@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livity Training & Academy</title>
+<link rel="canonical" href="https://livity.artiplay.app">
+<meta property="og:url" content="https://livity.artiplay.app">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+:root {
+--black:#000000;
+--cream:#ffffff;
+--white:#ffffff;
+--gold:#FFDE00;
+--gold-light:#FFE066;
+--navy:#0B2F64;
+--royal:#1C68D4;
+--red:#ED1C24;
+--text:#0B2F64;
+--muted:#5a5a5a;
+--line:#e2e2e2;
+}
+
+* {
+box-sizing:border-box;
+}
+
+html {
+scroll-behavior:smooth;
+}
+
+body {
+margin:0;
+background:var(--black);
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",
+"Segoe UI",sans-serif;
+color:var(--cream);
+}
+
+button {
+font:inherit;
+}
+
+.app {
+max-width:480px;
+margin:auto;
+min-height:100vh;
+background:var(--cream);
+color:var(--text);
+padding-bottom:78px;
+}
+
+/* HERO */
+
+.hero {
+min-height:620px;
+padding:26px 22px 30px;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+background:
+linear-gradient(
+180deg,
+#171714 0%,
+#28261f 58%,
+#11110f 100%
+);
+color:white;
+position:relative;
+overflow:hidden;
+}
+
+.hero:after {
+content:"";
+position:absolute;
+width:360px;
+height:360px;
+border-radius:50%;
+right:-170px;
+top:100px;
+background:radial-gradient(
+circle,
+#FFDE0033,
+transparent 65%
+);
+}
+
+.brand {
+font-weight:800;
+letter-spacing:3px;
+font-size:18px;
+position:relative;
+z-index:1;
+}
+
+.brand span {
+color:var(--gold);
+}
+
+.hero-copy {
+position:relative;
+z-index:1;
+}
+
+.eyebrow {
+font-size:11px;
+letter-spacing:2px;
+color:var(--gold-light);
+font-weight:700;
+text-transform:uppercase;
+}
+
+.hero h1 {
+font-family:Georgia,serif;
+font-size:48px;
+line-height:.98;
+margin:12px 0;
+}
+
+.hero p {
+color:#ddd8ce;
+line-height:1.5;
+max-width:330px;
+}
+
+/* BUTTONS */
+
+.btn {
+border:0;
+border-radius:16px;
+padding:15px 18px;
+font-weight:750;
+cursor:pointer;
+}
+
+.primary {
+background:var(--gold-light);
+color:#18150f;
+}
+
+.dark {
+background:#1c1b18;
+color:white;
+}
+
+.outline {
+background:transparent;
+border:1px solid #cdb77e;
+color:#2b2518;
+}
+
+/* CONTENT */
+
+.content {
+padding:24px 18px;
+}
+
+.section-title {
+display:flex;
+justify-content:space-between;
+align-items:end;
+margin:4px 2px 14px;
+}
+
+.section-title h2 {
+margin:0;
+font-family:Georgia,serif;
+font-size:26px;
+}
+
+.section-title small {
+color:var(--muted);
+}
+
+/* QUICK ACTIONS */
+
+.quick {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.quick button {
+background:#fff;
+border:1px solid var(--line);
+border-radius:18px;
+padding:17px;
+text-align:left;
+cursor:pointer;
+}
+
+.icon {
+font-size:21px;
+margin-bottom:9px;
+}
+
+.quick b {
+display:block;
+}
+
+.quick span {
+font-size:12px;
+color:var(--muted);
+}
+
+/* PROGRAM CARDS */
+
+.program {
+background:#fff;
+border:1px solid var(--line);
+border-radius:20px;
+padding:17px;
+margin-bottom:10px;
+cursor:pointer;
+}
+
+.program .top {
+display:flex;
+gap:13px;
+align-items:center;
+}
+
+.program .ico {
+width:42px;
+height:42px;
+border-radius:14px;
+background:#f5e9cc;
+display:grid;
+place-items:center;
+font-size:20px;
+}
+
+.program h3 {
+margin:0 0 4px;
+font-size:15px;
+}
+
+.program p {
+margin:0;
+color:var(--muted);
+font-size:12px;
+}
+
+.arrow {
+margin-left:auto;
+font-size:22px;
+color:#8d826e;
+}
+
+/* PANELS */
+
+.panel {
+background:#fff;
+border:1px solid var(--line);
+border-radius:20px;
+padding:18px;
+margin-bottom:12px;
+}
+
+.panel h3 {
+margin:0 0 10px;
+font-size:17px;
+}
+
+.panel p {
+line-height:1.5;
+color:#5e5a52;
+font-size:13px;
+}
+
+/* TAGS */
+
+.tags {
+display:flex;
+flex-wrap:wrap;
+gap:7px;
+}
+
+.tag {
+background:#f5eee0;
+padding:7px 9px;
+border-radius:9px;
+font-size:11px;
+font-weight:650;
+}
+
+/* SCHEDULE */
+
+.schedule .day {
+font-weight:800;
+font-size:13px;
+margin:18px 0 8px;
+}
+
+.event {
+padding:13px 0;
+border-top:1px solid var(--line);
+}
+
+.event b {
+font-size:13px;
+}
+
+.event span {
+display:block;
+color:var(--muted);
+font-size:11px;
+margin-top:4px;
+}
+
+/* PRICING */
+
+.price-grid {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.price {
+background:#fff;
+border:1px solid var(--line);
+border-radius:18px;
+padding:15px;
+}
+
+.price h4 {
+margin:0 0 7px;
+}
+
+.money {
+font-size:22px;
+font-weight:850;
+}
+
+.price small {
+color:var(--muted);
+display:block;
+margin-top:5px;
+line-height:1.4;
+}
+
+/* NOTICE */
+
+.notice {
+background:#f0e2c4;
+border-radius:16px;
+padding:15px;
+font-size:12px;
+line-height:1.5;
+margin-top:12px;
+}
+
+/* COACHES */
+
+.coach {
+display:flex;
+align-items:center;
+gap:13px;
+padding:13px 0;
+border-top:1px solid var(--line);
+}
+
+.avatar {
+width:48px;
+height:48px;
+border-radius:50%;
+background:#e7dcc6;
+display:grid;
+place-items:center;
+font-weight:800;
+}
+
+.coach b {
+display:block;
+}
+
+.coach span {
+font-size:11px;
+color:var(--muted);
+}
+
+/* ACCORDION */
+
+.accordion {
+border-top:1px solid var(--line);
+}
+
+.acc-head {
+padding:15px 0;
+display:flex;
+justify-content:space-between;
+font-weight:750;
+cursor:pointer;
+}
+
+.acc-body {
+display:none;
+padding:0 0 15px;
+color:var(--muted);
+font-size:12px;
+line-height:1.55;
+}
+
+.accordion.open .acc-body {
+display:block;
+}
+
+/* CTA */
+
+.cta {
+background:#171714;
+color:white;
+border-radius:24px;
+padding:22px;
+margin-top:14px;
+}
+
+.cta h2 {
+font-family:Georgia,serif;
+margin:0 0 7px;
+font-size:27px;
+}
+
+.cta p {
+color:#c8c4bb;
+font-size:12px;
+line-height:1.5;
+}
+
+.cta .btn {
+width:100%;
+margin-top:8px;
+}
+
+/* VIEWS */
+
+.view {
+display:none;
+}
+
+.view.active {
+display:block;
+}
+
+.back {
+background:none;
+border:0;
+padding:0;
+color:var(--ink);
+font-size:13px;
+font-weight:700;
+cursor:pointer;
+margin-bottom:12px;
+}
+
+/* BOTTOM NAV */
+
+.bottom {
+position:fixed;
+bottom:0;
+left:50%;
+transform:translateX(-50%);
+max-width:480px;
+width:100%;
+height:70px;
+background:#171714ee;
+backdrop-filter:blur(18px);
+display:grid;
+grid-template-columns:repeat(5,1fr);
+z-index:20;
+border-top:1px solid #ffffff18;
+}
+
+.bottom button {
+background:none;
+border:0;
+color:#aaa;
+font-size:10px;
+cursor:pointer;
+}
+
+.bottom button b {
+display:block;
+font-size:18px;
+margin-bottom:4px;
+}
+
+.bottom button.active {
+color:var(--gold-light);
+}
+
+/* DESKTOP */
+
+@media(min-width:600px) {
+
+body {
+padding:20px 0;
+}
+
+.app {
+border-radius:28px;
+overflow:hidden;
+box-shadow:0 20px 80px #0008;
+}
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- HOME -->
+
+<section id="home" class="view active">
+
+<div class="hero">
+
+<div class="brand">
+<span>◈</span> LIV<span>I</span>TY
+</div>
+
+<div class="hero-copy">
+
+<div class="eyebrow">
+Training & Football Academy
+</div>
+
+<h1>
+More Than<br>
+Just Football.
+</h1>
+
+<p>
+Build skilled players, confident individuals,
+and a stronger community.
+</p>
+
+<button
+class="btn primary"
+onclick="show('programs')"
+>
+Explore Programs →
+</button>
+
+</div>
+
+</div>
+
+<div class="content">
+
+<div class="section-title">
+<h2>Start Here</h2>
+<small>Find your path</small>
+</div>
+
+<div class="quick">
+
+<button onclick="show('programs')">
+<div class="icon">⚽</div>
+<b>Programs</b>
+<span>Find the right fit</span>
+</button>
+
+<button onclick="show('schedule')">
+<div class="icon">◷</div>
+<b>Schedule</b>
+<span>See training times</span>
+</button>
+
+<button onclick="show('pricing')">
+<div class="icon">₱</div>
+<b>Pricing</b>
+<span>Transparent rates</span>
+</button>
+
+<button onclick="show('enroll')">
+<div class="icon">↗</div>
+<b>Enroll</b>
+<span>Get started today</span>
+</button>
+
+</div>
+
+<div class="cta">
+
+<h2>
+Develop. Compete. Belong.
+</h2>
+
+<p>
+Explore the Livity pathway and find
+the training environment that matches
+your player's needs and goals.
+</p>
+
+<button
+class="btn primary"
+onclick="show('programs')"
+>
+Find Your Program →
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- PROGRAMS -->
+
+<section id="programs" class="view content">
+
+<button class="back" onclick="show('home')">
+← Back
+</button>
+
+<div class="section-title">
+<h2>Our Programs</h2>
+</div>
+
+<p style="color:var(--muted);font-size:13px">
+Four pathways. One goal — your child's growth.
+</p>
+
+
+<div class="program" onclick="detail('regular')">
+
+<div class="top">
+
+<div class="ico">⚽</div>
+
+<div>
+<h3>
+Specialized Training — Regular
+</h3>
+
+<p>
+Build skills · Group sessions · All levels
+</p>
+</div>
+
+<div class="arrow">›</div>
+
+</div>
+
+</div>
+
+
+<div class="program" onclick="detail('private')">
+
+<div class="top">
+
+<div class="ico">◎</div>
+
+<div>
+<h3>
+Specialized Training — Private
+</h3>
+
+<p>
+1-on-1 / small group · Focused growth
+</p>
+</div>
+
+<div class="arrow">›</div>
+
+</div>
+
+</div>
+
+
+<div class="program" onclick="detail('advanced')">
+
+<div class="top">
+
+<div class="ico">ϟ</div>
+
+<div>
+<h3>
+Advanced Performance Training
+</h3>
+
+<p>
+Higher intensity · Assessment required
+</p>
+</div>
+
+<div class="arrow">›</div>
+
+</div>
+
+</div>
+
+
+<div class="program" onclick="detail('academy')">
+
+<div class="top">
+
+<div class="ico">♙</div>
+
+<div>
+<h3>
+Academy Training
+</h3>
+
+<p>
+U5 · U7 · U9 · U11 · U13 · Team pathway
+</p>
+</div>
+
+<div class="arrow">›</div>
+
+</div>
+
+</div>
+
+
+<div class="notice" onclick="show('more')" style="cursor:pointer">
+Not sure which is right for your child?
+<b>Ask Coach Brina →</b>
+</div>
+
+</section>
+
+
+<!-- PROGRAM DETAIL -->
+
+<section id="detail" class="view content"></section>
+
+
+<!-- SCHEDULE -->
+
+<section id="schedule" class="view content">
+
+<button class="back" onclick="show('home')">
+← Back
+</button>
+
+<div class="section-title">
+<h2>Weekly Schedule</h2>
+</div>
+
+<p style="color:var(--muted);font-size:13px">
+See when and where we train.
+</p>
+
+
+<div class="panel schedule">
+
+<div class="day">
+TUESDAY
+</div>
+
+<div class="event">
+<b>
+Specialized Training — Regular
+</b>
+
+<span>
+6:00–8:30 PM · PAREF Southridge
+</span>
+</div>
+
+
+<div class="day">
+THURSDAY
+</div>
+
+<div class="event">
+
+<b>
+Specialized Training — Regular
+</b>
+
+<span>
+4:00–6:00 PM · Pacific Malayan
+(U9 & below)
+</span>
+
+</div>
+
+
+<div class="event">
+
+<b>
+Advanced Performance
+</b>
+
+<span>
+6:00–8:30 PM · PAREF Southridge
+· 11+ / Assessment
+</span>
+
+</div>
+
+
+<div class="event">
+
+<b>
+Academy Training
+</b>
+
+<span>
+6:00–8:30 PM · PAREF Southridge
+</span>
+
+</div>
+
+
+<div class="day">
+SATURDAY
+</div>
+
+
+<div class="event">
+
+<b>
+Specialized Training — Regular
+</b>
+
+<span>
+7:00–9:30 AM · PAREF Southridge
+</span>
+
+</div>
+
+
+<div class="event">
+
+<b>
+Academy Training
+</b>
+
+<span>
+7:00–9:30 AM · PAREF Southridge
+</span>
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Private Training
+</h3>
+
+<p>
+Booked separately. Flexible schedule and
+venue based on coach and field availability.
+Separate fees apply.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- PRICING -->
+
+<section id="pricing" class="view content">
+
+<button class="back" onclick="show('home')">
+← Back
+</button>
+
+<div class="section-title">
+<h2>Training Rates</h2>
+</div>
+
+<p style="color:var(--muted);font-size:13px">
+Packages valid for 6 weeks from first training day.
+</p>
+
+
+<div class="price-grid">
+
+
+<div class="price">
+
+<h4>U5–U7</h4>
+
+<small>
+Born 2019+
+</small>
+
+<div class="money">
+₱4,000
+</div>
+
+<small>
+5-session package
+</small>
+
+<small>
+Single ₱1,000 · Assessment ₱500
+</small>
+
+<small>
+Top-Up ₱3,500
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>U9–U13</h4>
+
+<small>
+Born 2013–2018
+</small>
+
+<div class="money">
+₱5,000
+</div>
+
+<small>
+5-session package
+</small>
+
+<small>
+Single ₱1,200 · Assessment ₱800
+</small>
+
+<small>
+Top-Up ₱4,500
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>U15+</h4>
+
+<small>
+Born 2012–
+</small>
+
+<div class="money">
+₱6,000
+</div>
+
+<small>
+5-session package
+</small>
+
+<small>
+Single ₱1,300 · Assessment ₱1,000
+</small>
+
+<small>
+Top-Up ₱5,000
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>Advanced</h4>
+
+<small>
+U11+ · By assessment
+</small>
+
+<div class="money">
+₱1,300
+</div>
+
+<small>
+Per session
+</small>
+
+</div>
+
+</div>
+
+
+<div
+class="panel"
+style="margin-top:12px"
+>
+
+<h3>
+Academy Packages
+</h3>
+
+<p style="color:var(--muted);font-size:12px;margin:-6px 0 12px">
+Valid for 30 days from first training day (U5–U13)
+</p>
+
+<div class="price-grid">
+
+
+<div class="price">
+
+<h4>
+Regular
+</h4>
+
+<div class="money">
+₱7,500
+</div>
+
+<small>
+8 Academy Sessions
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>
+Mixed A
+</h4>
+
+<div class="money">
+₱8,800
+</div>
+
+<small>
+4 Private + 4 Academy
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>
+Mixed B
+</h4>
+
+<div class="money">
+₱12,000
+</div>
+
+<small>
+4 Private + 8 Academy
+</small>
+
+</div>
+
+
+<div class="price">
+
+<h4>
+Mixed C
+</h4>
+
+<div class="money">
+₱14,400
+</div>
+
+<small>
+8 Private + 4 Academy
+</small>
+
+</div>
+
+
+</div>
+
+
+<div class="notice">
+
+<b>
+Membership: ₱4,000 one-time
+</b>
+
+<br>
+
+Required for Academy players.
+Includes 2 jersey sets.
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Rewards
+</h3>
+
+<p>
+Bring-a-Friend: ₱500 off next package (once referred player buys a package)
+· Regular rates apply to first 2 siblings, ₱800 off the 3rd sibling's package
+· Loyalty: 2 complimentary sessions after 5 package purchases.
+</p>
+
+<p style="font-size:11px;color:var(--muted);margin-top:8px">
+Applies to package purchases only (not assessments or single sessions) and cannot be combined unless approved.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- MORE -->
+
+<section id="more" class="view content">
+
+<button class="back" onclick="show('home')">
+← Back
+</button>
+
+<div class="section-title">
+<h2>Livity</h2>
+</div>
+
+
+<div class="panel">
+
+<h3>
+Who We Are
+</h3>
+
+<p>
+Livity Training and Football Academy
+creates meaningful opportunities for growth,
+engagement, and positive impact through
+training programs, experiences, and
+collaborative partnerships.
+</p>
+
+<div class="tags">
+
+<span class="tag">
+Excellence
+</span>
+
+<span class="tag">
+Inclusivity
+</span>
+
+<span class="tag">
+Development
+</span>
+
+<span class="tag">
+Community
+</span>
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Meet the Team
+</h3>
+
+
+<div class="coach">
+
+<div class="avatar">
+B
+</div>
+
+<div>
+
+<b>
+Coach Brina
+</b>
+
+<span>
+Training / Private Sessions
+</span>
+
+</div>
+
+</div>
+
+
+<div class="coach">
+
+<div class="avatar">
+C
+</div>
+
+<div>
+
+<b>
+Chelsi
+</b>
+
+<span>
+Academy
+</span>
+
+</div>
+
+</div>
+
+
+<div class="coach">
+
+<div class="avatar">
+S
+</div>
+
+<div>
+
+<b>
+Coach Sam
+</b>
+
+<span>
+Advanced Performance Assessment
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Policies & Guidelines
+</h3>
+
+
+<div class="accordion">
+
+<div
+class="acc-head"
+onclick="acc(this)"
+>
+Attendance & Registration
+<span>＋</span>
+</div>
+
+<div class="acc-body">
+
+Academy players are automatically expected
+to attend. Notify by 2:00 PM Thursday or
+10:00 PM Friday for Saturday.
+
+<br><br>
+
+Training registration is required at least
+2 hours before sessions.
+
+<br><br>
+
+Maximum 2 walk-ins per calendar month;
+the 3rd onward is charged at 1.5×.
+
+</div>
+
+</div>
+
+
+<div class="accordion">
+
+<div
+class="acc-head"
+onclick="acc(this)"
+>
+Payment
+<span>＋</span>
+</div>
+
+<div class="acc-body">
+
+Payment must be completed within 12 hours
+after the session ends.
+
+<br><br>
+
+Late payments incur a 1.5× charge.
+
+</div>
+
+</div>
+
+
+<div class="accordion">
+
+<div
+class="acc-head"
+onclick="acc(this)"
+>
+Packages & Cancellations
+<span>＋</span>
+</div>
+
+<div class="acc-body">
+
+Packages are non-transferable and
+non-refundable.
+
+<br><br>
+
+If weather cancellation occurs within the
+first 45 minutes, the session is not deducted.
+
+If training runs more than 45 minutes,
+it counts as completed.
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ENROLL -->
+
+<section id="enroll" class="view content">
+
+<button class="back" onclick="show('home')">
+← Back
+</button>
+
+
+<div class="cta">
+
+<h2>
+Ready to Train?
+</h2>
+
+<p>
+Get started in a few simple steps.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+01 · Choose
+</h3>
+
+<p>
+Select the program that best matches
+your player's needs and goals.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+02 · Register
+</h3>
+
+<p>
+Complete the appropriate Livity enrollment
+or training registration form.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+03 · Confirm
+</h3>
+
+<p>
+Receive the details you need for your
+first session.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+04 · Train
+</h3>
+
+<p>
+Show up, learn, compete, and grow.
+</p>
+
+</div>
+
+
+<a
+class="btn primary"
+style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:10px"
+href="https://bit.ly/LivityTrainingRegistration"
+target="_blank"
+>
+Training Registration →
+</a>
+
+<a
+class="btn dark"
+style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box"
+href="https://bit.ly/LivityAcademyEnrollment"
+target="_blank"
+>
+Academy Enrollment →
+</a>
+
+
+<div class="notice">
+
+<b>
+Key contacts
+</b>
+
+<br>
+
+Coach Brina — Training / Private
+
+<br>
+
+Chelsi — Academy
+
+<br>
+
+Coach Sam — Advanced Assessment
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Already Enrolled?
+</h3>
+
+<p>
+Check your sessions and balance on your dashboard.
+</p>
+
+<a
+class="btn outline"
+style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:8px"
+href="https://bit.ly/LivityTrainingDashboard"
+target="_blank"
+>
+Training Dashboard →
+</a>
+
+<a
+class="btn outline"
+style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box"
+href="https://bit.ly/LivityAcademyDashboard"
+target="_blank"
+>
+Academy Dashboard →
+</a>
+
+</div>
+
+</section>
+
+
+<!-- BOTTOM NAV -->
+
+<nav class="bottom">
+
+<button
+class="active"
+data-v="home"
+onclick="show('home')"
+>
+<b>⌂</b>
+Home
+</button>
+
+
+<button
+data-v="programs"
+onclick="show('programs')"
+>
+<b>◫</b>
+Programs
+</button>
+
+
+<button
+data-v="schedule"
+onclick="show('schedule')"
+>
+<b>◷</b>
+Schedule
+</button>
+
+
+<button
+data-v="more"
+onclick="show('more')"
+>
+<b>☷</b>
+More
+</button>
+
+
+<button
+data-v="enroll"
+onclick="show('enroll')"
+>
+<b>↗</b>
+Enroll
+</button>
+
+</nav>
+
+</div>
+
+
+<script>
+
+const data = {
+
+regular: {
+
+title:"Specialized Training — Regular",
+
+sub:"All levels · Group sessions",
+
+what:
+"Structured group training with players grouped by skill level, not age.",
+
+focus:[
+"Ball Control",
+"Passing",
+"Receiving",
+"Dribbling",
+"Finishing",
+"Decision-Making"
+],
+
+dev:
+"Build confidence, consistency, and strong football fundamentals through repetition and guided coaching.",
+
+best:
+"Players looking to develop a strong technical foundation and receive consistent training.",
+
+schedule:
+"Tue 6:00–8:30 PM · PAREF Southridge | Thu 4:00–6:00 PM · Pacific Malayan (U9 & below) | Sat 7:00–9:30 AM · PAREF Southridge",
+
+registerUrl:
+"https://bit.ly/LivityTrainingRegistration"
+
+},
+
+
+private: {
+
+title:"Specialized Training — Private",
+
+sub:"1-on-1 / Small Group",
+
+what:
+"Personalized sessions designed around the specific needs and goals of an individual player or private group.",
+
+focus:[
+"Customized Training",
+"Detailed Feedback",
+"Targeted Development"
+],
+
+dev:
+"Individualized coaching and maximum coach interaction to accelerate improvement in specific areas.",
+
+best:
+"Players wanting focused development, flexible scheduling, or extra training.",
+
+schedule:
+"Flexible — based on coach & field availability. Venue confirmed upon booking. Separate rates & field rental fees apply.",
+
+registerUrl:
+"https://bit.ly/LivityTrainingRegistration"
+
+},
+
+
+advanced: {
+
+title:"Advanced Performance Training",
+
+sub:"Assessment Required · U11+",
+
+what:
+"An advanced program for players ready for a higher level of challenge, intensity, and development.",
+
+focus:[
+"Speed of Play",
+"Advanced Decision-Making",
+"Game Awareness",
+"Execution Under Pressure",
+"Competitive Performance"
+],
+
+dev:
+"Faster decision-making, higher execution standards, and greater consistency in performance.",
+
+best:
+"Players with strong fundamentals ready for a more advanced, competitive environment.",
+
+schedule:
+"Thu 6:00–8:30 PM · PAREF Southridge. Eligibility confirmed by Coach Sam.",
+
+registerUrl:
+"https://bit.ly/LivityTrainingRegistration"
+
+},
+
+
+academy: {
+
+title:"Academy Training",
+
+sub:"U5 · U7 · U9 · U11 · U13 · Team",
+
+what:
+"A structured team development program helping players grow individually and as part of a team through consistent training and game-based learning.",
+
+focus:[
+"Team Play",
+"Game Understanding",
+"Positioning",
+"Decision-Making",
+"Communication",
+"Leadership"
+],
+
+dev:
+"Players develop habits, discipline, and understanding to perform effectively in training and match environments.",
+
+best:
+"Players seeking a complete football experience combining individual growth, teamwork, and long-term development.",
+
+schedule:
+"Thu 6:00–8:30 PM · PAREF Southridge | Sat 7:00–9:30 AM · PAREF Southridge.",
+
+registerUrl:
+"https://bit.ly/LivityAcademyEnrollment"
+
+}
+
+};
+
+
+function show(id) {
+
+document
+.querySelectorAll('.view')
+.forEach(x =>
+x.classList.remove('active')
+);
+
+document
+.getElementById(id)
+.classList.add('active');
+
+
+document
+.querySelectorAll('.bottom button')
+.forEach(x =>
+x.classList.toggle(
+'active',
+x.dataset.v === id
+)
+);
+
+
+window.scrollTo(0,0);
+
+}
+
+
+function detail(k) {
+
+let d = data[k];
+
+document.getElementById('detail').innerHTML = `
+
+<button
+class="back"
+onclick="show('programs')"
+>
+← Programs
+</button>
+
+
+<div class="section-title">
+
+<h2>
+${d.title}
+</h2>
+
+</div>
+
+
+<p style="color:var(--muted);font-size:13px">
+${d.sub}
+</p>
+
+
+<div class="panel">
+
+<h3>
+What It Is
+</h3>
+
+<p>
+${d.what}
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+What We Focus On
+</h3>
+
+<div class="tags">
+
+${d.focus
+.map(x =>
+`<span class="tag">${x}</span>`
+)
+.join('')
+}
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Player Development
+</h3>
+
+<p>
+${d.dev}
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Best For
+</h3>
+
+<p>
+${d.best}
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Schedule & Locations
+</h3>
+
+<p>
+${d.schedule}
+</p>
+
+</div>
+
+
+<button
+class="btn outline"
+style="width:100%;margin-bottom:10px"
+onclick="show('pricing')"
+>
+View Prices →
+</button>
+
+<button
+class="btn primary"
+style="width:100%"
+onclick="window.open('${d.registerUrl}','_blank')"
+>
+Register Now →
+</button>
+
+`;
+
+show('detail');
+
+}
+
+
+function acc(el) {
+
+el.parentElement.classList.toggle('open');
+
+el.querySelector('span').textContent =
+el.parentElement.classList.contains('open')
+? '−'
+: '＋';
+
+}
+
+</script>
+
+</body>
+</html>
