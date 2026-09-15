@@ -1,0 +1,466 @@
+/**
+ * LIVITY TRAINING & ACADEMY — Backend (Google Apps Script)
+ * ----------------------------------------------------------
+ * Run initializeAll() once (or via the "Livity Admin" menu) to build
+ * every sheet this app needs, with headers, frozen rows, and seed data
+ * for Programs / Pricing / Schedule / Coaches pulled straight from the
+ * Livity mobile app.
+ *
+ * Sheets created:
+ *   Config, Programs, Schedule, Pricing, Coaches, Players, Packages,
+ *   Payments, Attendance, WalkIns, Referrals, AuditLog
+ */
+
+// ============================================================
+// CONFIG — sheet names + headers in one place
+// ============================================================
+
+const SHEETS = {
+  CONFIG:     { name: 'Config',     headers: ['Key', 'Value'] },
+  PROGRAMS:   { name: 'Programs',   headers: ['ProgramID', 'Name', 'Type', 'AgeGroup', 'AssessmentRequired', 'Description'] },
+  SCHEDULE:   { name: 'Schedule',   headers: ['ScheduleID', 'ProgramID', 'Day', 'StartTime', 'EndTime', 'Venue', 'Notes'] },
+  PRICING:    { name: 'Pricing',    headers: ['PriceID', 'ProgramID', 'Category', 'PackageType', 'Sessions', 'Price', 'ValidityDays'] },
+  COACHES:    { name: 'Coaches',    headers: ['CoachID', 'Name', 'Role', 'ContactNumber'] },
+  PLAYERS:    { name: 'Players',    headers: ['PlayerID', 'FullName', 'BirthYear', 'Category', 'GuardianName', 'ContactNumber', 'Email', 'ProgramID', 'DateEnrolled', 'Status', 'ReferredBy'] },
+  PACKAGES:   { name: 'Packages',   headers: ['PackageID', 'PlayerID', 'PriceID', 'PurchaseDate', 'SessionsTotal', 'SessionsUsed', 'ExpiryDate', 'Status'] },
+  PAYMENTS:   { name: 'Payments',   headers: ['PaymentID', 'PlayerID', 'PackageID', 'Amount', 'Method', 'DateTime', 'Status', 'ProcessedBy'] },
+  ATTENDANCE: { name: 'Attendance', headers: ['AttendanceID', 'PlayerID', 'ScheduleID', 'Date', 'Status', 'SessionDeducted', 'IsWalkIn'] },
+  WALKINS:    { name: 'WalkIns',    headers: ['WalkInID', 'PlayerID', 'Date', 'MonthCount', 'SurchargeApplied'] },
+  REFERRALS:  { name: 'Referrals',  headers: ['ReferralID', 'ReferrerPlayerID', 'ReferredPlayerID', 'DateApplied', 'DiscountApplied', 'Status'] },
+  AUDITLOG:   { name: 'AuditLog',   headers: ['Timestamp', 'Action', 'Details', 'User'] }
+};
+
+// Seed data — mirrors the pricing/schedule shown in the Livity app
+const SEED_PROGRAMS = [
+  ['PRG-REG', 'Specialized Training — Regular', 'Group', 'All levels', 'No', 'Open group sessions focused on football fundamentals.'],
+  ['PRG-PRIV', 'Specialized Training — Private', '1-on-1 / Small Group', 'All levels', 'No', 'Personalized private or small-group coaching.'],
+  ['PRG-ADV', 'Advanced Performance Training', 'Group', 'U11+', 'Yes', 'High-intensity training for assessed players.'],
+  ['PRG-ACAD', 'Academy Training', 'Team', 'U5-U13', 'No', 'Full team development program with fixed weekly schedule.']
+];
+
+const SEED_SCHEDULE = [
+  ['SCH-001', 'PRG-REG', 'Tuesday', '18:00', '20:30', 'PAREF Southridge', ''],
+  ['SCH-002', 'PRG-REG', 'Thursday', '16:00', '18:00', 'Pacific Malayan', 'U9 & below'],
+  ['SCH-003', 'PRG-ADV', 'Thursday', '18:00', '20:30', 'PAREF Southridge', '11+ / Assessment'],
+  ['SCH-004', 'PRG-ACAD', 'Thursday', '18:00', '20:30', 'PAREF Southridge', ''],
+  ['SCH-005', 'PRG-REG', 'Saturday', '07:00', '09:30', 'PAREF Southridge', ''],
+  ['SCH-006', 'PRG-ACAD', 'Saturday', '07:00', '09:30', 'PAREF Southridge', '']
+];
+
+const SEED_PRICING = [
+  ['PRC-U57',  'PRG-REG', 'U5-U7',  'Package (5 sessions)', 5, 4000, 42],
+  ['PRC-U57S', 'PRG-REG', 'U5-U7',  'Single',               1, 1000, 0],
+  ['PRC-U57A', 'PRG-REG', 'U5-U7',  'Assessment',           1, 500,  0],
+  ['PRC-U57T', 'PRG-REG', 'U5-U7',  'Top-Up',               5, 3500, 42],
+  ['PRC-U913', 'PRG-REG', 'U9-U13', 'Package (5 sessions)', 5, 5000, 42],
+  ['PRC-U913S','PRG-REG', 'U9-U13', 'Single',               1, 1200, 0],
+  ['PRC-U913A','PRG-REG', 'U9-U13', 'Assessment',           1, 800,  0],
+  ['PRC-U913T','PRG-REG', 'U9-U13', 'Top-Up',               5, 4500, 42],
+  ['PRC-U15',  'PRG-REG', 'U15+',   'Package (5 sessions)', 5, 6000, 42],
+  ['PRC-U15S', 'PRG-REG', 'U15+',   'Single',               1, 1300, 0],
+  ['PRC-U15A', 'PRG-REG', 'U15+',   'Assessment',           1, 1000, 0],
+  ['PRC-U15T', 'PRG-REG', 'U15+',   'Top-Up',               5, 5000, 42],
+  ['PRC-ADV',  'PRG-ADV', 'U11+',   'Per Session',          1, 1300, 0],
+  ['PRC-ACADR','PRG-ACAD','U5-U13', 'Regular (8 sessions)', 8, 7500, 30],
+  ['PRC-ACADMA','PRG-ACAD','U5-U13','Mixed A (4P+4A)',      8, 8800, 30],
+  ['PRC-ACADMB','PRG-ACAD','U5-U13','Mixed B (4P+8A)',      12, 12000, 30],
+  ['PRC-ACADMC','PRG-ACAD','U5-U13','Mixed C (8P+4A)',      12, 14400, 30],
+  ['PRC-MEMB', 'PRG-ACAD', 'U5-U13', 'Membership (one-time, incl. 2 jersey sets)', 0, 4000, 0]
+];
+
+const SEED_COACHES = [
+  ['CH-BRINA', 'Coach Brina', 'Training / Private Sessions', ''],
+  ['CH-CHELSI', 'Chelsi', 'Academy', ''],
+  ['CH-SAM', 'Coach Sam', 'Advanced Performance Assessment', '']
+];
+
+const SEED_CONFIG = [
+  ['BusinessName', 'Livity Training & Academy'],
+  ['WalkInFreePerMonth', 2],
+  ['WalkInSurchargeMultiplier', 1.5],
+  ['LatePaymentMultiplier', 1.5],
+  ['PaymentDeadlineHours', 12],
+  ['ReferralDiscount', 500],
+  ['SiblingDiscountFromThird', 800],
+  ['LoyaltyBonusAfterPurchases', 5],
+  ['LoyaltyBonusSessions', 2]
+];
+
+// ============================================================
+// MENU
+// ============================================================
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Livity Admin')
+    .addItem('Initialize All Sheets', 'initializeAll')
+    .addSeparator()
+    .addItem('Re-seed Programs / Pricing / Schedule', 'reseedReferenceData')
+    .addToUi();
+}
+
+// ============================================================
+// INITIALIZE ALL
+// ============================================================
+
+function initializeAll() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  Object.values(SHEETS).forEach(function (def) {
+    getOrCreateSheet_(ss, def.name, def.headers);
+  });
+
+  reseedReferenceData();
+  logAudit_('INITIALIZE_ALL', 'All Livity sheets created/verified', Session.getActiveUser().getEmail());
+
+  SpreadsheetApp.getUi().alert('Livity backend initialized: ' + Object.keys(SHEETS).length + ' sheets ready.');
+}
+
+function reseedReferenceData() {
+  writeSeed_(SHEETS.CONFIG.name, SEED_CONFIG, false);
+  writeSeed_(SHEETS.PROGRAMS.name, SEED_PROGRAMS, true);
+  writeSeed_(SHEETS.SCHEDULE.name, SEED_SCHEDULE, true);
+  writeSeed_(SHEETS.PRICING.name, SEED_PRICING, true);
+  writeSeed_(SHEETS.COACHES.name, SEED_COACHES, true);
+}
+
+// ============================================================
+// SHEET HELPERS
+// ============================================================
+
+function getOrCreateSheet_(ss, name, headers) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+  sheet.setFrozenRows(1);
+  sheet.setRowHeight(1, 34);
+  sheet.autoResizeColumns(1, headers.length);
+  applyZebraStyle_(sheet, headers.length);
+  return sheet;
+}
+
+// Applies the Livity table theme: dark/gold header + cream zebra striping.
+// Safe to re-run — clears any existing banding on the sheet first.
+function applyZebraStyle_(sheet, numCols) {
+  sheet.getBandings().forEach(function (b) { b.remove(); });
+
+  const maxRows = Math.max(sheet.getMaxRows(), 300);
+  const range = sheet.getRange(1, 1, maxRows, numCols);
+  const banding = range.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false);
+
+  banding.setHeaderRowColor('#171714');
+  banding.setFirstRowColor('#FFFFFF');
+  banding.setSecondRowColor('#F5EEE0');
+
+  sheet.getRange(1, 1, 1, numCols)
+    .setFontWeight('bold')
+    .setFontColor('#FFDE00')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+
+  range.setBorder(true, true, true, true, true, true, '#e2e2e2', SpreadsheetApp.BorderStyle.SOLID);
+  sheet.setColumnWidths(1, numCols, 140);
+}
+
+// Writes seed rows only if sheet has no data rows yet (idempotent — safe to re-run)
+function writeSeed_(sheetName, rows, keyedById) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet || rows.length === 0) return;
+
+  const existingIds = keyedById ? getColumnValues_(sheet, 1) : [];
+  const toWrite = keyedById
+    ? rows.filter(function (r) { return existingIds.indexOf(r[0]) === -1; })
+    : (sheet.getLastRow() <= 1 ? rows : []);
+
+  if (toWrite.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, toWrite.length, toWrite[0].length).setValues(toWrite);
+  }
+}
+
+function getColumnValues_(sheet, col) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, col, lastRow - 1, 1).getValues().map(function (r) { return r[0]; });
+}
+
+function sheet_(name) {
+  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+}
+
+function nextId_(prefix, sheetName) {
+  const sheet = sheet_(sheetName);
+  const count = Math.max(0, sheet.getLastRow() - 1);
+  return prefix + '-' + Utilities.formatString('%04d', count + 1);
+}
+
+function logAudit_(action, details, user) {
+  const sheet = sheet_(SHEETS.AUDITLOG.name);
+  sheet.appendRow([new Date(), action, details, user || Session.getActiveUser().getEmail()]);
+}
+
+// ============================================================
+// CORE FUNCTIONS
+// ============================================================
+
+/** Register a new player. data = {fullName, birthYear, category, guardianName, contactNumber, email, programId, referredBy} */
+function registerPlayer(data) {
+  const id = nextId_('PLR', SHEETS.PLAYERS.name);
+  sheet_(SHEETS.PLAYERS.name).appendRow([
+    id, data.fullName, data.birthYear, data.category, data.guardianName,
+    data.contactNumber, data.email, data.programId, new Date(), 'Active', data.referredBy || ''
+  ]);
+  logAudit_('REGISTER_PLAYER', id + ' — ' + data.fullName, null);
+
+  if (data.referredBy) {
+    addReferral(data.referredBy, id);
+  }
+  return id;
+}
+
+/** Purchase a package for a player. Looks up Pricing to fill sessions/price/expiry. */
+function purchasePackage(playerId, priceId) {
+  const pricingRow = findRowById_(SHEETS.PRICING.name, priceId);
+  if (!pricingRow) throw new Error('Unknown PriceID: ' + priceId);
+
+  const sessions = pricingRow[4];   // Sessions
+  const validityDays = pricingRow[6]; // ValidityDays
+  const purchaseDate = new Date();
+  const expiryDate = validityDays > 0
+    ? new Date(purchaseDate.getTime() + validityDays * 24 * 60 * 60 * 1000)
+    : '';
+
+  const id = nextId_('PKG', SHEETS.PACKAGES.name);
+  sheet_(SHEETS.PACKAGES.name).appendRow([
+    id, playerId, priceId, purchaseDate, sessions, 0, expiryDate, 'Active'
+  ]);
+  logAudit_('PURCHASE_PACKAGE', id + ' for ' + playerId + ' (' + priceId + ')', null);
+  return id;
+}
+
+/** Record a payment against a package. method e.g. 'Cash','GCash','Bank Transfer'. */
+function recordPayment(playerId, packageId, amount, method) {
+  const id = nextId_('PAY', SHEETS.PAYMENTS.name);
+  sheet_(SHEETS.PAYMENTS.name).appendRow([
+    id, playerId, packageId, amount, method, new Date(), 'Paid', Session.getActiveUser().getEmail()
+  ]);
+  logAudit_('RECORD_PAYMENT', id + ' — ' + amount + ' via ' + method, null);
+  return id;
+}
+
+/**
+ * Mark attendance for a player on a given schedule/date.
+ * Handles walk-in surcharge logic: max 2 free walk-ins/month, 3rd+ charged 1.5x.
+ * status: 'Present' | 'Absent'
+ */
+function markAttendance(playerId, scheduleId, dateStr, status, isWalkIn) {
+  const date = dateStr ? new Date(dateStr) : new Date();
+  let sessionDeducted = false;
+  let surcharge = false;
+
+  if (status === 'Present') {
+    sessionDeducted = true;
+    if (isWalkIn) {
+      const monthCount = countWalkInsThisMonth_(playerId, date) + 1;
+      surcharge = monthCount > getConfigValue_('WalkInFreePerMonth');
+      const wId = nextId_('WI', SHEETS.WALKINS.name);
+      sheet_(SHEETS.WALKINS.name).appendRow([wId, playerId, date, monthCount, surcharge]);
+    } else {
+      deductPackageSession_(playerId);
+    }
+  }
+
+  const id = nextId_('ATT', SHEETS.ATTENDANCE.name);
+  sheet_(SHEETS.ATTENDANCE.name).appendRow([
+    id, playerId, scheduleId, date, status, sessionDeducted, !!isWalkIn
+  ]);
+  logAudit_('MARK_ATTENDANCE', id + ' — ' + playerId + ' (' + status + ')', null);
+  return { attendanceId: id, walkInSurcharge: surcharge };
+}
+
+/** Apply the Bring-a-Friend referral discount once the referred player buys a package. */
+function addReferral(referrerPlayerId, referredPlayerId) {
+  const id = nextId_('REF', SHEETS.REFERRALS.name);
+  const discount = getConfigValue_('ReferralDiscount');
+  sheet_(SHEETS.REFERRALS.name).appendRow([
+    id, referrerPlayerId, referredPlayerId, new Date(), discount, 'Pending'
+  ]);
+  logAudit_('ADD_REFERRAL', id + ' — ' + referrerPlayerId + ' referred ' + referredPlayerId, null);
+  return id;
+}
+
+// ============================================================
+// INTERNAL LOOKUPS
+// ============================================================
+
+function findRowById_(sheetName, id) {
+  const sheet = sheet_(sheetName);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === id) return data[i];
+  }
+  return null;
+}
+
+function getConfigValue_(key) {
+  const data = sheet_(SHEETS.CONFIG.name).getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === key) return data[i][1];
+  }
+  return null;
+}
+
+function countWalkInsThisMonth_(playerId, date) {
+  const data = sheet_(SHEETS.WALKINS.name).getDataRange().getValues();
+  const m = date.getMonth(), y = date.getFullYear();
+  let count = 0;
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const rowDate = new Date(row[2]);
+    if (row[1] === playerId && rowDate.getMonth() === m && rowDate.getFullYear() === y) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function deductPackageSession_(playerId) {
+  const sheet = sheet_(SHEETS.PACKAGES.name);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === playerId && data[i][7] === 'Active' && data[i][5] < data[i][4]) {
+      const newUsed = data[i][5] + 1;
+      sheet.getRange(i + 1, 6).setValue(newUsed); // SessionsUsed
+      if (newUsed >= data[i][4]) {
+        sheet.getRange(i + 1, 8).setValue('Completed'); // Status
+      }
+      return true;
+    }
+  }
+  return false; // no active package with remaining sessions found
+}
+// ============================================================
+// WEB APP API — Enrollment endpoint for the Livity frontend
+// ============================================================
+
+const PROGRAM_PACKAGE_MAP = {
+  regular: 'PRC-ACADR',
+  mixedA:  'PRC-ACADMA',
+  mixedB:  'PRC-ACADMB',
+  mixedC:  'PRC-ACADMC'
+};
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const body = JSON.parse(e.postData.contents);
+
+    if (body.action !== 'enroll') {
+      return jsonResponse_({ success: false, error: 'Unknown action: ' + body.action });
+    }
+
+    return jsonResponse_(handleEnrollment_(body));
+
+  } catch (err) {
+    logAudit_('ENROLL_ERROR', String(err), null);
+    return jsonResponse_({ success: false, error: 'Server error: ' + err.message });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function doGet(e) {
+  return jsonResponse_({ status: 'ok', service: 'Livity Enrollment API' });
+}
+
+function handleEnrollment_(body) {
+  const player = body.player || {};
+  const guardian = body.guardian || {};
+  const enrollment = body.enrollment || {};
+
+  const missing = [];
+  if (!player.firstName) missing.push('firstName');
+  if (!player.lastName) missing.push('lastName');
+  if (!player.gender) missing.push('gender');
+  if (!guardian.guardianName) missing.push('guardianName');
+  if (!guardian.whatsapp) missing.push('whatsapp');
+  if (!enrollment.programId) missing.push('programId');
+  if (!enrollment.consentPhoto || !enrollment.consentPrivacy) missing.push('consents');
+  if (missing.length) {
+    return { success: false, error: 'Missing required fields: ' + missing.join(', ') };
+  }
+
+  // Price is resolved server-side — never trust a price sent from the client.
+  const priceId = resolvePriceId_(enrollment.programId, enrollment.packageKey, enrollment.category);
+  let pricingRow = null;
+  if (priceId) {
+    pricingRow = findRowById_(SHEETS.PRICING.name, priceId);
+    if (!pricingRow) {
+      return { success: false, error: 'Unknown PriceID resolved: ' + priceId };
+    }
+  }
+  // Private training has no fixed catalog price (priceId is null) — that's expected, not an error.
+  if (!priceId && enrollment.programId !== 'PRG-PRIV') {
+    return { success: false, error: 'Could not resolve a valid package for this program/category.' };
+  }
+
+  const playerId = registerPlayer({
+    fullName: player.firstName + ' ' + player.lastName,
+    birthYear: player.dob ? new Date(player.dob).getFullYear()
+      : (player.age ? (new Date().getFullYear() - Number(player.age)) : ''),
+    category: enrollment.category || '',
+    guardianName: guardian.guardianName,
+    contactNumber: guardian.whatsapp,
+    email: guardian.email || '',
+    programId: enrollment.programId,
+    referredBy: enrollment.referredBy || ''
+  });
+
+  let packageId = null;
+  let membershipPackageId = null;
+  let totalPrice = 0;
+
+  if (pricingRow) {
+    packageId = purchasePackage(playerId, priceId);
+    totalPrice = Number(pricingRow[5]);
+  }
+
+  // Membership fee — ONLY for Academy, added automatically, never for other programs.
+  if (enrollment.programId === 'PRG-ACAD') {
+    membershipPackageId = purchasePackage(playerId, 'PRC-MEMB');
+    totalPrice += 4000;
+  }
+
+  const paymentId = recordPayment(playerId, packageId || 'PENDING', totalPrice, enrollment.paymentMethod || 'Unspecified');
+
+  logAudit_('WEB_ENROLLMENT', playerId + ' via web form — ' + (priceId || 'no-fixed-price'), null);
+
+  return {
+    success: true,
+    enrollmentId: playerId,
+    packageId: packageId,
+    paymentId: paymentId,
+    amountDue: totalPrice
+  };
+}
+
+function resolvePriceId_(programId, packageKey, category) {
+  if (programId === 'PRG-ACAD') return PROGRAM_PACKAGE_MAP[packageKey] || null;
+  if (programId === 'PRG-ADV')  return 'PRC-ADV';
+  if (programId === 'PRG-REG') {
+    const map = { 'U5-U7': 'PRC-U57', 'U9-U13': 'PRC-U913', 'U15+': 'PRC-U15' };
+    return map[category] || null;
+  }
+  return null; // PRG-PRIV — rate confirmed by coach, not in the price catalog
+}
+
+function jsonResponse_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
