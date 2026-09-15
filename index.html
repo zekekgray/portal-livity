@@ -207,14 +207,16 @@ color:var(--muted);
 
 /* PROGRAM CARDS */
 
+/* === START: REMOVE GRIDLINES — PROGRAM CARDS === */
 .program {
 background:#fff;
-border:1px solid var(--line);
 border-radius:20px;
 padding:17px;
 margin-bottom:10px;
 cursor:pointer;
+box-shadow:0 2px 10px rgba(11,47,100,.06);
 }
+/* === END: REMOVE GRIDLINES — PROGRAM CARDS === */
 
 .program .top {
 display:flex;
@@ -251,13 +253,15 @@ color:#8d826e;
 
 /* PANELS */
 
+/* === START: REMOVE GRIDLINES — PANELS === */
 .panel {
 background:#fff;
-border:1px solid var(--line);
 border-radius:20px;
 padding:18px;
 margin-bottom:12px;
+box-shadow:0 2px 10px rgba(11,47,100,.06);
 }
+/* === END: REMOVE GRIDLINES — PANELS === */
 
 .panel h3 {
 margin:0 0 10px;
@@ -294,10 +298,11 @@ font-size:13px;
 margin:18px 0 8px;
 }
 
+/* === START: REMOVE GRIDLINES — SCHEDULE EVENTS === */
 .event {
 padding:13px 0;
-border-top:1px solid var(--line);
 }
+/* === END: REMOVE GRIDLINES — SCHEDULE EVENTS === */
 
 .event b {
 font-size:13px;
@@ -318,12 +323,14 @@ grid-template-columns:1fr 1fr;
 gap:10px;
 }
 
+/* === START: REMOVE GRIDLINES — PRICE CARDS === */
 .price {
 background:#fff;
-border:1px solid var(--line);
 border-radius:18px;
 padding:15px;
+box-shadow:0 2px 10px rgba(11,47,100,.06);
 }
+/* === END: REMOVE GRIDLINES — PRICE CARDS === */
 
 .price h4 {
 margin:0 0 7px;
@@ -444,16 +451,295 @@ display:none;
 display:block;
 }
 
+/* === START: BACK BUTTON — FIX UNDEFINED --ink VAR === */
 .back {
 background:none;
 border:0;
 padding:0;
-color:var(--ink);
+color:var(--text);
 font-size:13px;
 font-weight:700;
 cursor:pointer;
 margin-bottom:12px;
 }
+/* === END: BACK BUTTON — FIX UNDEFINED --ink VAR === */
+
+/* === START: ANYTIME LIVITY BALL — STYLES === */
+.ball-touch {
+display:inline-block;
+transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.ball-touch.pressed {
+animation:livityPop .38s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes livityPop {
+0%   { transform:scale(1); }
+35%  { transform:scale(.72) rotate(-12deg); }
+70%  { transform:scale(1.18) rotate(8deg); }
+100% { transform:scale(1) rotate(0deg); }
+}
+
+/* === START: LIVITY BALL — DEFAULT POSITION EDIT === */
+.livity-ball {
+position:fixed;
+z-index:60;
+width:56px;
+height:56px;
+right:70px;
+top:250px;
+/* === END: LIVITY BALL — DEFAULT POSITION EDIT === */
+border-radius:50%;
+border:0;
+display:grid;
+place-items:center;
+font-size:40px;
+line-height:1;
+background:transparent;
+box-shadow:none;
+filter:drop-shadow(0 8px 14px #00000055);
+cursor:grab;
+opacity:.45;
+touch-action:none;
+user-select:none;
+animation:livityFloat 3.6s ease-in-out infinite;
+transition:opacity .25s ease, filter .25s ease;
+}
+.livity-ball:hover,
+.livity-ball:focus-visible {
+opacity:.8;
+}
+.livity-ball.active {
+opacity:1;
+filter:drop-shadow(0 12px 20px #00000066);
+}
+.livity-ball.dragging {
+cursor:grabbing;
+animation:none;
+opacity:1;
+transition:none;
+}
+.livity-ball.tapped {
+animation:livityPop .42s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes livityFloat {
+0%,100% { transform:translateY(0) rotate(0deg); }
+50%     { transform:translateY(-8px) rotate(10deg); }
+}
+
+/* === START: ANYTIME LIVITY — REMOVE BLACK BACKDROP === */
+.livity-ball-backdrop {
+position:fixed;
+inset:0;
+background:rgba(11,47,100,.45);
+backdrop-filter:blur(6px);
+z-index:59;
+opacity:0;
+pointer-events:none;
+transition:opacity .22s ease;
+}
+/* === END: ANYTIME LIVITY — REMOVE BLACK BACKDROP === */
+.livity-ball-backdrop.open {
+opacity:1;
+pointer-events:auto;
+}
+
+.livity-ball-modal {
+position:fixed;
+z-index:61;
+left:50%;
+bottom:96px;
+transform:translate(-50%,24px) scale(.9);
+width:min(320px,86vw);
+background:#fff;
+border-radius:22px;
+padding:16px;
+box-shadow:0 24px 60px #00000055;
+opacity:0;
+pointer-events:none;
+transition:opacity .28s cubic-bezier(.34,1.56,.64,1), transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.livity-ball-modal.open {
+opacity:1;
+pointer-events:auto;
+transform:translate(-50%,0) scale(1);
+}
+.livity-ball-modal h4 {
+margin:0 0 10px;
+font-size:14px;
+color:var(--muted);
+font-weight:700;
+letter-spacing:.4px;
+text-transform:uppercase;
+}
+/* === START: LIVITY BALL — REMOVE LB-ITEM GRIDLINES === */
+/* === START: LIVITY BALL — RESET LB-ITEM BUTTON DEFAULTS === */
+.lb-item {
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px 6px;
+width:100%;
+background:none;
+border:0;
+text-align:left;
+font:inherit;
+color:var(--text);
+cursor:pointer;
+}
+/* === END: LIVITY BALL — RESET LB-ITEM BUTTON DEFAULTS === */
+/* === END: LIVITY BALL — REMOVE LB-ITEM GRIDLINES === */
+.lb-item .lb-ico {
+font-size:18px;
+width:30px;
+text-align:center;
+}
+
+.lb-header {
+display:flex;
+align-items:center;
+gap:8px;
+margin-bottom:10px;
+}
+.lb-header h4 {
+margin:0;
+flex:1;
+}
+.lb-back,
+.lb-close {
+background:#f5f2ea;
+border:0;
+border-radius:10px;
+width:28px;
+height:28px;
+display:grid;
+place-items:center;
+font-size:14px;
+cursor:pointer;
+color:var(--text);
+flex-shrink:0;
+}
+.lb-body {
+max-height:56vh;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+}
+.lb-sub {
+color:var(--muted);
+font-size:12px;
+margin:-4px 0 10px;
+}
+.lb-text {
+font-size:13px;
+line-height:1.5;
+color:#5e5a52;
+margin:0 0 8px;
+}
+.lb-step-title {
+margin:0 0 10px;
+font-size:15px;
+}
+.lb-input {
+width:100%;
+border:1px solid var(--line);
+border-radius:12px;
+padding:11px 12px;
+font-size:13px;
+font-family:inherit;
+margin-bottom:8px;
+color:var(--text);
+background:#fafaf8;
+}
+.lb-pills {
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-bottom:8px;
+}
+.lb-pill {
+border:1px solid var(--line);
+background:#fff;
+border-radius:12px;
+padding:9px 14px;
+font-size:12px;
+font-weight:650;
+cursor:pointer;
+color:var(--text);
+}
+.lb-pill.sel {
+background:var(--navy);
+border-color:var(--navy);
+color:#fff;
+}
+.lb-pkg {
+display:flex;
+justify-content:space-between;
+align-items:center;
+width:100%;
+text-align:left;
+border:1px solid var(--line);
+background:#fff;
+border-radius:14px;
+padding:12px 14px;
+margin-bottom:8px;
+cursor:pointer;
+font:inherit;
+color:var(--text);
+}
+.lb-pkg b {
+font-size:12px;
+}
+.lb-pkg span {
+font-size:13px;
+font-weight:800;
+}
+.lb-pkg.sel {
+border-color:var(--navy);
+background:#eef4ff;
+}
+.lb-check {
+display:flex;
+gap:9px;
+align-items:flex-start;
+font-size:12px;
+color:#5e5a52;
+line-height:1.5;
+margin-bottom:12px;
+}
+.lb-check input {
+margin-top:2px;
+flex-shrink:0;
+}
+.lb-err {
+color:var(--red);
+font-size:11px;
+min-height:14px;
+margin-bottom:6px;
+}
+.lb-nav {
+display:flex;
+justify-content:space-between;
+gap:10px;
+margin-top:4px;
+}
+.lb-nav .btn {
+flex:1;
+padding:12px;
+font-size:13px;
+}
+.lb-progress {
+height:4px;
+background:var(--line);
+border-radius:2px;
+margin-bottom:14px;
+overflow:hidden;
+}
+.lb-progress span {
+display:block;
+height:100%;
+background:var(--navy);
+transition:width .25s ease;
+}
+/* === END: ANYTIME LIVITY BALL — STYLES === */
 
 /* BOTTOM NAV */
 
@@ -560,7 +846,7 @@ Explore Programs →
 <div class="quick">
 
 <button onclick="show('programs')">
-<div class="icon">⚽</div>
+<div class="icon ball-touch">⚽</div>
 <b>Programs</b>
 <span>Find the right fit</span>
 </button>
@@ -632,7 +918,7 @@ Four pathways. One goal — your child's growth.
 
 <div class="top">
 
-<div class="ico">⚽</div>
+<div class="ico ball-touch">⚽</div>
 
 <div>
 <h3>
@@ -1474,6 +1760,22 @@ Academy Dashboard →
 </section>
 
 
+<!-- === START: ANYTIME LIVITY BALL — MARKUP === -->
+<div class="livity-ball-backdrop" id="livityBackdrop" onclick="closeLivityBall()"></div>
+
+<div class="livity-ball-modal" id="livityModal">
+<div class="lb-header">
+<button class="lb-back" id="lbBackBtn" onclick="lbGoTo(lbBackTarget)" style="display:none">←</button>
+<h4 id="lbTitle">Anytime Livity</h4>
+<button class="lb-close" onclick="closeLivityBall()">✕</button>
+</div>
+<div class="lb-body" id="lbBody"></div>
+</div>
+
+<button class="livity-ball" id="livityBall" aria-label="Anytime Livity">⚽</button>
+<!-- === END: ANYTIME LIVITY BALL — MARKUP === -->
+
+
 <!-- BOTTOM NAV -->
 
 <nav class="bottom">
@@ -1533,6 +1835,8 @@ Enroll
 const data = {
 
 regular: {
+
+programId:"PRG-REG",
 
 title:"Specialized Training — Regular",
 
@@ -1660,6 +1964,635 @@ registerUrl:
 }
 
 };
+
+
+/* === START: ANYTIME LIVITY ASSISTANT — SCREENS === */
+let lbScreen = 'menu';
+let lbBackTarget = 'menu';
+let lbEnrollStep = 0;
+
+/* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
+const LIVITY_API_URL = 'PASTE_YOUR_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+let lbForm = {
+programId:'', category:'',
+firstName:'', lastName:'', dob:'', age:'', gender:'', nationality:'', area:'',
+guardianName:'', relationship:'', whatsapp:'', email:'', emName:'', emNumber:'', contactMode:'',
+package:'', paymentMethod:'',
+consentPhoto:false, consentPrivacy:false
+};
+/* === END: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
+
+const lbPackages = {
+regular:{ label:'Regular — 8 Academy Sessions', price:7500 },
+mixedA:{ label:'Mixed A — 4 Private + 4 Academy', price:8800 },
+mixedB:{ label:'Mixed B — 4 Private + 8 Academy', price:12000 },
+mixedC:{ label:'Mixed C — 8 Private + 4 Academy', price:14400 }
+};
+const LB_MEMBERSHIP_FEE = 4000;
+const LB_ENROLL_STEPS = ['program','player','guardian','package','payment','consent','review'];
+
+/* === START: LIVITY ENROLL — NATIONALITY LIST === */
+const LB_NATIONALITIES = [
+"Afghan","Albanian","Algerian","American","Andorran","Angolan","Antiguan and Barbudan","Argentine","Armenian","Australian","Austrian","Azerbaijani","Bahamian","Bahraini","Bangladeshi","Barbadian","Belarusian","Belgian","Belizean","Beninese","Bhutanese","Bolivian","Bosnian and Herzegovinian","Botswanan","Brazilian","British","Bruneian","Bulgarian","Burkinabe","Burmese","Burundian","Cabo Verdean","Cambodian","Cameroonian","Canadian","Central African","Chadian","Chilean","Chinese","Colombian","Comoran","Congolese (Congo-Brazzaville)","Congolese (DR Congo)","Costa Rican","Croatian","Cuban","Cypriot","Czech","Danish","Djiboutian","Dominican (Dominica)","Dominican (Dominican Republic)","Dutch","East Timorese","Ecuadorian","Egyptian","Emirati","English","Equatorial Guinean","Eritrean","Estonian","Eswatini (Swazi)","Ethiopian","Fijian","Filipino","Finnish","French","Gabonese","Gambian","Georgian","German","Ghanaian","Greek","Grenadian","Guatemalan","Guinean","Guinea-Bissauan","Guyanese","Haitian","Honduran","Hungarian","Icelandic","Indian","Indonesian","Iranian","Iraqi","Irish","Israeli","Italian","Ivorian","Jamaican","Japanese","Jordanian","Kazakhstani","Kenyan","I-Kiribati","Kosovar","Kuwaiti","Kyrgyz","Lao","Latvian","Lebanese","Basotho (Lesotho)","Liberian","Libyan","Liechtensteiner","Lithuanian","Luxembourgish","Macedonian","Malagasy","Malawian","Malaysian","Maldivian","Malian","Maltese","Marshallese","Mauritanian","Mauritian","Mexican","Micronesian","Moldovan","Monacan","Mongolian","Montenegrin","Moroccan","Mozambican","Namibian","Nauruan","Nepali","New Zealander","Nicaraguan","Nigerien","Nigerian","North Korean","Norwegian","Omani","Pakistani","Palauan","Palestinian","Panamanian","Papua New Guinean","Paraguayan","Peruvian","Polish","Portuguese","Qatari","Romanian","Russian","Rwandan","Kittitian and Nevisian","Saint Lucian","Saint Vincentian","Samoan","San Marinese","Sao Tomean","Saudi Arabian","Scottish","Senegalese","Serbian","Seychellois","Sierra Leonean","Singaporean","Slovak","Slovenian","Solomon Islander","Somali","South African","South Korean","South Sudanese","Spanish","Sri Lankan","Sudanese","Surinamese","Swedish","Swiss","Syrian","Taiwanese","Tajikistani","Tanzanian","Thai","Togolese","Tongan","Trinidadian and Tobagonian","Tunisian","Turkish","Turkmen","Tuvaluan","Ugandan","Ukrainian","Uruguayan","Uzbekistani","Vanuatuan","Vatican","Venezuelan","Vietnamese","Welsh","Yemeni","Zambian","Zimbabwean","Other"
+];
+/* === END: LIVITY ENROLL — NATIONALITY LIST === */
+
+function lbBody() {
+return document.getElementById('lbBody');
+}
+
+function lbGoTo(screen) {
+
+lbScreen = screen;
+const body = lbBody();
+const title = document.getElementById('lbTitle');
+const back = document.getElementById('lbBackBtn');
+
+if (screen === 'menu') {
+body.innerHTML = lbScreenMenu();
+title.textContent = 'Anytime Livity';
+back.style.display = 'none';
+} else if (screen === 'programs') {
+lbBackTarget = 'menu';
+body.innerHTML = lbScreenPrograms();
+title.textContent = 'Programs';
+back.style.display = 'grid';
+} else if (screen === 'schedule') {
+lbBackTarget = 'menu';
+body.innerHTML = lbScreenSchedule();
+title.textContent = 'Schedule';
+back.style.display = 'grid';
+} else if (screen === 'pricing') {
+lbBackTarget = 'menu';
+body.innerHTML = lbScreenPricing();
+title.textContent = 'Pricing';
+back.style.display = 'grid';
+} else if (screen === 'coach') {
+lbBackTarget = 'menu';
+body.innerHTML = lbScreenCoach();
+title.textContent = 'Ask Coach Brina';
+back.style.display = 'grid';
+} else if (screen === 'enroll') {
+lbBackTarget = 'menu';
+lbEnrollStep = 0;
+body.innerHTML = lbRenderEnrollStep();
+title.textContent = 'Enroll';
+back.style.display = 'grid';
+}
+
+body.scrollTop = 0;
+
+}
+
+function lbScreenMenu() {
+return `
+<button class="lb-item" onclick="lbGoTo('programs')">
+<span class="lb-ico">⚽</span> Programs
+</button>
+<button class="lb-item" onclick="lbGoTo('schedule')">
+<span class="lb-ico">◷</span> Schedule
+</button>
+<button class="lb-item" onclick="lbGoTo('pricing')">
+<span class="lb-ico">₱</span> Pricing
+</button>
+<button class="lb-item" onclick="lbGoTo('enroll')">
+<span class="lb-ico">↗</span> Enroll
+</button>
+<button class="lb-item" onclick="lbGoTo('coach')">
+<span class="lb-ico">☷</span> Ask Coach Brina
+</button>
+`;
+}
+
+function lbScreenPrograms() {
+return `
+<button class="lb-item" onclick="lbShowProgram('regular')">
+<span class="lb-ico">⚽</span> Specialized Training — Regular
+</button>
+<button class="lb-item" onclick="lbShowProgram('private')">
+<span class="lb-ico">◎</span> Specialized Training — Private
+</button>
+<button class="lb-item" onclick="lbShowProgram('advanced')">
+<span class="lb-ico">ϟ</span> Advanced Performance
+</button>
+<button class="lb-item" onclick="lbShowProgram('academy')">
+<span class="lb-ico">♙</span> Academy Training
+</button>
+`;
+}
+
+function lbShowProgram(k) {
+
+const d = data[k];
+lbBackTarget = 'programs';
+document.getElementById('lbTitle').textContent = d.title;
+document.getElementById('lbBackBtn').style.display = 'grid';
+
+lbBody().innerHTML = `
+<p class="lb-sub">${d.sub}</p>
+<p class="lb-text">${d.what}</p>
+<div class="tags">${d.focus.map(x => `<span class="tag">${x}</span>`).join('')}</div>
+<p class="lb-text" style="margin-top:8px">${d.dev}</p>
+<p class="lb-text"><b>Schedule:</b> ${d.schedule}</p>
+<button class="btn primary" style="width:100%;margin-top:6px" onclick="lbForm.programId='${d.programId}';lbGoTo('enroll')">Enroll in This Program →</button>
+`;
+
+}
+
+function lbScreenSchedule() {
+return `
+<p class="lb-text"><b>Tue</b> 6:00–8:30 PM · Regular · PAREF Southridge</p>
+<p class="lb-text"><b>Thu</b> 4:00–6:00 PM · Regular, U9 & below · Pacific Malayan</p>
+<p class="lb-text"><b>Thu</b> 6:00–8:30 PM · Advanced & Academy · PAREF Southridge</p>
+<p class="lb-text"><b>Sat</b> 7:00–9:30 AM · Regular & Academy · PAREF Southridge</p>
+<p class="lb-text" style="color:var(--muted);font-size:11px">Private training is booked separately — flexible schedule and venue, separate fees apply.</p>
+`;
+}
+
+/* === START: LIVITY BALL — PRICING FULL AGE LABELS === */
+function lbScreenPricing() {
+return `
+<p class="lb-text"><b>Under 5 to Under 7</b> ₱4,000 / 5 sessions · Single ₱1,000</p>
+<p class="lb-text"><b>Under 9 to Under 13</b> ₱5,000 / 5 sessions · Single ₱1,200</p>
+<p class="lb-text"><b>Under 15 and Above</b> ₱6,000 / 5 sessions · Single ₱1,300</p>
+<p class="lb-text"><b>Advanced</b> ₱1,300 / session, by assessment</p>
+<p class="lb-text" style="margin-top:8px"><b>Academy Packages</b> · 30 days, Under 5 to Under 13</p>
+<p class="lb-text">Regular ₱7,500 · Mixed A ₱8,800 · Mixed B ₱12,000 · Mixed C ₱14,400</p>
+<p class="lb-text" style="color:var(--muted);font-size:11px">+ ₱4,000 one-time Membership Fee (includes 2 jersey sets), required for Academy players.</p>
+<button class="btn primary" style="width:100%;margin-top:6px" onclick="lbGoTo('enroll')">Start Enrollment →</button>
+`;
+}
+/* === END: LIVITY BALL — PRICING FULL AGE LABELS === */
+
+function lbScreenCoach() {
+return `
+<div class="coach" style="border-top:0;padding-top:0">
+<div class="avatar">B</div>
+<div><b>Coach Brina</b><span>Training / Private Sessions</span></div>
+</div>
+<div class="coach">
+<div class="avatar">C</div>
+<div><b>Chelsi</b><span>Academy</span></div>
+</div>
+<div class="coach">
+<div class="avatar">S</div>
+<div><b>Coach Sam</b><span>Advanced Performance Assessment</span></div>
+</div>
+<p class="lb-text" style="margin-top:10px">Not sure which program fits your child? Start enrollment below and the team will help match the right path.</p>
+<button class="btn primary" style="width:100%;margin-top:4px" onclick="lbGoTo('enroll')">Start Enrollment →</button>
+`;
+}
+
+function lbRerender() {
+lbBody().innerHTML = lbRenderEnrollStep();
+}
+
+function lbRenderEnrollStep() {
+
+const step = LB_ENROLL_STEPS[lbEnrollStep];
+const progress = `<div class="lb-progress"><span style="width:${((lbEnrollStep + 1) / LB_ENROLL_STEPS.length * 100)}%"></span></div>`;
+
+let inner = '';
+if (step === 'program') inner = lbStepProgram();
+else if (step === 'player') inner = lbStepPlayer();
+else if (step === 'guardian') inner = lbStepGuardian();
+else if (step === 'package') inner = lbStepPackage();
+else if (step === 'payment') inner = lbStepPayment();
+else if (step === 'consent') inner = lbStepConsent();
+else if (step === 'review') inner = lbStepReview();
+
+return progress + inner;
+
+}
+
+/* === START: LIVITY ENROLL — PROGRAM SELECTION STEP === */
+function lbStepProgram() {
+const progs = [
+{ id:'PRG-REG', label:'Specialized Training — Regular' },
+{ id:'PRG-PRIV', label:'Specialized Training — Private' },
+{ id:'PRG-ADV', label:'Advanced Performance' },
+{ id:'PRG-ACAD', label:'Academy Training' }
+];
+const opts = progs.map(p => `
+<button type="button" class="lb-pkg ${lbForm.programId === p.id ? 'sel' : ''}" onclick="lbForm.programId='${p.id}';lbForm.package='';lbForm.category='';lbRerender()">
+<b>${p.label}</b>
+</button>
+`).join('');
+
+return `
+<h5 class="lb-step-title">Which Program?</h5>
+${opts}
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<span></span>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+function lbProgramLabel_(id) {
+const map = { 'PRG-REG':'Specialized Training — Regular', 'PRG-PRIV':'Specialized Training — Private', 'PRG-ADV':'Advanced Performance', 'PRG-ACAD':'Academy Training' };
+return map[id] || '—';
+}
+
+function lbComputeTotal_() {
+const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
+if (lbForm.programId === 'PRG-ACAD' && lbForm.package) return lbPackages[lbForm.package].price + LB_MEMBERSHIP_FEE;
+if (lbForm.programId === 'PRG-ADV') return 1300;
+if (lbForm.programId === 'PRG-REG' && lbForm.category) return catPrice[lbForm.category];
+return null; // Private — no fixed price
+}
+/* === END: LIVITY ENROLL — PROGRAM SELECTION STEP === */
+
+function lbStepPlayer() {
+return `
+<h5 class="lb-step-title">Player Information</h5>
+<input class="lb-input" placeholder="Player's First Name" value="${lbForm.firstName}" oninput="lbForm.firstName=this.value">
+<input class="lb-input" placeholder="Player's Last Name" value="${lbForm.lastName}" oninput="lbForm.lastName=this.value">
+<input class="lb-input" type="date" value="${lbForm.dob}" oninput="lbForm.dob=this.value">
+<input class="lb-input" type="number" placeholder="Age" value="${lbForm.age}" oninput="lbForm.age=this.value">
+<div class="lb-pills">
+<button type="button" class="lb-pill ${lbForm.gender === 'Male' ? 'sel' : ''}" onclick="lbForm.gender='Male';lbRerender()">Male</button>
+<button type="button" class="lb-pill ${lbForm.gender === 'Female' ? 'sel' : ''}" onclick="lbForm.gender='Female';lbRerender()">Female</button>
+</div>
+<select class="lb-input" onchange="lbForm.nationality=this.value">
+<option value="" ${lbForm.nationality==='' ? 'selected' : ''}>Nationality</option>
+${LB_NATIONALITIES.map(n => `<option value="${n}" ${lbForm.nationality===n ? 'selected' : ''}>${n}</option>`).join('')}
+</select>
+<input class="lb-input" placeholder="Area of Residence" value="${lbForm.area}" oninput="lbForm.area=this.value">
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<span></span>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+function lbStepGuardian() {
+return `
+<h5 class="lb-step-title">Parent / Guardian Information</h5>
+<input class="lb-input" placeholder="Parent / Guardian Name" value="${lbForm.guardianName}" oninput="lbForm.guardianName=this.value">
+<input class="lb-input" placeholder="Relationship to Player" value="${lbForm.relationship}" oninput="lbForm.relationship=this.value">
+<input class="lb-input" placeholder="WhatsApp Mobile Number" value="${lbForm.whatsapp}" oninput="lbForm.whatsapp=this.value">
+<input class="lb-input" type="email" placeholder="Email Address" value="${lbForm.email}" oninput="lbForm.email=this.value">
+<input class="lb-input" placeholder="Emergency Contact Person" value="${lbForm.emName}" oninput="lbForm.emName=this.value">
+<input class="lb-input" placeholder="Emergency Contact Number" value="${lbForm.emNumber}" oninput="lbForm.emNumber=this.value">
+<div class="lb-pills">
+<button type="button" class="lb-pill ${lbForm.contactMode === 'WhatsApp' ? 'sel' : ''}" onclick="lbForm.contactMode='WhatsApp';lbRerender()">WhatsApp</button>
+<button type="button" class="lb-pill ${lbForm.contactMode === 'Messenger' ? 'sel' : ''}" onclick="lbForm.contactMode='Messenger';lbRerender()">Messenger</button>
+</div>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+/* === START: LIVITY ENROLL — PROGRAM-AWARE PACKAGE STEP === */
+function lbStepPackage() {
+
+if (lbForm.programId === 'PRG-ACAD') {
+const opts = Object.entries(lbPackages).map(([key, p]) => `
+<button type="button" class="lb-pkg ${lbForm.package === key ? 'sel' : ''}" onclick="lbForm.package='${key}';lbRerender()">
+<b>${p.label}</b>
+<span>₱${p.price.toLocaleString()}</span>
+</button>
+`).join('');
+
+return `
+<h5 class="lb-step-title">Academy Package</h5>
+<p class="lb-text" style="font-size:11px;color:var(--muted)">Valid for 30 days from first training day.</p>
+${opts}
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">+ ₱${LB_MEMBERSHIP_FEE.toLocaleString()} one-time Membership Fee (includes 2 jersey sets) — required for Academy, added automatically.</p>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+if (lbForm.programId === 'PRG-ADV') {
+return `
+<h5 class="lb-step-title">Advanced Performance</h5>
+<p class="lb-text">Per-session rate, by assessment.</p>
+<div class="lb-pkg sel"><b>Per Session</b><span>₱1,300</span></div>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbForm.package='adv';lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+if (lbForm.programId === 'PRG-PRIV') {
+return `
+<h5 class="lb-step-title">Private Training</h5>
+<p class="lb-text">Private sessions are flexible — rates depend on coach & schedule. We'll confirm the rate after you submit.</p>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbForm.package='private';lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+const cats = ['U5-U7','U9-U13','U15+'];
+const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
+const catOpts = cats.map(c => `
+<button type="button" class="lb-pill ${lbForm.category === c ? 'sel' : ''}" onclick="lbForm.category='${c}';lbRerender()">${c}</button>
+`).join('');
+const priceLine = lbForm.category ? `<p class="lb-text"><b>${lbForm.category}</b> — ₱${catPrice[lbForm.category].toLocaleString()} / 5-session package</p>` : '';
+
+return `
+<h5 class="lb-step-title">Specialized Training — Regular</h5>
+<p class="lb-text" style="font-size:11px;color:var(--muted)">Select the player's age category.</p>
+<div class="lb-pills">${catOpts}</div>
+${priceLine}
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbForm.package='regular-cat';lbNextEnroll()">Next →</button>
+</div>
+`;
+
+}
+/* === END: LIVITY ENROLL — PROGRAM-AWARE PACKAGE STEP === */
+
+function lbStepPayment() {
+
+const methods = ['GCash', 'Bank Transfer', 'Cash'];
+const opts = methods.map(m => `
+<button type="button" class="lb-pill ${lbForm.paymentMethod === m ? 'sel' : ''}" onclick="lbForm.paymentMethod='${m}';lbRerender()">${m}</button>
+`).join('');
+const total = lbComputeTotal_();
+const totalLine = total !== null ? `Total amount due: <b>₱${total.toLocaleString()}</b>` : `Amount due will be confirmed by your coach.`;
+
+return `
+<h5 class="lb-step-title">Payment Method</h5>
+<p class="lb-text">${totalLine}</p>
+<div class="lb-pills">${opts}</div>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">Proof of payment can be sent to your coach after Livity confirms your enrollment.</p>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+
+}
+
+function lbStepConsent() {
+return `
+<h5 class="lb-step-title">Consents</h5>
+<label class="lb-check">
+<input type="checkbox" ${lbForm.consentPhoto ? 'checked' : ''} onchange="lbForm.consentPhoto=this.checked">
+I agree to the Photo & Video Consent for marketing, promotional, and academy publications.
+</label>
+<label class="lb-check">
+<input type="checkbox" ${lbForm.consentPrivacy ? 'checked' : ''} onchange="lbForm.consentPrivacy=this.checked">
+I agree to the Data Privacy Consent for enrollment, communication, scheduling, and payment administration.
+</label>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" onclick="lbNextEnroll()">Next →</button>
+</div>
+`;
+}
+
+/* === START: LIVITY ENROLL — REAL SUBMIT TO BACKEND === */
+function lbStepReview() {
+
+const total = lbComputeTotal_();
+const totalLine = total !== null ? `₱${total.toLocaleString()}` : 'To be confirmed';
+const packageLabel = lbForm.programId === 'PRG-ACAD' && lbForm.package ? lbPackages[lbForm.package].label
+: lbForm.programId === 'PRG-REG' ? (lbForm.category || '—')
+: lbForm.programId === 'PRG-ADV' ? 'Per Session'
+: 'Private (rate confirmed by coach)';
+
+return `
+<h5 class="lb-step-title">Review & Submit</h5>
+<p class="lb-text"><b>Program:</b> ${lbProgramLabel_(lbForm.programId)}</p>
+<p class="lb-text"><b>Player:</b> ${lbForm.firstName} ${lbForm.lastName} · ${lbForm.gender || '—'} · ${lbForm.age || '—'} yrs</p>
+<p class="lb-text"><b>Guardian:</b> ${lbForm.guardianName} (${lbForm.relationship || '—'})</p>
+<p class="lb-text"><b>Contact:</b> ${lbForm.whatsapp || '—'} · ${lbForm.contactMode || '—'}</p>
+<p class="lb-text"><b>Package:</b> ${packageLabel}</p>
+<p class="lb-text"><b>Payment:</b> ${lbForm.paymentMethod || '—'} · Total ${totalLine}</p>
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
+<button class="btn primary" id="lbSubmitBtn" onclick="lbSubmitEnrollment()">Submit Enrollment →</button>
+</div>
+`;
+
+}
+
+async function lbSubmitEnrollment() {
+
+const btn = document.getElementById('lbSubmitBtn');
+const err = document.getElementById('lbErr');
+if (err) err.textContent = '';
+if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+const payload = {
+action: 'enroll',
+player: { firstName: lbForm.firstName, lastName: lbForm.lastName, dob: lbForm.dob, age: lbForm.age, gender: lbForm.gender, nationality: lbForm.nationality, area: lbForm.area },
+guardian: { guardianName: lbForm.guardianName, relationship: lbForm.relationship, whatsapp: lbForm.whatsapp, email: lbForm.email, emName: lbForm.emName, emNumber: lbForm.emNumber, contactMode: lbForm.contactMode },
+enrollment: { programId: lbForm.programId, category: lbForm.category, packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPhoto: lbForm.consentPhoto, consentPrivacy: lbForm.consentPrivacy }
+};
+
+try {
+const res = await fetch(LIVITY_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+const result = await res.json();
+if (!result.success) throw new Error(result.error || 'Something went wrong. Please try again.');
+lbShowSuccess_(result);
+} catch (e) {
+if (btn) { btn.disabled = false; btn.textContent = 'Submit Enrollment →'; }
+if (err) err.textContent = "We couldn't submit your enrollment (" + e.message + "). Please check your connection and try again.";
+}
+
+}
+
+function lbShowSuccess_(result) {
+document.getElementById('lbTitle').textContent = 'Enrolled!';
+document.getElementById('lbBackBtn').style.display = 'none';
+lbBody().innerHTML = `
+<p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">Enrollment submitted successfully.</p>
+<p class="lb-text">Livity will contact you with your next steps.</p>
+${result.enrollmentId ? `<p class="lb-text" style="font-size:11px;color:var(--muted)">Reference No.: ${result.enrollmentId}</p>` : ''}
+<button class="btn primary" style="width:100%;margin-top:8px" onclick="lbEnrollStep=0;lbForm={programId:'',category:'',firstName:'',lastName:'',dob:'',age:'',gender:'',nationality:'',area:'',guardianName:'',relationship:'',whatsapp:'',email:'',emName:'',emNumber:'',contactMode:'',package:'',paymentMethod:'',consentPhoto:false,consentPrivacy:false};lbGoTo('menu')">Done</button>
+`;
+}
+/* === END: LIVITY ENROLL — REAL SUBMIT TO BACKEND === */
+
+function lbNextEnroll() {
+
+const step = LB_ENROLL_STEPS[lbEnrollStep];
+const err = document.getElementById('lbErr');
+
+if (step === 'player' && (!lbForm.firstName || !lbForm.lastName || !lbForm.gender)) {
+if (err) err.textContent = 'Please fill in first name, last name, and gender.';
+return;
+}
+if (step === 'guardian' && (!lbForm.guardianName || !lbForm.whatsapp)) {
+if (err) err.textContent = 'Please fill in guardian name and WhatsApp number.';
+return;
+}
+if (step === 'program' && !lbForm.programId) {
+if (err) err.textContent = 'Please select a program.';
+return;
+}
+if (step === 'package' && lbForm.programId === 'PRG-REG' && !lbForm.category) {
+if (err) err.textContent = 'Please select an age category.';
+return;
+}
+if (step === 'package' && lbForm.programId === 'PRG-ACAD' && !lbForm.package) {
+if (err) err.textContent = 'Please select a training package.';
+return;
+}
+if (step === 'payment' && !lbForm.paymentMethod) {
+if (err) err.textContent = 'Please select a payment method.';
+return;
+}
+if (step === 'consent' && (!lbForm.consentPhoto || !lbForm.consentPrivacy)) {
+if (err) err.textContent = 'Both consents are required to continue.';
+return;
+}
+
+if (lbEnrollStep < LB_ENROLL_STEPS.length - 1) {
+lbEnrollStep++;
+lbRerender();
+}
+
+}
+
+function lbPrevEnroll() {
+
+if (lbEnrollStep > 0) {
+lbEnrollStep--;
+lbRerender();
+} else {
+lbGoTo('menu');
+}
+
+}
+/* === END: ANYTIME LIVITY ASSISTANT — SCREENS === */
+
+
+/* === START: ANYTIME LIVITY BALL — LOGIC === */
+let lbDragging = false;
+let lbMoved = false;
+let lbStartX = 0, lbStartY = 0;
+let lbOffsetX = 0, lbOffsetY = 0;
+
+function initLivityBall() {
+
+const ball = document.getElementById('livityBall');
+if (!ball) return;
+
+ball.addEventListener('pointerdown', lbPointerDown);
+window.addEventListener('pointermove', lbPointerMove);
+window.addEventListener('pointerup', lbPointerUp);
+
+document.querySelectorAll('.ball-touch').forEach(el => {
+el.addEventListener('pointerdown', () => {
+el.classList.remove('pressed');
+requestAnimationFrame(() => el.classList.add('pressed'));
+});
+el.addEventListener('animationend', () => el.classList.remove('pressed'));
+});
+
+}
+
+function lbPointerDown(e) {
+
+const ball = document.getElementById('livityBall');
+lbDragging = true;
+lbMoved = false;
+
+const rect = ball.getBoundingClientRect();
+lbStartX = e.clientX;
+lbStartY = e.clientY;
+lbOffsetX = e.clientX - rect.left;
+lbOffsetY = e.clientY - rect.top;
+
+ball.classList.add('dragging');
+ball.setPointerCapture(e.pointerId);
+
+}
+
+function lbPointerMove(e) {
+
+if (!lbDragging) return;
+
+const dx = e.clientX - lbStartX;
+const dy = e.clientY - lbStartY;
+
+if (Math.abs(dx) > 6 || Math.abs(dy) > 6) lbMoved = true;
+
+const ball = document.getElementById('livityBall');
+const size = ball.offsetWidth;
+
+let left = e.clientX - lbOffsetX;
+let top = e.clientY - lbOffsetY;
+
+left = Math.max(6, Math.min(window.innerWidth - size - 6, left));
+top = Math.max(6, Math.min(window.innerHeight - size - 86, top));
+
+ball.style.left = left + 'px';
+ball.style.top = top + 'px';
+
+}
+
+function lbPointerUp(e) {
+
+if (!lbDragging) return;
+lbDragging = false;
+
+const ball = document.getElementById('livityBall');
+ball.classList.remove('dragging');
+
+if (!lbMoved) {
+ball.classList.add('tapped');
+ball.classList.add('active');
+setTimeout(() => ball.classList.remove('tapped'), 420);
+toggleLivityBall();
+}
+
+}
+
+function toggleLivityBall() {
+
+const modal = document.getElementById('livityModal');
+const backdrop = document.getElementById('livityBackdrop');
+
+if (modal.classList.contains('open')) {
+closeLivityBall();
+} else {
+lbGoTo('menu');
+modal.classList.add('open');
+backdrop.classList.add('open');
+}
+
+}
+
+function closeLivityBall() {
+
+const modal = document.getElementById('livityModal');
+const backdrop = document.getElementById('livityBackdrop');
+const ball = document.getElementById('livityBall');
+
+modal.classList.remove('open');
+backdrop.classList.remove('open');
+ball.classList.remove('active');
+
+}
+
+document.addEventListener('DOMContentLoaded', initLivityBall);
+/* === END: ANYTIME LIVITY BALL — LOGIC === */
 
 
 function show(id) {
