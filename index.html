@@ -215,10 +215,6 @@ max-width:330px;
 
 /* === START: RATE US WIDGET — STYLES === */
 .rate-btn {
-position:absolute;
-top:26px;
-right:22px;
-z-index:2;
 background:rgba(255,255,255,.1);
 border:1px solid rgba(255,222,0,.4);
 border-radius:20px;
@@ -230,7 +226,33 @@ font-size:12px;
 font-weight:700;
 color:var(--gold-light);
 cursor:pointer;
+white-space:nowrap;
 }
+
+/* === START: APP TEXT ICON LINK === */
+.top-actions {
+position:absolute;
+top:26px;
+right:22px;
+z-index:2;
+display:flex;
+align-items:center;
+gap:8px;
+}
+.app-link-btn {
+background:rgba(255,255,255,.1);
+border:1px solid rgba(255,222,0,.4);
+border-radius:20px;
+padding:8px 13px;
+font-size:12px;
+font-weight:800;
+letter-spacing:1px;
+color:var(--gold-light);
+cursor:pointer;
+text-decoration:none;
+white-space:nowrap;
+}
+/* === END: APP TEXT ICON LINK === */
 
 .rate-backdrop {
 position:fixed;
@@ -1073,9 +1095,14 @@ box-shadow:0 20px 80px #0008;
 
 <div class="hero">
 
+<div class="top-actions">
+<a class="app-link-btn" href="https://livity.artiplay.app" target="_blank" rel="noopener">
+APP
+</a>
 <button class="rate-btn" onclick="openRateModal()">
 ★ Rate Us
 </button>
+</div>
 
 <div class="brand">
 <span style="color:#FFDE00">LIVITY</span>
