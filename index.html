@@ -52,6 +52,94 @@ color:var(--text);
 padding-bottom:78px;
 }
 
+/* === START: LIVITY SPLASH — GHANA FLAG WAVE INTRO === */
+.splash {
+position:fixed;
+inset:0;
+z-index:100;
+background:#171714;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+transition:opacity .5s ease;
+}
+.splash.hide {
+opacity:0;
+pointer-events:none;
+}
+.flag-real {
+position:relative;
+width:200px;
+height:133px;
+perspective:700px;
+}
+.flag-cloth {
+position:relative;
+width:100%;
+height:100%;
+background:linear-gradient(#CE1126 0 33.33%, #FCD116 33.33% 66.66%, #006B3F 66.66% 100%);
+transform-style:preserve-3d;
+animation:flagWave 4.8s cubic-bezier(.45,0,.15,1) infinite;
+box-shadow:4px 10px 26px rgba(0,0,0,.5);
+overflow:hidden;
+border-radius:4px;
+will-change:transform;
+}
+.flag-cloth:before {
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(100deg,
+rgba(255,255,255,.18) 0%,
+rgba(255,255,255,0) 18%,
+rgba(0,0,0,.14) 38%,
+rgba(0,0,0,0) 55%,
+rgba(255,255,255,.14) 72%,
+rgba(255,255,255,0) 90%
+);
+animation:flagShade 4.8s cubic-bezier(.45,0,.15,1) infinite;
+}
+.flag-cloth:after {
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(180deg, rgba(255,255,255,.08), transparent 40%, rgba(0,0,0,.12) 100%);
+pointer-events:none;
+}
+.flag-star {
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:34px;
+height:34px;
+clip-path:polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+background:#000;
+z-index:1;
+}
+@keyframes flagWave {
+0%   { transform:perspective(700px) rotateY(0deg) skewY(0deg); }
+25%  { transform:perspective(700px) rotateY(6deg) skewY(1.6deg); }
+50%  { transform:perspective(700px) rotateY(0deg) skewY(0deg); }
+75%  { transform:perspective(700px) rotateY(-6deg) skewY(-1.6deg); }
+100% { transform:perspective(700px) rotateY(0deg) skewY(0deg); }
+}
+@keyframes flagShade {
+0%   { background-position:0% 0; }
+50%  { background-position:100% 0; }
+100% { background-position:0% 0; }
+}
+.splash-text {
+margin-top:26px;
+color:var(--gold);
+font-weight:800;
+letter-spacing:3px;
+font-size:20px;
+}
+/* === END: LIVITY SPLASH — GHANA FLAG WAVE INTRO === */
+
 /* HERO */
 
 .hero {
@@ -90,7 +178,7 @@ transparent 65%
 .brand {
 font-weight:800;
 letter-spacing:3px;
-font-size:18px;
+font-size:27px;
 position:relative;
 z-index:1;
 }
@@ -125,6 +213,123 @@ line-height:1.5;
 max-width:330px;
 }
 
+/* === START: RATE US WIDGET — STYLES === */
+.rate-btn {
+position:absolute;
+top:26px;
+right:22px;
+z-index:2;
+background:rgba(255,255,255,.1);
+border:1px solid rgba(255,222,0,.4);
+border-radius:20px;
+padding:8px 13px;
+display:flex;
+align-items:center;
+gap:6px;
+font-size:12px;
+font-weight:700;
+color:var(--gold-light);
+cursor:pointer;
+}
+
+.rate-backdrop {
+position:fixed;
+inset:0;
+background:rgba(11,47,100,.45);
+backdrop-filter:blur(6px);
+z-index:69;
+opacity:0;
+pointer-events:none;
+transition:opacity .22s ease;
+}
+.rate-backdrop.open {
+opacity:1;
+pointer-events:auto;
+}
+
+.rate-modal {
+position:fixed;
+z-index:70;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%) scale(.9);
+width:min(320px,86vw);
+background:#fff;
+border-radius:22px;
+padding:20px;
+box-shadow:0 24px 60px #00000055;
+opacity:0;
+pointer-events:none;
+transition:opacity .28s cubic-bezier(.34,1.56,.64,1), transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.rate-modal.open {
+opacity:1;
+pointer-events:auto;
+transform:translate(-50%,-50%) scale(1);
+}
+.rate-modal h4 {
+margin:0 0 14px;
+font-size:16px;
+color:var(--text);
+text-align:center;
+}
+.rate-faces {
+display:flex;
+justify-content:center;
+gap:16px;
+margin-bottom:14px;
+}
+.rate-face {
+width:56px;
+height:56px;
+border-radius:50%;
+border:2px solid var(--line);
+background:#fff;
+font-size:26px;
+cursor:pointer;
+display:grid;
+place-items:center;
+transition:transform .15s ease, border-color .15s ease;
+}
+.rate-face:hover {
+transform:scale(1.08);
+}
+.rate-face.sel-good {
+border-color:#2e9e4f;
+background:#eafbef;
+}
+.rate-face.sel-bad {
+border-color:var(--red);
+background:#ffeceb;
+}
+.rate-textarea {
+width:100%;
+border:1px solid var(--line);
+border-radius:12px;
+padding:10px 12px;
+font-size:13px;
+font-family:inherit;
+resize:vertical;
+min-height:64px;
+margin-bottom:12px;
+color:var(--text);
+background:#fafaf8;
+display:none;
+}
+.rate-textarea.show {
+display:block;
+}
+.rate-modal .btn {
+width:100%;
+}
+.rate-thanks {
+text-align:center;
+font-size:13px;
+color:var(--text);
+padding:10px 0;
+}
+/* === END: RATE US WIDGET — STYLES === */
+
 /* BUTTONS */
 
 .btn {
@@ -136,19 +341,19 @@ cursor:pointer;
 }
 
 .primary {
-background:var(--gold-light);
+background:var(--gold);
 color:#18150f;
 }
 
 .dark {
-background:#1c1b18;
-color:white;
+background:var(--gold);
+color:#18150f;
 }
 
 .outline {
-background:transparent;
-border:1px solid #cdb77e;
-color:#2b2518;
+background:var(--gold);
+border:1px solid var(--gold);
+color:#18150f;
 }
 
 /* CONTENT */
@@ -294,8 +499,10 @@ font-weight:650;
 
 .schedule .day {
 font-weight:800;
-font-size:13px;
+font-size:15px;
 margin:18px 0 8px;
+color:var(--navy);
+letter-spacing:.5px;
 }
 
 /* === START: REMOVE GRIDLINES — SCHEDULE EVENTS === */
@@ -309,10 +516,15 @@ font-size:13px;
 }
 
 .event span {
-display:block;
-color:var(--muted);
-font-size:11px;
-margin-top:4px;
+display:inline-block;
+background:#fff8dd;
+color:var(--navy);
+font-weight:700;
+font-size:13px;
+margin-top:6px;
+padding:5px 10px;
+border-radius:8px;
+border:1px solid #ffe38a;
 }
 
 /* PRICING */
@@ -483,8 +695,8 @@ animation:livityPop .38s cubic-bezier(.34,1.56,.64,1);
 .livity-ball {
 position:fixed;
 z-index:60;
-width:56px;
-height:56px;
+width:68px;
+height:68px;
 right:70px;
 top:250px;
 /* === END: LIVITY BALL — DEFAULT POSITION EDIT === */
@@ -492,7 +704,7 @@ border-radius:50%;
 border:0;
 display:grid;
 place-items:center;
-font-size:40px;
+font-size:48px;
 line-height:1;
 background:transparent;
 box-shadow:none;
@@ -741,6 +953,53 @@ transition:width .25s ease;
 }
 /* === END: ANYTIME LIVITY BALL — STYLES === */
 
+/* === START: TRAINED WITH LIVITY — SOCIAL PROOF STYLES === */
+.proof-card {
+display:flex;
+gap:12px;
+align-items:flex-start;
+padding:13px 0;
+border-top:1px solid var(--line);
+}
+.proof-card:first-child {
+border-top:0;
+padding-top:0;
+}
+.proof-avatar {
+width:44px;
+height:44px;
+border-radius:50%;
+background:#e7dcc6;
+display:grid;
+place-items:center;
+font-weight:800;
+font-size:15px;
+color:var(--text);
+flex-shrink:0;
+}
+.proof-body b {
+display:block;
+font-size:13px;
+}
+.proof-badge {
+display:inline-block;
+background:#fff8dd;
+color:var(--navy);
+font-weight:700;
+font-size:10px;
+padding:2px 8px;
+border-radius:7px;
+border:1px solid #ffe38a;
+margin:3px 0 6px;
+}
+.proof-body p {
+margin:0;
+font-size:12px;
+color:#5e5a52;
+line-height:1.5;
+font-style:italic;
+}
+
 /* BOTTOM NAV */
 
 .bottom {
@@ -797,6 +1056,15 @@ box-shadow:0 20px 80px #0008;
 
 <body>
 
+<div class="splash" id="livitySplash">
+<div class="flag-real">
+<div class="flag-cloth">
+<div class="flag-star"></div>
+</div>
+</div>
+<div class="splash-text">LIVITY</div>
+</div>
+
 <div class="app">
 
 <!-- HOME -->
@@ -805,8 +1073,12 @@ box-shadow:0 20px 80px #0008;
 
 <div class="hero">
 
+<button class="rate-btn" onclick="openRateModal()">
+★ Rate Us
+</button>
+
 <div class="brand">
-<span>◈</span> LIV<span>I</span>TY
+<span style="color:#FFDE00">LIVITY</span>
 </div>
 
 <div class="hero-copy">
@@ -1008,7 +1280,7 @@ U5 · U7 · U9 · U11 · U13 · Team pathway
 
 <div class="notice" onclick="show('more')" style="cursor:pointer">
 Not sure which is right for your child?
-<b>Ask Coach Brina →</b>
+<b>Ask Admin Jah →</b>
 </div>
 
 </section>
@@ -1065,7 +1337,7 @@ Specialized Training — Regular
 
 <span>
 4:00–6:00 PM · Pacific Malayan
-(U9 & below)
+(U9 & above)
 </span>
 
 </div>
@@ -1093,6 +1365,23 @@ Academy Training
 
 <span>
 6:00–8:30 PM · PAREF Southridge
+</span>
+
+</div>
+
+
+<div class="event">
+
+<b>
+Specialized Training — Private
+</b>
+
+<span>
+4:00–6:00 PM · Pacific Malayan
+</span>
+
+<span>
+6:00–8:00 PM · PAREF Southridge
 </span>
 
 </div>
@@ -1414,11 +1703,13 @@ Who We Are
 </h3>
 
 <p>
-Livity Training and Football Academy
-creates meaningful opportunities for growth,
-engagement, and positive impact through
-training programs, experiences, and
-collaborative partnerships.
+Livity Training and Football Academy is a dedicated
+organization committed to creating meaningful
+opportunities for growth, engagement, and positive
+impact within our community. Through our Livity
+Training Programs, we strive to bring people together,
+foster development, and inspire excellence among our
+athletes and coaches.
 </p>
 
 <div class="tags">
@@ -1447,6 +1738,138 @@ Community
 <div class="panel">
 
 <h3>
+Mission
+</h3>
+
+<p>
+To empower individuals through Livity training
+programs, meaningful experiences, and collaborative
+partnerships that create lasting value for our
+community.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Vision
+</h3>
+
+<p>
+To be a leading football academy recognized for
+excellence, inclusivity, and positive impact,
+inspiring individuals to reach their full potential
+and contribute to a better future.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Core Values
+</h3>
+
+<div class="tags">
+
+<span class="tag">
+Excellence
+</span>
+
+<span class="tag">
+Inclusivity
+</span>
+
+<span class="tag">
+Development
+</span>
+
+<span class="tag">
+Community
+</span>
+
+<span class="tag">
+Discipline
+</span>
+
+<span class="tag">
+Integrity
+</span>
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Our Philosophy
+</h3>
+
+<p>
+Train Like a Pro. We believe every player deserves
+professional-level coaching, structure, and care —
+regardless of age or skill level. Growth happens
+through consistency, discipline, and a supportive
+environment where players are pushed to improve
+while feeling like they belong.
+</p>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
+Trained with Livity
+</h3>
+
+<div class="proof-card">
+<div class="proof-avatar">M</div>
+<div class="proof-body">
+<b>Miguel Santos</b>
+<span class="proof-badge">Academy · 2 years</span>
+<p>"Livity turned my son from a shy kid into a confident team player. The coaches actually remember his name."</p>
+</div>
+</div>
+
+<div class="proof-card">
+<div class="proof-avatar">A</div>
+<div class="proof-body">
+<b>Ana Reyes</b>
+<span class="proof-badge">Advanced Performance</span>
+<p>"The assessment-based training pushed me to a level I didn't think I could reach in a year."</p>
+</div>
+</div>
+
+<div class="proof-card">
+<div class="proof-avatar">K</div>
+<div class="proof-body">
+<b>Kian Dela Cruz</b>
+<span class="proof-badge">Regular · U11</span>
+<p>"Best Saturday mornings of the week. My footwork improved so much in just one package."</p>
+</div>
+</div>
+
+<div class="proof-card">
+<div class="proof-avatar">P</div>
+<div class="proof-body">
+<b>Patricia Lim</b>
+<span class="proof-badge">Private Training</span>
+<p>"Flexible scheduling that actually works around our family's crazy week. Highly recommend."</p>
+</div>
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
 Meet the Team
 </h3>
 
@@ -1454,13 +1877,13 @@ Meet the Team
 <div class="coach">
 
 <div class="avatar">
-B
+J
 </div>
 
 <div>
 
 <b>
-Coach Brina
+Admin Jah
 </b>
 
 <span>
@@ -1687,23 +2110,21 @@ Show up, learn, compete, and grow.
 </div>
 
 
-<a
+<button
 class="btn primary"
-style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:10px"
-href="https://bit.ly/LivityTrainingRegistration"
-target="_blank"
+style="width:100%;display:block;text-align:center;box-sizing:border-box;margin-bottom:10px"
+onclick="lbStartDirectEnroll('PRG-PRIV')"
 >
-Training Registration →
-</a>
+Private Training Registration →
+</button>
 
-<a
+<button
 class="btn dark"
-style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box"
-href="https://bit.ly/LivityAcademyEnrollment"
-target="_blank"
+style="width:100%;display:block;text-align:center;box-sizing:border-box"
+onclick="lbStartDirectEnroll('PRG-ACAD')"
 >
 Academy Enrollment →
-</a>
+</button>
 
 
 <div class="notice">
@@ -1714,7 +2135,7 @@ Key contacts
 
 <br>
 
-Coach Brina — Training / Private
+Admin Jah — Training / Private
 
 <br>
 
@@ -1723,37 +2144,6 @@ Chelsi — Academy
 <br>
 
 Coach Sam — Advanced Assessment
-
-</div>
-
-
-<div class="panel">
-
-<h3>
-Already Enrolled?
-</h3>
-
-<p>
-Check your sessions and balance on your dashboard.
-</p>
-
-<a
-class="btn outline"
-style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:8px"
-href="https://bit.ly/LivityTrainingDashboard"
-target="_blank"
->
-Training Dashboard →
-</a>
-
-<a
-class="btn outline"
-style="width:100%;display:block;text-align:center;text-decoration:none;box-sizing:border-box"
-href="https://bit.ly/LivityAcademyDashboard"
-target="_blank"
->
-Academy Dashboard →
-</a>
 
 </div>
 
@@ -1774,6 +2164,15 @@ Academy Dashboard →
 
 <button class="livity-ball" id="livityBall" aria-label="Anytime Livity">⚽</button>
 <!-- === END: ANYTIME LIVITY BALL — MARKUP === -->
+
+
+<!-- === START: RATE US WIDGET — MARKUP === -->
+<div class="rate-backdrop" id="rateBackdrop" onclick="closeRateModal()"></div>
+
+<div class="rate-modal" id="rateModal">
+<div id="rateModalBody"></div>
+</div>
+<!-- === END: RATE US WIDGET — MARKUP === -->
 
 
 <!-- BOTTOM NAV -->
@@ -1861,7 +2260,7 @@ best:
 "Players looking to develop a strong technical foundation and receive consistent training.",
 
 schedule:
-"Tue 6:00–8:30 PM · PAREF Southridge | Thu 4:00–6:00 PM · Pacific Malayan (U9 & below) | Sat 7:00–9:30 AM · PAREF Southridge",
+"Tue 6:00–8:30 PM · PAREF Southridge | Thu 4:00–6:00 PM · Pacific Malayan (U9 & above) | Sat 7:00–9:30 AM · PAREF Southridge",
 
 registerUrl:
 "https://bit.ly/LivityTrainingRegistration"
@@ -2003,6 +2402,30 @@ function lbBody() {
 return document.getElementById('lbBody');
 }
 
+/* === START: LIVITY — DIRECT ENROLL FROM ENROLL SECTION BUTTONS === */
+function lbStartDirectEnroll(programId) {
+
+lbForm.programId = programId;
+lbForm.package = '';
+lbForm.category = '';
+lbEnrollStep = 1; // skip Program step — preset na ang program
+
+lbScreen = 'enroll';
+lbBackTarget = 'menu';
+
+document.getElementById('lbTitle').textContent =
+programId === 'PRG-ACAD' ? 'Academy Enrollment' : 'Private Training Registration';
+document.getElementById('lbBackBtn').style.display = 'grid';
+
+lbBody().innerHTML = lbRenderEnrollStep();
+lbBody().scrollTop = 0;
+
+document.getElementById('livityModal').classList.add('open');
+document.getElementById('livityBackdrop').classList.add('open');
+
+}
+/* === END: LIVITY — DIRECT ENROLL FROM ENROLL SECTION BUTTONS === */
+
 function lbGoTo(screen) {
 
 lbScreen = screen;
@@ -2032,7 +2455,7 @@ back.style.display = 'grid';
 } else if (screen === 'coach') {
 lbBackTarget = 'menu';
 body.innerHTML = lbScreenCoach();
-title.textContent = 'Ask Coach Brina';
+title.textContent = 'Ask Admin Jah';
 back.style.display = 'grid';
 } else if (screen === 'enroll') {
 lbBackTarget = 'menu';
@@ -2061,7 +2484,7 @@ return `
 <span class="lb-ico">↗</span> Enroll
 </button>
 <button class="lb-item" onclick="lbGoTo('coach')">
-<span class="lb-ico">☷</span> Ask Coach Brina
+<span class="lb-ico">☷</span> Ask Admin Jah
 </button>
 `;
 }
@@ -2104,8 +2527,10 @@ lbBody().innerHTML = `
 function lbScreenSchedule() {
 return `
 <p class="lb-text"><b>Tue</b> 6:00–8:30 PM · Regular · PAREF Southridge</p>
-<p class="lb-text"><b>Thu</b> 4:00–6:00 PM · Regular, U9 & below · Pacific Malayan</p>
+<p class="lb-text"><b>Thu</b> 4:00–6:00 PM · Regular, U9 & above · Pacific Malayan</p>
 <p class="lb-text"><b>Thu</b> 6:00–8:30 PM · Advanced & Academy · PAREF Southridge</p>
+<p class="lb-text"><b>Thu</b> 4:00–6:00 PM · Private · Pacific Malayan</p>
+<p class="lb-text"><b>Thu</b> 6:00–8:00 PM · Private · PAREF Southridge</p>
 <p class="lb-text"><b>Sat</b> 7:00–9:30 AM · Regular & Academy · PAREF Southridge</p>
 <p class="lb-text" style="color:var(--muted);font-size:11px">Private training is booked separately — flexible schedule and venue, separate fees apply.</p>
 `;
@@ -2129,8 +2554,8 @@ return `
 function lbScreenCoach() {
 return `
 <div class="coach" style="border-top:0;padding-top:0">
-<div class="avatar">B</div>
-<div><b>Coach Brina</b><span>Training / Private Sessions</span></div>
+<div class="avatar">J</div>
+<div><b>Admin Jah</b><span>Training / Private Sessions</span></div>
 </div>
 <div class="coach">
 <div class="avatar">C</div>
@@ -2632,7 +3057,16 @@ ball.classList.remove('active');
 
 }
 
-document.addEventListener('DOMContentLoaded', initLivityBall);
+document.addEventListener('DOMContentLoaded', function() {
+initLivityBall();
+setTimeout(function() {
+const splash = document.getElementById('livitySplash');
+if (splash) {
+splash.classList.add('hide');
+setTimeout(function() { splash.remove(); }, 500);
+}
+}, 3000);
+});
 /* === END: ANYTIME LIVITY BALL — LOGIC === */
 
 
@@ -2786,6 +3220,47 @@ show('detail');
 
 }
 
+
+/* === START: RATE US WIDGET — LOGIC === */
+let rateSelected = '';
+
+function openRateModal() {
+rateSelected = '';
+document.getElementById('rateModalBody').innerHTML = rateModalForm();
+document.getElementById('rateModal').classList.add('open');
+document.getElementById('rateBackdrop').classList.add('open');
+}
+
+function closeRateModal() {
+document.getElementById('rateModal').classList.remove('open');
+document.getElementById('rateBackdrop').classList.remove('open');
+}
+
+function rateModalForm() {
+return `
+<h4>How was your experience?</h4>
+<div class="rate-faces">
+<button class="rate-face ${rateSelected === 'good' ? 'sel-good' : ''}" onclick="pickRate('good')">🙂</button>
+<button class="rate-face ${rateSelected === 'bad' ? 'sel-bad' : ''}" onclick="pickRate('bad')">🙁</button>
+</div>
+<textarea class="rate-textarea ${rateSelected ? 'show' : ''}" id="rateDetails" placeholder="Please provide details (optional)"></textarea>
+<button class="btn primary" onclick="submitRate()" ${rateSelected ? '' : 'disabled style="opacity:.5;cursor:not-allowed"'}>Submit Feedback →</button>
+`;
+}
+
+function pickRate(type) {
+rateSelected = type;
+document.getElementById('rateModalBody').innerHTML = rateModalForm();
+}
+
+function submitRate() {
+if (!rateSelected) return;
+document.getElementById('rateModalBody').innerHTML = `
+<p class="rate-thanks">Thank you for your feedback! 💛</p>
+<button class="btn primary" onclick="closeRateModal()">Close</button>
+`;
+}
+/* === END: RATE US WIDGET — LOGIC === */
 
 function acc(el) {
 
