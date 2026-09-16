@@ -1972,7 +1972,8 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'PASTE_YOUR_DEPLOYED_APPS_SCRIPT_WEB_APP_URL_HERE';
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbxYWgyuyOeTJhETXfJOuVGaV6iFYZcngaq53Gc62moWqsGa8We3Jgl70dtsuDN5UUNFTw/exec';
+const LIVITY_SHARED_SECRET = 'kahit-anong-random-string-dito'; // dapat magkatugma sa backend
 
 let lbForm = {
 programId:'', category:'',
@@ -2195,7 +2196,6 @@ function lbProgramLabel_(id) {
 const map = { 'PRG-REG':'Specialized Training — Regular', 'PRG-PRIV':'Specialized Training — Private', 'PRG-ADV':'Advanced Performance', 'PRG-ACAD':'Academy Training' };
 return map[id] || '—';
 }
-
 function lbComputeTotal_() {
 const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
 if (lbForm.programId === 'PRG-ACAD' && lbForm.package) return lbPackages[lbForm.package].price + LB_MEMBERSHIP_FEE;
@@ -2390,6 +2390,50 @@ return `
 
 }
 
+/* === START: LIVITY — GENERIC BACKEND FETCH WRAPPER === */
+async function doFetch(action, payload) {
+
+if (!LIVITY_API_URL || LIVITY_API_URL.indexOf('PASTE_YOUR') === 0) {
+throw new Error('LIVITY_API_URL is not set yet — paste your Apps Script /exec URL first.');
+}
+
+const body = JSON.stringify({ action, secret: LIVITY_SHARED_SECRET, ...payload });
+
+let res;
+try {
+res = await fetch(LIVITY_API_URL, {
+method: 'POST',
+// Walang custom headers dito nang sinasadya — kung mag-set ka ng
+// Content-Type: application/json, pipilitin ng browser mag-send ng
+// CORS preflight (OPTIONS) bago yung actual POST, at hindi sinasagot
+// ng Apps Script Web Apps yung OPTIONS. Kaya "simple request" lang
+// (text/plain body), walang preflight, gumagana agad.
+body
+});
+} catch (networkErr) {
+throw new Error('Could not reach the server. Check your connection and try again.');
+}
+
+if (!res.ok) {
+throw new Error('Server responded with status ' + res.status);
+}
+
+let result;
+try {
+result = await res.json();
+} catch (parseErr) {
+throw new Error('Server returned an unexpected response.');
+}
+
+if (!result.success) {
+throw new Error(result.error || 'Something went wrong. Please try again.');
+}
+
+return result;
+
+}
+/* === END: LIVITY — GENERIC BACKEND FETCH WRAPPER === */
+
 async function lbSubmitEnrollment() {
 
 const btn = document.getElementById('lbSubmitBtn');
@@ -2398,16 +2442,13 @@ if (err) err.textContent = '';
 if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
 
 const payload = {
-action: 'enroll',
 player: { firstName: lbForm.firstName, lastName: lbForm.lastName, dob: lbForm.dob, age: lbForm.age, gender: lbForm.gender, nationality: lbForm.nationality, area: lbForm.area },
 guardian: { guardianName: lbForm.guardianName, relationship: lbForm.relationship, whatsapp: lbForm.whatsapp, email: lbForm.email, emName: lbForm.emName, emNumber: lbForm.emNumber, contactMode: lbForm.contactMode },
 enrollment: { programId: lbForm.programId, category: lbForm.category, packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPhoto: lbForm.consentPhoto, consentPrivacy: lbForm.consentPrivacy }
 };
 
 try {
-const res = await fetch(LIVITY_API_URL, { method: 'POST', body: JSON.stringify(payload) });
-const result = await res.json();
-if (!result.success) throw new Error(result.error || 'Something went wrong. Please try again.');
+const result = await doFetch('enroll', payload);
 lbShowSuccess_(result);
 } catch (e) {
 if (btn) { btn.disabled = false; btn.textContent = 'Submit Enrollment →'; }
