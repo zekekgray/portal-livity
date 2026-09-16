@@ -760,6 +760,49 @@ animation:livityPop .42s cubic-bezier(.34,1.56,.64,1);
 50%     { transform:translateY(-8px) rotate(10deg); }
 }
 
+/* === START: LIVITY BALL HINT BUBBLE — APPLE-STYLE ZOOM === */
+.livity-hint {
+position:fixed;
+z-index:60;
+max-width:180px;
+background:#171714;
+color:#fff;
+font-size:12px;
+font-weight:650;
+line-height:1.4;
+padding:10px 13px;
+border-radius:14px;
+box-shadow:0 10px 24px rgba(0,0,0,.35);
+opacity:0;
+transform:scale(.5);
+transform-origin:right center;
+pointer-events:none;
+transition:opacity .35s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.livity-hint.show {
+opacity:1;
+transform:scale(1);
+pointer-events:auto;
+transition:opacity .4s ease, transform .5s cubic-bezier(.34,1.56,.64,1);
+}
+.livity-hint.hide {
+opacity:0;
+transform:scale(.5);
+transition:opacity .45s ease, transform .45s cubic-bezier(.5,0,.75,0);
+}
+.livity-hint:after {
+content:"";
+position:absolute;
+top:50%;
+right:-5px;
+width:11px;
+height:11px;
+background:#171714;
+transform:translateY(-50%) rotate(45deg);
+border-radius:2px;
+}
+/* === END: LIVITY BALL HINT BUBBLE — APPLE-STYLE ZOOM === */
+
 /* === START: ANYTIME LIVITY — REMOVE BLACK BACKDROP === */
 .livity-ball-backdrop {
 position:fixed;
@@ -2190,6 +2233,7 @@ Coach Sam — Advanced Assessment
 </div>
 
 <button class="livity-ball" id="livityBall" aria-label="Anytime Livity">⚽</button>
+<div class="livity-hint" id="livityHint">Ready for the next pitch? ⚽</div>
 <!-- === END: ANYTIME LIVITY BALL — MARKUP === -->
 
 
@@ -2998,7 +3042,59 @@ requestAnimationFrame(() => el.classList.add('pressed'));
 el.addEventListener('animationend', () => el.classList.remove('pressed'));
 });
 
+showLivityHint();
+
 }
+
+/* === START: LIVITY BALL HINT — SHOW / AUTO-HIDE LOGIC === */
+function positionLivityHint() {
+
+const ball = document.getElementById('livityBall');
+const hint = document.getElementById('livityHint');
+if (!ball || !hint) return;
+
+const rect = ball.getBoundingClientRect();
+const hintWidth = hint.offsetWidth || 180;
+const hintHeight = hint.offsetHeight || 40;
+
+let left = rect.left - hintWidth - 14;
+left = Math.max(10, left);
+
+let top = rect.top + rect.height / 2 - hintHeight / 2;
+top = Math.max(10, Math.min(window.innerHeight - hintHeight - 10, top));
+
+hint.style.left = left + 'px';
+hint.style.top = top + 'px';
+
+}
+
+function showLivityHint() {
+
+const hint = document.getElementById('livityHint');
+if (!hint) return;
+
+setTimeout(() => {
+positionLivityHint();
+hint.classList.remove('hide');
+hint.classList.add('show');
+
+setTimeout(() => {
+hint.classList.remove('show');
+hint.classList.add('hide');
+}, 7000);
+
+}, 1800);
+
+}
+
+function hideLivityHint() {
+const hint = document.getElementById('livityHint');
+if (hint) {
+hint.classList.remove('show');
+hint.classList.add('hide');
+}
+}
+/* === END: LIVITY BALL HINT — SHOW / AUTO-HIDE LOGIC === */
 
 function lbPointerDown(e) {
 
@@ -3052,6 +3148,7 @@ if (!lbMoved) {
 ball.classList.add('tapped');
 ball.classList.add('active');
 setTimeout(() => ball.classList.remove('tapped'), 420);
+hideLivityHint();
 toggleLivityBall();
 }
 
@@ -3090,7 +3187,10 @@ setTimeout(function() {
 const splash = document.getElementById('livitySplash');
 if (splash) {
 splash.classList.add('hide');
-setTimeout(function() { splash.remove(); }, 500);
+setTimeout(function() {
+splash.remove();
+showLivityHint();
+}, 500);
 }
 }, 3000);
 });
