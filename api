@@ -27,7 +27,9 @@ const SHEETS = {
   ATTENDANCE: { name: 'Attendance', headers: ['AttendanceID', 'PlayerID', 'ScheduleID', 'Date', 'Status', 'SessionDeducted', 'IsWalkIn'] },
   WALKINS:    { name: 'WalkIns',    headers: ['WalkInID', 'PlayerID', 'Date', 'MonthCount', 'SurchargeApplied'] },
   REFERRALS:  { name: 'Referrals',  headers: ['ReferralID', 'ReferrerPlayerID', 'ReferredPlayerID', 'DateApplied', 'DiscountApplied', 'Status'] },
-  AUDITLOG:   { name: 'AuditLog',   headers: ['Timestamp', 'Action', 'Details', 'User'] }
+  AUDITLOG:   { name: 'AuditLog',   headers: ['Timestamp', 'Action', 'Details', 'User'] },
+  NOTIFICATION_TYPES: { name: 'NotificationTypes', headers: ['TypeKey', 'Label', 'Audience', 'Bucket', 'Channel', 'DefaultTemplate'] },
+  NOTIFICATIONS:       { name: 'Notifications',     headers: ['NotificationID', 'TypeKey', 'Audience', 'RecipientID', 'Title', 'Body', 'Channel', 'Status', 'CreatedAt', 'ReadAt'] }
 };
 
 // Seed data — mirrors the pricing/schedule shown in the Livity app
@@ -83,9 +85,89 @@ const SEED_CONFIG = [
   ['ReferralDiscount', 500],
   ['SiblingDiscountFromThird', 800],
   ['LoyaltyBonusAfterPurchases', 5],
-  ['LoyaltyBonusSessions', 2]
+  ['LoyaltyBonusSessions', 2],
+  ['AdminEmail', 'your-email@example.com']
 ];
+/* === START: NOTIFICATION TYPES — SEED (67 types, Parent/Admin/Coach/System) === */
+const SEED_NOTIFICATION_TYPES = [
 
+// ── PARENT / PLAYER ──
+['ENROLL_SUBMITTED', 'Enrollment Submitted', 'Parent', 'Enrollment', 'Both', "Hi {{guardianName}}, we've received {{playerName}}'s enrollment for {{programName}}. We'll notify you once it's reviewed."],
+['ENROLL_UNDER_REVIEW', 'Enrollment Received / Under Review', 'Parent', 'Enrollment', 'Both', "{{playerName}}'s enrollment is now under review by our team."],
+['ENROLL_APPROVED', 'Enrollment Approved', 'Parent', 'Enrollment', 'Both', "Good news! {{playerName}}'s enrollment for {{programName}} has been approved."],
+['ENROLL_NEEDS_CORRECTION', 'Enrollment Needs Correction', 'Parent', 'Enrollment', 'Both', "We need a few corrections on {{playerName}}'s enrollment: {{details}}"],
+['ENROLL_DECLINED', 'Enrollment Declined', 'Parent', 'Enrollment', 'Both', "We're unable to process {{playerName}}'s enrollment at this time. {{reason}}"],
+['ACCOUNT_WELCOME', 'Welcome / Account Created', 'Parent', 'Account', 'Both', "Welcome to Livity, {{guardianName}}! Your account for {{playerName}} is now active."],
+['ACCOUNT_PROFILE_UPDATED', 'Profile Updated', 'Parent', 'Account', 'InApp', "{{playerName}}'s profile has been updated."],
+['SCHEDULE_PROGRAM_ASSIGNED', 'Program Assigned', 'Parent', 'Schedule', 'Both', "{{playerName}} has been assigned to {{programName}}."],
+['SCHEDULE_CONFIRMED', 'Training Schedule Confirmed', 'Parent', 'Schedule', 'Both', "{{playerName}}'s training schedule is confirmed: {{scheduleDetails}}"],
+['SCHEDULE_CHANGED', 'Training Schedule Changed', 'Parent', 'Schedule', 'Both', "{{playerName}}'s training schedule has changed: {{scheduleDetails}}"],
+['SCHEDULE_SESSION_REMINDER', 'Training Session Reminder', 'Parent', 'Schedule', 'Both', "Reminder: {{playerName}} has training on {{sessionDate}} at {{venue}}."],
+['SCHEDULE_SESSION_CANCELLED', 'Session Cancelled', 'Parent', 'Schedule', 'Both', "The session on {{sessionDate}} has been cancelled. {{reason}}"],
+['SCHEDULE_SESSION_RESCHEDULED', 'Session Rescheduled', 'Parent', 'Schedule', 'Both', "The session on {{oldDate}} has been moved to {{newDate}}."],
+['SCHEDULE_MAKEUP_AVAILABLE', 'Make-up Session Available', 'Parent', 'Schedule', 'Both', "A make-up session is available for {{playerName}} on {{sessionDate}}."],
+['PAY_INSTRUCTIONS', 'Payment Instructions', 'Parent', 'Payments', 'Both', "Here's how to pay for {{playerName}}'s package: {{instructions}}"],
+['PAY_SUBMITTED', 'Payment Submitted', 'Parent', 'Payments', 'InApp', "We've received your payment of ₱{{amount}} for {{playerName}}. Verifying now."],
+['PAY_VERIFIED', 'Payment Verified', 'Parent', 'Payments', 'Both', "Your payment of ₱{{amount}} for {{playerName}} has been verified."],
+['PAY_REJECTED', 'Payment Rejected / Needs Verification', 'Parent', 'Payments', 'Both', "We couldn't verify your payment of ₱{{amount}}. {{reason}}"],
+['PAY_DUE', 'Payment Due', 'Parent', 'Payments', 'Both', "₱{{amount}} is now due for {{playerName}}'s package."],
+['PAY_DUE_SOON', 'Payment Due Soon', 'Parent', 'Payments', 'Both', "₱{{amount}} for {{playerName}} is due on {{dueDate}}."],
+['PAY_OVERDUE', 'Payment Overdue', 'Parent', 'Payments', 'Both', "₱{{amount}} for {{playerName}} is now overdue."],
+['INVOICE_GENERATED', 'Invoice Generated', 'Parent', 'Payments', 'Both', "A new invoice for {{playerName}} is ready: ₱{{amount}}."],
+['INVOICE_UPDATED', 'Invoice Updated', 'Parent', 'Payments', 'InApp', "{{playerName}}'s invoice has been updated."],
+['RECEIPT_AVAILABLE', 'Receipt Available', 'Parent', 'Payments', 'Both', "Your receipt for ₱{{amount}} is now available."],
+['BALANCE_UPDATED', 'Balance Updated', 'Parent', 'Payments', 'InApp', "{{playerName}}'s balance is now ₱{{amount}}."],
+['PACKAGE_EXPIRING_SOON', 'Package Expiring Soon', 'Parent', 'Package', 'Both', "{{playerName}}'s package expires on {{expiryDate}}."],
+['PACKAGE_EXPIRED', 'Package Expired', 'Parent', 'Package', 'Both', "{{playerName}}'s package has expired."],
+['MEMBERSHIP_RENEWAL_REMINDER', 'Membership Renewal Reminder', 'Parent', 'Package', 'Both', "It's time to renew {{playerName}}'s Academy membership."],
+['REQUEST_SUBMITTED', 'Request Submitted', 'Parent', 'Requests', 'InApp', "Your request has been submitted."],
+['REQUEST_APPROVED', 'Request Approved', 'Parent', 'Requests', 'Both', "Your request has been approved."],
+['REQUEST_DECLINED', 'Request Declined', 'Parent', 'Requests', 'Both', "Your request was declined. {{reason}}"],
+['REQUEST_RESPONDED', 'Request Updated / Responded', 'Parent', 'Requests', 'Both', "There's an update on your request: {{details}}"],
+['ANNOUNCEMENT_IMPORTANT', 'Important Academy Announcement', 'Parent', 'Account', 'Both', "{{announcementTitle}}: {{announcementBody}}"],
+['POLICY_UPDATE', 'Policy / Terms Update', 'Parent', 'Account', 'Both', "Our policies have been updated. {{summary}}"],
+
+// ── ADMIN / FINANCE ──
+['ADMIN_NEW_ENROLLMENT', 'New Enrollment Received', 'Admin', 'Enrollments', 'Both', "New enrollment: {{playerName}} for {{programName}}."],
+['ADMIN_ENROLL_CORRECTION', 'Enrollment Correction Required', 'Admin', 'Enrollments', 'Both', "Enrollment for {{playerName}} needs correction: {{details}}"],
+['ADMIN_NEW_PAYMENT', 'New Payment Submitted', 'Admin', 'Finance', 'Both', "{{guardianName}} submitted a payment of ₱{{amount}}."],
+['ADMIN_PAYMENT_VERIFY', 'Payment Verification Required', 'Admin', 'Finance', 'Both', "Payment of ₱{{amount}} from {{guardianName}} needs verification."],
+['ADMIN_PAYMENT_OVERDUE', 'Payment Overdue', 'Admin', 'Finance', 'Both', "{{playerName}}'s payment of ₱{{amount}} is overdue."],
+['ADMIN_INVOICE_NEW', 'New Invoice Generated', 'Admin', 'Finance', 'InApp', "New invoice generated for {{playerName}}."],
+['ADMIN_INVOICE_UNPAID', 'Invoice Unpaid', 'Admin', 'Finance', 'Both', "Invoice for {{playerName}} remains unpaid."],
+['ADMIN_NEW_PARENT_REQUEST', 'New Parent Request', 'Admin', 'Operations', 'Both', "{{guardianName}} submitted a request: {{details}}"],
+['ADMIN_SCHEDULE_CHANGE', 'Schedule Change', 'Admin', 'Operations', 'InApp', "Schedule change made for {{programName}}."],
+['ADMIN_CANCEL_RESCHEDULE_REQUEST', 'Cancellation / Reschedule Request', 'Admin', 'Operations', 'Both', "{{guardianName}} requested a cancellation/reschedule for {{playerName}}."],
+['ADMIN_NEW_REGISTRATION', 'New Registration', 'Admin', 'Enrollments', 'InApp', "New registration: {{playerName}}."],
+['ADMIN_PACKAGE_NEAR_EXPIRY', 'Package Near Expiry', 'Admin', 'Finance', 'InApp', "{{playerName}}'s package nears expiry on {{expiryDate}}."],
+['ADMIN_DAILY_ENROLLMENT_SUMMARY', 'Daily Enrollment Summary', 'Admin', 'Reports', 'Email', "Today's enrollments: {{count}}."],
+['ADMIN_DAILY_PAYMENT_SUMMARY', 'Daily Payment Summary', 'Admin', 'Reports', 'Email', "Today's payments: ₱{{total}}."],
+['ADMIN_DAILY_OUTSTANDING_REPORT', 'Daily Outstanding Balance Report', 'Admin', 'Reports', 'Email', "Total outstanding balance: ₱{{total}}."],
+['ADMIN_WEEKLY_FINANCIAL_REPORT', 'Weekly Financial Report', 'Admin', 'Reports', 'Email', "This week's financial summary is ready."],
+['ADMIN_MONTHLY_FINANCIAL_REPORT', 'Monthly Financial Report', 'Admin', 'Reports', 'Email', "This month's financial summary is ready."],
+['ADMIN_SYSTEM_ERROR', 'System / Automation Error', 'Admin', 'Reports', 'Email', "System error detected: {{errorMessage}}"],
+
+// ── COACH ──
+['COACH_NEW_PLAYER_ASSIGNED', 'New Player Assigned', 'Coach', 'MyPlayers', 'Both', "{{playerName}} has been assigned to you."],
+['COACH_NEW_ENROLLMENT_PROGRAM', 'New Enrollment for Your Program', 'Coach', 'MyPlayers', 'Both', "New enrollment in {{programName}}: {{playerName}}."],
+['COACH_SESSION_REMINDER', 'Upcoming Session Reminder', 'Coach', 'Schedule', 'Both', "Reminder: your session with {{programName}} is on {{sessionDate}}."],
+['COACH_SESSION_CHANGED', 'Session Changed', 'Coach', 'Schedule', 'Both', "Session for {{programName}} moved to {{newDate}}."],
+['COACH_PLAYER_CANCELLATION', 'Player Cancellation', 'Coach', 'Schedule', 'InApp', "{{playerName}} cancelled for {{sessionDate}}."],
+['COACH_MAKEUP_REQUEST', 'Make-up Session Request', 'Coach', 'Schedule', 'Both', "{{playerName}} requested a make-up session."],
+['COACH_PARENT_REQUEST', 'Parent Request', 'Coach', 'Requests', 'Both', "{{guardianName}} sent a request regarding {{playerName}}."],
+['COACH_STATUS_UPDATE', 'Payment / Enrollment Status Update', 'Coach', 'Requests', 'InApp', "Status update for {{playerName}}: {{details}}"],
+
+// ── INTERNAL AUTOMATION (System → sent to AdminEmail only) ──
+['SYS_EMAIL_FAILED', 'Email Delivery Failed', 'System', 'System', 'Email', "Email failed to send: {{details}}"],
+['SYS_INVOICE_GEN_FAILED', 'Invoice Generation Failed', 'System', 'System', 'Email', "Invoice generation failed: {{details}}"],
+['SYS_REPORT_GEN_FAILED', 'Report Generation Failed', 'System', 'System', 'Email', "Report generation failed: {{details}}"],
+['SYS_GAS_ERROR', 'Google Sheets / Apps Script Error', 'System', 'System', 'Email', "Apps Script error: {{details}}"],
+['SYS_FAILED_FOLLOWUP', 'Failed Follow-up', 'System', 'System', 'Email', "Follow-up failed for {{playerName}}: {{details}}"],
+['SYS_MISSING_DATA', 'Missing Required Enrollment Data', 'System', 'System', 'Email', "Missing enrollment data: {{details}}"],
+['SYS_DUPLICATE_ENROLLMENT', 'Duplicate Enrollment Detected', 'System', 'System', 'Email', "Possible duplicate enrollment: {{details}}"]
+
+];
+/* === END: NOTIFICATION TYPES — SEED === */
 // ============================================================
 // MENU
 // ============================================================
@@ -291,7 +373,57 @@ function addReferral(referrerPlayerId, referredPlayerId) {
   logAudit_('ADD_REFERRAL', id + ' — ' + referrerPlayerId + ' referred ' + referredPlayerId, null);
   return id;
 }
+/* === START: NOTIFICATION ENGINE — CORE SEND FUNCTION === */
 
+/**
+ * Send a notification of a given type to a recipient.
+ * typeKey: e.g. 'ENROLL_SUBMITTED' (must exist in NotificationTypes sheet)
+ * recipient: { id, email } — id is PlayerID/CoachID/etc for the Notifications log
+ * data: object used to fill {{placeholders}} in the DefaultTemplate
+ */
+function sendNotification_(typeKey, recipient, data) {
+  const typeRow = findRowById_(SHEETS.NOTIFICATION_TYPES.name, typeKey);
+  if (!typeRow) {
+    logAudit_('NOTIF_UNKNOWN_TYPE', 'Unknown TypeKey: ' + typeKey, null);
+    return null;
+  }
+
+  const label = typeRow[1];
+  const audience = typeRow[2];
+  const channel = typeRow[4];
+  const template = typeRow[5];
+  const body = renderTemplate_(template, data || {});
+
+  const id = nextId_('NOTIF', SHEETS.NOTIFICATIONS.name);
+  sheet_(SHEETS.NOTIFICATIONS.name).appendRow([
+    id, typeKey, audience, (recipient && recipient.id) || '', label, body, channel, 'Unread', new Date(), ''
+  ]);
+
+  if ((channel === 'Email' || channel === 'Both') && recipient && recipient.email) {
+    try {
+      MailApp.sendEmail(recipient.email, label, body);
+    } catch (mailErr) {
+      logAudit_('NOTIF_EMAIL_FAILED', id + ' — ' + mailErr, null);
+    }
+  }
+
+  return id;
+}
+
+/** Replaces {{key}} placeholders in a template string with values from data. */
+function renderTemplate_(template, data) {
+  return String(template).replace(/{{(\w+)}}/g, function (match, key) {
+    const val = data[key];
+    return (val !== undefined && val !== null) ? val : '';
+  });
+}
+
+/** Shortcut for System-audience alerts — always goes to AdminEmail from Config. */
+function notifySystem_(typeKey, details) {
+  const adminEmail = getConfigValue_('AdminEmail');
+  return sendNotification_(typeKey, { email: adminEmail }, { details: details });
+}
+/* === END: NOTIFICATION ENGINE — CORE SEND FUNCTION === */
 // ============================================================
 // INTERNAL LOOKUPS
 // ============================================================
@@ -353,12 +485,18 @@ const PROGRAM_PACKAGE_MAP = {
   mixedC:  'PRC-ACADMC'
 };
 
+const LIVITY_SHARED_SECRET = 'kahit-anong-random-string-dito';
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
 
   try {
     const body = JSON.parse(e.postData.contents);
+
+    if (body.secret !== LIVITY_SHARED_SECRET) {
+      return jsonResponse_({ success: false, error: 'Unauthorized' });
+    }
 
     if (body.action !== 'enroll') {
       return jsonResponse_({ success: false, error: 'Unknown action: ' + body.action });
@@ -440,6 +578,18 @@ function handleEnrollment_(body) {
 
   logAudit_('WEB_ENROLLMENT', playerId + ' via web form — ' + (priceId || 'no-fixed-price'), null);
 
+  // Notify parent + admin
+  sendNotification_('ENROLL_SUBMITTED', { id: playerId, email: guardian.email }, {
+    guardianName: guardian.guardianName,
+    playerName: player.firstName + ' ' + player.lastName,
+    programName: lbProgramLabelServer_(enrollment.programId)
+  });
+
+  sendNotification_('ADMIN_NEW_ENROLLMENT', { email: getConfigValue_('AdminEmail') }, {
+    playerName: player.firstName + ' ' + player.lastName,
+    programName: lbProgramLabelServer_(enrollment.programId)
+  });
+
   return {
     success: true,
     enrollmentId: playerId,
@@ -447,6 +597,11 @@ function handleEnrollment_(body) {
     paymentId: paymentId,
     amountDue: totalPrice
   };
+}
+
+function lbProgramLabelServer_(id) {
+  const map = { 'PRG-REG':'Specialized Training — Regular', 'PRG-PRIV':'Specialized Training — Private', 'PRG-ADV':'Advanced Performance', 'PRG-ACAD':'Academy Training' };
+  return map[id] || id;
 }
 
 function resolvePriceId_(programId, packageKey, category) {
