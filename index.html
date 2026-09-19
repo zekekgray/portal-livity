@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Livity Training & Academy</title>
 <link rel="canonical" href="https://livityportal.artiplay.app">
 <!-- === START: FAVICON EDIT === -->
@@ -33,6 +33,10 @@ box-sizing:border-box;
 
 html {
 scroll-behavior:smooth;
+-webkit-text-size-adjust:100%;
+text-size-adjust:100%;
+touch-action:manipulation;
+overscroll-behavior:none;
 }
 
 body {
@@ -427,7 +431,7 @@ width:100%;
 border:1px solid var(--line);
 border-radius:12px;
 padding:10px 12px;
-font-size:13px;
+font-size:16px;
 font-family:inherit;
 resize:vertical;
 min-height:64px;
@@ -1018,7 +1022,7 @@ width:100%;
 border:1px solid var(--line);
 border-radius:12px;
 padding:11px 12px;
-font-size:13px;
+font-size:16px;
 font-family:inherit;
 margin-bottom:8px;
 color:var(--text);
@@ -3541,6 +3545,12 @@ document.getElementById('rateModalBody').innerHTML = `
 `;
 }
 /* === END: RATE US WIDGET — LOGIC === */
+
+/* === START: NO ZOOM — LOGIC === */
+['gesturestart','gesturechange','gestureend'].forEach(function(t) {
+document.addEventListener(t, function(e) { e.preventDefault(); });
+});
+/* === END: NO ZOOM — LOGIC === */
 
 function acc(el) {
 
