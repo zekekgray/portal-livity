@@ -211,6 +211,22 @@ line-height:.98;
 margin:12px 0;
 }
 
+/* === START: HERO LOGO: STYLES === */
+.hero-logo {
+position:relative;
+z-index:1;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+.hero-logo img {
+width:128px;
+height:128px;
+object-fit:contain;
+filter:drop-shadow(0 10px 24px rgba(0,0,0,.45));
+}
+/* === END: HERO LOGO: STYLES === */
+
 .hero p {
 color:#ddd8ce;
 line-height:1.5;
@@ -1154,6 +1170,12 @@ APP
 <div class="brand">
 <span style="color:#FFDE00">LIVITY</span>
 </div>
+
+<!-- === START: HERO LOGO === -->
+<div class="hero-logo">
+<img src="/logo-256.png" alt="Livity logo" width="128" height="128">
+</div>
+<!-- === END: HERO LOGO === -->
 
 <div class="hero-copy">
 
