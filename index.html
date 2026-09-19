@@ -56,7 +56,6 @@ color:var(--text);
 padding-bottom:78px;
 }
 
-/* === START: LIVITY SPLASH — GHANA FLAG WAVE INTRO === */
 .splash {
 position:fixed;
 inset:0;
@@ -142,7 +141,6 @@ font-weight:800;
 letter-spacing:3px;
 font-size:20px;
 }
-/* === END: LIVITY SPLASH — GHANA FLAG WAVE INTRO === */
 
 /* HERO */
 
@@ -182,7 +180,7 @@ transparent 65%
 .brand {
 font-weight:800;
 letter-spacing:3px;
-font-size:27px;
+font-size:32.4px;
 position:relative;
 z-index:1;
 }
@@ -1141,15 +1139,6 @@ box-shadow:0 20px 80px #0008;
 
 <body>
 
-<div class="splash" id="livitySplash">
-<div class="flag-real">
-<div class="flag-cloth">
-<div class="flag-star"></div>
-</div>
-</div>
-<div class="splash-text">LIVITY</div>
-</div>
-
 <div class="app">
 
 <!-- HOME -->
@@ -1159,7 +1148,7 @@ box-shadow:0 20px 80px #0008;
 <div class="hero">
 
 <div class="top-actions">
-<a class="app-link-btn" href="https://livity.artiplay.app" target="_blank" rel="noopener">
+<a class="app-link-btn" href="https://livity.artiplay.app" target="_blank" rel="noopener" onclick="return appLinkClick(event)">
 APP
 </a>
 <button class="rate-btn" onclick="openRateModal()">
@@ -1168,7 +1157,7 @@ APP
 </div>
 
 <div class="brand">
-<span style="color:#FFDE00">LIVITY</span>
+<span style="color:#ffffff">LIVITY</span>
 </div>
 
 <!-- === START: HERO LOGO === -->
@@ -2263,6 +2252,16 @@ Coach Sam — Advanced Assessment
 <!-- === END: ANYTIME LIVITY BALL — MARKUP === -->
 
 
+<!-- === START: APP MAINTENANCE MODAL — MARKUP === -->
+<div class="rate-backdrop" id="maintBackdrop" onclick="closeMaintModal()"></div>
+
+<div class="rate-modal" id="maintModal">
+<h4>🛠 Under Maintenance</h4>
+<p class="rate-thanks">We're upgrading some stats and versions to the latest. Please check back soon.</p>
+<button class="btn primary" onclick="closeMaintModal()">Got it</button>
+</div>
+<!-- === END: APP MAINTENANCE MODAL — MARKUP === -->
+
 <!-- === START: RATE US WIDGET — MARKUP === -->
 <div class="rate-backdrop" id="rateBackdrop" onclick="closeRateModal()"></div>
 
@@ -3209,16 +3208,6 @@ ball.classList.remove('active');
 
 document.addEventListener('DOMContentLoaded', function() {
 initLivityBall();
-setTimeout(function() {
-const splash = document.getElementById('livitySplash');
-if (splash) {
-splash.classList.add('hide');
-setTimeout(function() {
-splash.remove();
-showLivityHint();
-}, 500);
-}
-}, 3000);
 });
 /* === END: ANYTIME LIVITY BALL — LOGIC === */
 
@@ -3373,6 +3362,23 @@ show('detail');
 
 }
 
+
+/* === START: APP MAINTENANCE — LOGIC === */
+const APP_MAINTENANCE = true; // true = maintenance modal, false = normal link papunta sa app
+
+function appLinkClick(e) {
+if (!APP_MAINTENANCE) return true;
+e.preventDefault();
+document.getElementById('maintModal').classList.add('open');
+document.getElementById('maintBackdrop').classList.add('open');
+return false;
+}
+
+function closeMaintModal() {
+document.getElementById('maintModal').classList.remove('open');
+document.getElementById('maintBackdrop').classList.remove('open');
+}
+/* === END: APP MAINTENANCE — LOGIC === */
 
 /* === START: RATE US WIDGET — LOGIC === */
 let rateSelected = '';
