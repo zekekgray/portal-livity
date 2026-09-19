@@ -2560,8 +2560,9 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbxYWgyuyOeTJhETXfJOuVGaV6iFYZcngaq53Gc62moWqsGa8We3Jgl70dtsuDN5UUNFTw/exec';
-const LIVITY_SHARED_SECRET = 'kahit-anong-random-string-dito'; // dapat magkatugma sa backend
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbx3D2h-PlrcVmFqS2e2lg-44jSfz7W6yYtNRpZz0xJjv9bqZWkuTZ20aOtD45XKeeTYiQ/exec';
+const LIVITY_TENANT_ID = 'livity';
+const LIVITY_TENANT_KEY = 'b55c31fe184643278d8ba031589770b3';
 
 let lbForm = {
 programId:'', category:'',
@@ -3011,7 +3012,7 @@ if (!LIVITY_API_URL || LIVITY_API_URL.indexOf('PASTE_YOUR') === 0) {
 throw new Error('LIVITY_API_URL is not set yet — paste your Apps Script /exec URL first.');
 }
 
-const body = JSON.stringify({ action, secret: LIVITY_SHARED_SECRET, ...payload });
+const body = JSON.stringify({ action, tenantId: LIVITY_TENANT_ID, tenantKey: LIVITY_TENANT_KEY, ...payload });
 
 let res;
 try {
