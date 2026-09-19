@@ -231,6 +231,86 @@ line-height:1.5;
 max-width:330px;
 }
 
+/* === START: WELCOME POPUP — STYLES === */
+.welcome-backdrop {
+position:fixed;
+inset:0;
+z-index:200;
+background:rgba(11,47,100,.35);
+backdrop-filter:blur(14px);
+-webkit-backdrop-filter:blur(14px);
+opacity:0;
+pointer-events:none;
+transition:opacity .35s ease;
+}
+.welcome-backdrop.open {
+opacity:1;
+pointer-events:auto;
+}
+.welcome-modal {
+position:fixed;
+z-index:201;
+left:50%;
+top:50%;
+transform:translate(-50%,-46%) scale(.9);
+width:min(340px,88vw);
+background:#fff;
+border-radius:26px;
+padding:26px 22px 20px;
+text-align:center;
+box-shadow:0 30px 80px rgba(0,0,0,.45);
+opacity:0;
+pointer-events:none;
+transition:opacity .35s ease, transform .5s cubic-bezier(.34,1.56,.64,1);
+}
+.welcome-modal.open {
+opacity:1;
+pointer-events:auto;
+transform:translate(-50%,-50%) scale(1);
+}
+.welcome-badge {
+display:inline-block;
+background:#fff8dd;
+color:var(--navy);
+border:1px solid #ffe38a;
+border-radius:20px;
+padding:5px 12px;
+font-size:10px;
+font-weight:800;
+letter-spacing:1.2px;
+text-transform:uppercase;
+margin-bottom:14px;
+}
+.welcome-modal h3 {
+margin:0 0 10px;
+font-family:Georgia,serif;
+font-size:26px;
+color:var(--navy);
+}
+.welcome-modal p {
+margin:0 0 10px;
+font-size:13px;
+line-height:1.6;
+color:#5e5a52;
+}
+.welcome-mail {
+display:inline-block;
+color:var(--royal);
+font-weight:800;
+text-decoration:none;
+}
+.welcome-sign {
+font-size:11px !important;
+font-weight:700;
+letter-spacing:.4px;
+color:var(--muted) !important;
+margin:4px 0 16px !important;
+}
+.welcome-modal .btn {
+width:100%;
+}
+/* === END: WELCOME POPUP — STYLES === */
+
 /* === START: RATE US WIDGET — STYLES === */
 .rate-btn {
 background:rgba(255,255,255,.1);
@@ -2252,6 +2332,19 @@ Coach Sam — Advanced Assessment
 <!-- === END: ANYTIME LIVITY BALL — MARKUP === -->
 
 
+<!-- === START: WELCOME POPUP — MARKUP === -->
+<div class="welcome-backdrop" id="welcomeBackdrop"></div>
+
+<div class="welcome-modal" id="welcomeModal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+<div class="welcome-badge">Message from Artiplay Developer Team</div>
+<h3 id="welcomeTitle">Hi there! 👋</h3>
+<p>If this is your first time using the app, don't hesitate to ask the Academy or our developer team at <a class="welcome-mail" href="mailto:support@artiplay.app">support@artiplay.app</a></p>
+<p>Here at Artiplay, we'll keep improving the app and the experience para mas lalong masarap ang paglalaro at experience ninyo sa loob ng Academy.</p>
+<p class="welcome-sign">— Artiplay Developer Team</p>
+<button class="btn primary" id="welcomeBtn" onclick="closeWelcome()">Let's go →</button>
+</div>
+<!-- === END: WELCOME POPUP — MARKUP === -->
+
 <!-- === START: APP MAINTENANCE MODAL — MARKUP === -->
 <div class="rate-backdrop" id="maintBackdrop" onclick="closeMaintModal()"></div>
 
@@ -3362,6 +3455,33 @@ show('detail');
 
 }
 
+
+/* === START: WELCOME POPUP — LOGIC === */
+const WELCOME_KEY = 'livity_welcome_seen_v1'; // palitan ang v1 → v2 para lumabas ulit sa lahat
+
+function openWelcome() {
+document.getElementById('welcomeBackdrop').classList.add('open');
+document.getElementById('welcomeModal').classList.add('open');
+document.body.style.overflow = 'hidden';
+setTimeout(function() {
+const b = document.getElementById('welcomeBtn');
+if (b) b.focus();
+}, 400);
+}
+
+function closeWelcome() {
+document.getElementById('welcomeBackdrop').classList.remove('open');
+document.getElementById('welcomeModal').classList.remove('open');
+document.body.style.overflow = '';
+try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+let seen = false;
+try { seen = localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) {}
+if (!seen) setTimeout(openWelcome, 400);
+});
+/* === END: WELCOME POPUP — LOGIC === */
 
 /* === START: APP MAINTENANCE — LOGIC === */
 const APP_MAINTENANCE = true; // true = maintenance modal, false = normal link papunta sa app
