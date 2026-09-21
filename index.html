@@ -2565,8 +2565,6 @@ let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
 const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyfgpWMbCmzFwYssnn1wLvtbU3iX8T60renhcP_33DxWdCpStJs4X8XgJJ0_0yq4lPlRQ/exec';
-const LIVITY_TENANT_ID = 'livity';
-const LIVITY_TENANT_KEY = 'b55c31fe184643278d8ba031589770b3';
 
 let lbForm = {
 programId:'', category:'',
@@ -3016,7 +3014,7 @@ if (!LIVITY_API_URL || LIVITY_API_URL.indexOf('PASTE_YOUR') === 0) {
 throw new Error('LIVITY_API_URL is not set yet — paste your Apps Script /exec URL first.');
 }
 
-const body = JSON.stringify({ action, tenantId: LIVITY_TENANT_ID, tenantKey: LIVITY_TENANT_KEY, ...payload });
+const body = JSON.stringify({ action, ...payload });
 
 let res;
 try {
@@ -3564,6 +3562,5 @@ el.parentElement.classList.contains('open')
 }
 
 </script>
-
 </body>
 </html>
