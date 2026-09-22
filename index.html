@@ -454,6 +454,101 @@ padding:10px 0;
 }
 /* === END: RATE US WIDGET — STYLES === */
 
+/* === START: APP TUTORIAL — STYLES === */
+.tutorial-fab {
+width:50px;
+height:50px;
+border-radius:50%;
+background:rgba(255,222,0,.15);
+border:1.5px solid var(--gold);
+color:var(--gold);
+font-size:19px;
+font-weight:800;
+display:grid;
+place-items:center;
+cursor:pointer;
+flex-shrink:0;
+box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+.tutorial-fab:active {
+transform:scale(.92);
+}
+.tutorial-role-grid {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+.tutorial-role-btn {
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:8px;
+background:#fff;
+border:1.5px solid var(--line);
+border-radius:16px;
+padding:16px 10px;
+font-size:12.5px;
+font-weight:750;
+color:var(--text);
+cursor:pointer;
+text-align:center;
+}
+.tutorial-role-btn:active {
+transform:scale(.97);
+}
+.tutorial-role-ico {
+width:44px;
+height:44px;
+border-radius:50%;
+display:grid;
+place-items:center;
+font-size:22px;
+}
+.tutorial-steps {
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+.tutorial-step {
+display:flex;
+gap:10px;
+align-items:flex-start;
+background:#faf8f2;
+border-radius:14px;
+padding:12px;
+}
+.tutorial-step-num {
+width:22px;
+height:22px;
+border-radius:50%;
+background:var(--navy);
+color:#fff;
+font-size:11px;
+font-weight:800;
+display:grid;
+place-items:center;
+flex-shrink:0;
+margin-top:1px;
+}
+.tutorial-step-ico {
+font-size:22px;
+flex-shrink:0;
+line-height:1;
+}
+.tutorial-step-body b {
+display:block;
+font-size:13px;
+color:var(--text);
+margin-bottom:2px;
+}
+.tutorial-step-body p {
+margin:0;
+font-size:12px;
+color:#5e5a52;
+line-height:1.5;
+}
+/* === END: APP TUTORIAL — STYLES === */
+
 /* BUTTONS */
 
 .btn {
@@ -1589,12 +1684,24 @@ Build skilled players, confident individuals,
 and a stronger community.
 </p>
 
+<div style="display:flex;align-items:center;gap:10px">
+
 <button
 class="btn primary"
 onclick="show('programs')"
 >
 Explore Programs →
 </button>
+
+<button
+class="tutorial-fab"
+onclick="openTutorial()"
+aria-label="How to use the app"
+>
+?
+</button>
+
+</div>
 
 </div>
 
@@ -1678,8 +1785,6 @@ See when and where we train.
 </p>
 
 <div id="nextSessionCard" style="margin:14px 0"></div>
-
-<div class="sched-view-toggle">
 
 <div class="program" onclick="detail('regular')">
 
@@ -2598,6 +2703,14 @@ Coach Sam — Advanced Assessment
 <div id="rateModalBody"></div>
 </div>
 <!-- === END: RATE US WIDGET — MARKUP === -->
+
+<!-- === START: APP TUTORIAL — MARKUP === -->
+<div class="rate-backdrop" id="tutorialBackdrop" onclick="closeTutorial()"></div>
+
+<div class="rate-modal" id="tutorialModal" style="max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+<div id="tutorialBody"></div>
+</div>
+<!-- === END: APP TUTORIAL — MARKUP === -->
 
 <!-- === START: SESSION DETAIL MODAL — MARKUP === -->
 <div class="rate-backdrop" id="sessionDetailBackdrop" onclick="closeSessionDetail_()"></div>
@@ -4844,6 +4957,106 @@ document.getElementById('rateModalBody').innerHTML = `
 }
 /* === END: RATE US WIDGET — LOGIC === */
 
+/* === START: APP TUTORIAL — HOW TO USE (ROLE-BASED, KID-SIMPLE) === */
+const TUTORIAL_ROLES = {
+student: {
+icon:'⚽', label:'Player / Student', color:'#1C68D4',
+steps:[
+{ icon:'🏠', title:'Home Button', text:'Tap ⌂ Home sa ibaba anumang oras para bumalik sa simula.' },
+{ icon:'◫', title:'Tingnan ang Programs', text:'Tap "Programs" para makita lahat ng klase ng training — piliin ang gusto mong laruin!' },
+{ icon:'◷', title:'Kailan ang Training Mo?', text:'Tap "Schedule" para malaman kung anong ARAW at anong ORAS ang training mo.' },
+{ icon:'⚽', title:'Tap ang Gumagalaw na Bola', text:'May lumulutang na bola sa screen — tap ito para magtanong kay Admin JA o mag-top up.' },
+{ icon:'↗', title:'Bago Ka Pa Lang?', text:'Tap "Enroll" para magparehistro — kasama mo ang magulang mo dito.' }
+]
+},
+parent: {
+icon:'👨‍👩‍👧', label:'Parent / Guardian', color:'#ED1C24',
+steps:[
+{ icon:'↗', title:'Bagong Player? Mag-Enroll', text:'Tap "Enroll" sa ibaba, piliin ang program, sagutan ang maikling form.' },
+{ icon:'⚽', title:'Meron Nang Anak Dito?', text:'Tap ang lumulutang na bola → "Top Up Sessions" → ilagay ang WhatsApp number para makita agad ang lahat ng info ng anak niyo.' },
+{ icon:'₱', title:'Payments & Balance', text:'Sa loob ng player profile, tap "Payments & Balance" para malaman kung magkano at kailan babayaran.' },
+{ icon:'◷', title:'Weekly Schedule', text:'Tap "Schedule" sa ibabang menu para makita ang buong linggong iskedyul.' },
+{ icon:'☷', title:'May Tanong?', text:'Tap ang bola → "Ask Admin JA" para direktang makipag-chat sa staff namin.' }
+]
+},
+coach: {
+icon:'🥅', label:'Coach', color:'#0B2F64',
+steps:[
+{ icon:'◷', title:'Tingnan ang Schedule', text:'Tap "Schedule" para makita ang oras at venue ng bawat session ngayong linggo.' },
+{ icon:'◫', title:'Alamin ang Bawat Program', text:'Tap "Programs" para makita ang detalye ng Regular, Private, Advanced, at Academy Training.' },
+{ icon:'☷', title:'Makipag-ugnayan', text:'Gamitin ang "Ask Admin JA" para sa updates tungkol sa schedule o player.' },
+{ icon:'ℹ️', title:'Full na Impormasyon', text:'Tap "More" sa ibaba para makita ang mission, values, at policies ng academy.' }
+]
+},
+admin: {
+icon:'🗂️', label:'Admin', color:'#171714',
+steps:[
+{ icon:'◷', title:'I-manage ang Schedule', text:'Galing direkta sa Google Sheet ang Schedule tab — anumang baguhin doon, doon din agad lalabas sa app.' },
+{ icon:'₱', title:'I-verify ang Payments', text:'"Pending" muna ang bayad hanggang i-verify sa Sheet menu: "Livity Admin → Verify a Payment."' },
+{ icon:'👤', title:'Bagong Player', text:'Awtomatikong maidadagdag sa Players sheet ang sinumang mag-enroll o mag-add ng child sa app.' },
+{ icon:'☷', title:'Sagutin ang Mensahe', text:'Ang mga tanong sa "Ask Admin JA" ay napupunta sa Messages sheet at sa email niyo.' }
+]
+}
+};
+
+function openTutorial() {
+document.getElementById('tutorialModal').classList.add('open');
+document.getElementById('tutorialBackdrop').classList.add('open');
+renderTutorialRoleSelect_();
+}
+
+function closeTutorial() {
+document.getElementById('tutorialModal').classList.remove('open');
+document.getElementById('tutorialBackdrop').classList.remove('open');
+}
+
+function renderTutorialRoleSelect_() {
+const roleButtons = Object.entries(TUTORIAL_ROLES).map(function ([key, r]) {
+return `
+<button type="button" class="tutorial-role-btn" onclick="renderTutorialSteps_('${key}')">
+<span class="tutorial-role-ico" style="background:${r.color}18">${r.icon}</span>
+<span>${r.label}</span>
+</button>
+`;
+}).join('');
+
+document.getElementById('tutorialBody').innerHTML = `
+<div class="lb-header" style="margin-bottom:4px">
+<h4 style="flex:1;font-size:15px;color:var(--text)">Paano Gamitin ang Livity App?</h4>
+<button class="lb-close" onclick="closeTutorial()">✕</button>
+</div>
+<p class="lb-text" style="margin:0 0 14px">Sino ka? Piliin para makita ang madaling gabay 👇</p>
+<div class="tutorial-role-grid">${roleButtons}</div>
+`;
+}
+
+function renderTutorialSteps_(roleKey) {
+const role = TUTORIAL_ROLES[roleKey];
+const stepsHtml = role.steps.map(function (s, i) {
+return `
+<div class="tutorial-step">
+<div class="tutorial-step-num">${i + 1}</div>
+<div class="tutorial-step-ico">${s.icon}</div>
+<div class="tutorial-step-body">
+<b>${s.title}</b>
+<p>${s.text}</p>
+</div>
+</div>
+`;
+}).join('');
+
+document.getElementById('tutorialBody').innerHTML = `
+<div class="lb-header" style="margin-bottom:4px">
+<button class="lb-back" onclick="renderTutorialRoleSelect_()">←</button>
+<h4 style="flex:1;font-size:15px;color:var(--text)">${role.icon} ${role.label} Guide</h4>
+<button class="lb-close" onclick="closeTutorial()">✕</button>
+</div>
+<div class="tutorial-steps">${stepsHtml}</div>
+<button class="btn primary" style="width:100%;margin-top:6px" onclick="closeTutorial()">Nakuha ko na! →</button>
+`;
+}
+/* === END: APP TUTORIAL === */
+
 /* === START: NO ZOOM — LOGIC === */
 ['gesturestart','gesturechange','gestureend'].forEach(function(t) {
 document.addEventListener(t, function(e) { e.preventDefault(); });
@@ -4864,4 +5077,3 @@ el.parentElement.classList.contains('open')
 </script>
 </body>
 </html>
-
