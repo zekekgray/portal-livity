@@ -631,56 +631,191 @@ letter-spacing:.5px;
 
 /* === START: REMOVE GRIDLINES — SCHEDULE EVENTS === */
 .event {
-padding:13px 0;
+padding:16px 0;
+border-bottom:1px solid var(--line);
+}
+.event:last-child {
+border-bottom:0;
 }
 /* === END: REMOVE GRIDLINES — SCHEDULE EVENTS === */
 
-.event b {
-font-size:13px;
+.event-time {
+font-size:20px;
+font-weight:800;
+color:var(--navy);
+letter-spacing:-.2px;
 }
 
-.event span {
-display:inline-block;
+.event-title {
+font-size:14px;
+font-weight:700;
+color:var(--text);
+margin-top:4px;
+}
+
+.event-venue {
+font-size:12.5px;
+color:var(--muted);
+margin-top:2px;
+}
+
+.event-tags {
+display:inline-flex;
+align-items:center;
+gap:4px;
 background:#fff8dd;
 color:var(--navy);
-font-weight:700;
-font-size:13px;
-margin-top:6px;
-padding:5px 10px;
-border-radius:8px;
+font-weight:650;
+font-size:11px;
+margin-top:8px;
+padding:6px 10px;
+border-radius:7px;
 border:1px solid #ffe38a;
+cursor:pointer;
+}
+.event-tags:active {
+transform:scale(.97);
 }
 
+.session-detail-label {
+font-size:11px;
+font-weight:800;
+letter-spacing:.4px;
+text-transform:uppercase;
+color:var(--muted);
+margin:14px 0 4px;
+}
+.session-detail-label:first-of-type {
+margin-top:4px;
+}
 /* === START: DYNAMIC SCHEDULE — TABS === */
+.sched-view-toggle {
+display:flex;
+gap:6px;
+background:#f5f2ea;
+border-radius:12px;
+padding:4px;
+margin:0 0 14px;
+}
+.sched-view-toggle button {
+flex:1;
+background:none;
+border:0;
+border-radius:9px;
+padding:9px 0;
+font-size:12px;
+font-weight:800;
+letter-spacing:.3px;
+color:var(--muted);
+cursor:pointer;
+}
+.sched-view-toggle button.active {
+background:#fff;
+color:var(--navy);
+box-shadow:0 1px 4px rgba(11,47,100,.12);
+}
+
+.next-session-card {
+cursor:pointer;
+background:#171714;
+color:#fff;
+}
+.next-session-label {
+font-size:10px;
+font-weight:800;
+letter-spacing:1.4px;
+text-transform:uppercase;
+color:var(--gold-light);
+margin-bottom:8px;
+}
+.next-session-title {
+font-family:Georgia,serif;
+font-size:22px;
+margin-bottom:6px;
+}
+.next-session-meta {
+font-size:13px;
+font-weight:650;
+color:#ddd8ce;
+}
+.next-session-venue {
+font-size:12px;
+color:#a8a49a;
+margin-top:2px;
+}
+.next-session-link {
+font-size:12px;
+font-weight:800;
+color:var(--gold-light);
+margin-top:12px;
+}
+
+.program-group {
+padding:16px 0;
+border-bottom:1px solid var(--line);
+}.program-group:last-child {
+border-bottom:0;
+}
+.program-group-title {
+font-size:15px;
+font-weight:800;
+color:var(--text);
+margin:0 0 10px;
+}
+.program-group-row {
+display:flex;
+align-items:baseline;
+gap:12px;
+padding:8px 0;
+}
+.program-group-day {
+font-size:11px;
+font-weight:800;
+letter-spacing:.5px;
+color:var(--muted);
+width:34px;
+flex-shrink:0;
+}
+.program-group-info b {
+display:block;
+font-size:14px;
+color:var(--text);
+}
+.program-group-info span {
+font-size:12px;
+color:var(--muted);
+}
+
 .sched-tabs {
 display:flex;
 overflow-x:auto;
 -webkit-overflow-scrolling:touch;
-background:#171714;
-padding:10px 10px 0;
-gap:6px;
+background:#fff;
+padding:14px 14px 12px;
+gap:8px;
+border-bottom:1px solid var(--line);
 }
 .sched-tab {
-flex:1 0 auto;
-min-width:44px;
-background:none;
+flex:0 0 auto;
+min-width:46px;
+background:#f5f2ea;
 border:0;
-border-radius:12px 12px 0 0;
-padding:10px 6px;
+border-radius:12px;
+padding:10px 14px;
 font-size:11px;
 font-weight:800;
 letter-spacing:.5px;
-color:#8d8a80;
+color:var(--muted);
 cursor:pointer;
 }
 .sched-tab.active {
-background:var(--cream);
-color:var(--navy);
+background:var(--navy);
+color:#fff;
 }
 .sched-tab.off.active {
-color:var(--muted);
-}
-/* === END: DYNAMIC SCHEDULE — TABS === */
+background:var(--muted);
+color:#fff;
+}/* === END: DYNAMIC SCHEDULE — TABS === */
 
 /* PRICING */
 
@@ -1486,9 +1621,12 @@ Find Your Program →
 </div>
 
 <p style="color:var(--muted);font-size:13px">
-Four pathways. One goal — your child's growth.
+See when and where we train.
 </p>
 
+<div id="nextSessionCard" style="margin:14px 0"></div>
+
+<div class="sched-view-toggle">
 
 <div class="program" onclick="detail('regular')">
 
@@ -1607,10 +1745,15 @@ Not sure which is right for your child?
 <h2>Weekly Schedule</h2>
 </div>
 
-<p style="color:var(--muted);font-size:13px">
-See when and where we train.
-</p>
+<div class="sched-view-toggle">
+<button id="schedViewBtnDay" class="active" onclick="switchScheduleView_('day')">By Day</button>
+<button id="schedViewBtnProgram" onclick="switchScheduleView_('program')">By Program</button>
+</div>
 
+<div id="scheduleDayView">
+
+<p class="lb-text" id="schedDayHeading" style="color:var(--text);font-size:17px;font-weight:800;margin:-4px 0 2px">Loading…</p>
+<p style="color:var(--muted);font-size:12px;margin:0 0 14px" id="schedDateSub"></p>
 
 <div class="panel" style="padding:0;overflow:hidden">
 
@@ -1622,26 +1765,17 @@ See when and where we train.
 
 </div>
 
-
-<div class="panel">
-
-<h3>
-Private Training
-</h3>
-
-<p>
-Booked separately. Flexible schedule and
-venue based on coach and field availability.
-Separate fees apply.
-</p>
-
 </div>
+
+<div id="scheduleProgramView" class="panel" style="display:none;padding:16px">
+<p class="lb-text" style="color:var(--muted);text-align:center;padding:12px 0">Loading schedule…</p>
+</div>
+
 
 </section>
 
 
 <!-- PRICING -->
-
 <section id="pricing" class="view content">
 
 <button class="back" onclick="show('home')">
@@ -2312,6 +2446,20 @@ Show up, learn, compete, and grow.
 </div>
 
 
+<div class="panel" style="margin-bottom:12px">
+<h3 style="margin:0 0 4px">Already training with us?</h3>
+<p style="color:var(--muted);font-size:12px;margin:0 0 12px">Access your player profile — top up sessions, check schedule, payments, or update info. No need to register again.</p>
+<button
+class="btn outline"
+style="width:100%;display:block;text-align:center;box-sizing:border-box"
+onclick="toggleLivityBall();lbGoTo('topupFind')"
+>
+Access Your Player →
+</button>
+</div>
+
+<p style="color:var(--muted);font-size:12px;margin:0 0 8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">New to Livity?</p>
+
 <button
 class="btn primary"
 style="width:100%;display:block;text-align:center;box-sizing:border-box;margin-bottom:10px"
@@ -2397,6 +2545,14 @@ Coach Sam — Advanced Assessment
 <div id="rateModalBody"></div>
 </div>
 <!-- === END: RATE US WIDGET — MARKUP === -->
+
+<!-- === START: SESSION DETAIL MODAL — MARKUP === -->
+<div class="rate-backdrop" id="sessionDetailBackdrop" onclick="closeSessionDetail_()"></div>
+
+<div class="rate-modal" id="sessionDetailModal">
+<div id="sessionDetailBody"></div>
+</div>
+<!-- === END: SESSION DETAIL MODAL — MARKUP === -->
 
 
 <!-- BOTTOM NAV -->
@@ -2627,6 +2783,112 @@ h = h % 12; if (h === 0) h = 12;
 return h + ':' + m + ' ' + suffix;
 }
 
+function lbFormatTimeRange_(start, end) {
+const sParts = (start || '').split(':');
+const eParts = (end || '').split(':');
+if (sParts.length < 2 || eParts.length < 2) return lbFormatTime12_(start) + ' – ' + lbFormatTime12_(end);
+let sh = parseInt(sParts[0], 10), eh = parseInt(eParts[0], 10);
+const sSuffix = sh >= 12 ? 'PM' : 'AM';
+const eSuffix = eh >= 12 ? 'PM' : 'AM';
+sh = sh % 12; if (sh === 0) sh = 12;
+eh = eh % 12; if (eh === 0) eh = 12;
+if (sSuffix === eSuffix) {
+return sh + ':' + sParts[1] + ' – ' + eh + ':' + eParts[1] + ' ' + eSuffix;
+}
+return sh + ':' + sParts[1] + ' ' + sSuffix + ' – ' + eh + ':' + eParts[1] + ' ' + eSuffix;
+}
+
+const LB_SHORT_PROGRAM_NAME = {
+'Specialized Training — Regular': 'Regular Training',
+'Specialized Training — Private': 'Private Training',
+'Advanced Performance Training': 'Advanced Training',
+'Advanced Performance — Pro Session': 'Advanced Training',
+'Academy Training': 'Academy Training',
+'Private Training': 'Private Training'
+};
+
+// Maps a session's programName back to a programId — needed because fallback schedule data
+// (and some backend rows) carry only the display name, not the PRG- code.
+const LB_PROGRAM_NAME_TO_ID = {
+'Specialized Training — Regular': 'PRG-REG',
+'Specialized Training — Private': 'PRG-PRIV',
+'Private Training': 'PRG-PRIV',
+'Advanced Performance Training': 'PRG-ADV',
+'Advanced Performance — Pro Session': 'PRG-ADV',
+'Academy Training': 'PRG-ACAD'
+};
+
+function lbSessionProgramId_(s) {
+return s.programId || LB_PROGRAM_NAME_TO_ID[s.programName] || '';
+}
+
+function lbShortProgramName_(fullName) {
+return LB_SHORT_PROGRAM_NAME[fullName] || fullName;
+}
+
+function lbSessionTagLabel_(programName, notes) {
+if (/private/i.test(programName)) return 'Booked separately';
+return lbShortEligibility_(notes) || (notes ? 'Details' : '');
+}
+
+function lbShortEligibility_(notes) {if (!notes) return null;
+const match = notes.match(/(Ages?\s*\d+\+|U\d+\+)/i);
+if (match) {
+const requiresAssessment = /assessment/i.test(notes);
+return match[1].replace(/^Ages?\s*/i, 'Ages ') + (requiresAssessment ? ' · Assessment required' : '');
+}
+return null;
+}
+
+let lbCurrentDaySessions = [];
+
+function openSessionDetail_(index) {
+const s = lbCurrentDaySessions[index];
+if (!s) return;
+
+const parts = (s.notes || '').split('·').map(function (p) { return p.trim(); }).filter(Boolean);
+const detailsHtml = parts.length
+? parts.map(function (p) { return `<p class="lb-text">${p}</p>`; }).join('')
+: `<p class="lb-text">No additional details for this session.</p>`;
+
+document.getElementById('sessionDetailBody').innerHTML = `
+<h4 style="margin:0 0 4px;font-size:16px;color:var(--text)">${lbShortProgramName_(s.programName)}</h4>
+<p class="lb-text" style="color:var(--muted);margin:0 0 2px">${lbFormatTimeRange_(s.startTime, s.endTime)}</p>
+<p class="lb-text" style="color:var(--muted);margin:0 0 4px">${s.venue}</p>
+<div class="session-detail-label">Details</div>
+${detailsHtml}
+${lbSessionActionHtml_(s)}
+<button class="btn outline" style="width:100%;margin-top:8px" onclick="closeSessionDetail_()">Close</button>
+`;
+
+document.getElementById('sessionDetailModal').classList.add('open');
+document.getElementById('sessionDetailBackdrop').classList.add('open');
+}
+
+/** The action a session card offers depends on what actually happens for that program — never "Register". */
+function lbSessionActionHtml_(s) {
+const programId = lbSessionProgramId_(s);
+
+if (programId === 'PRG-ACAD') {
+return `<div class="notice" style="margin-top:10px">Academy players are automatically expected to attend. No booking needed — just show up, or message Admin JA if you can't make it.</div>`;
+}
+
+if (programId === 'PRG-PRIV') {
+return `<a href="https://wa.me/639762675397" target="_blank" rel="noopener" class="btn primary" style="width:100%;margin-top:10px;display:block;text-align:center;box-sizing:border-box;text-decoration:none">Message to Book →</a>`;
+}
+
+if (programId === 'PRG-REG' || programId === 'PRG-ADV') {
+return `<button class="btn primary" style="width:100%;margin-top:10px" onclick="closeSessionDetail_();lbGateThenEnroll_('${programId}')">Reserve Spot →</button>`;
+}
+
+return '';
+}
+
+function closeSessionDetail_() {
+document.getElementById('sessionDetailModal').classList.remove('open');
+document.getElementById('sessionDetailBackdrop').classList.remove('open');
+}
+
 async function loadSchedule() {
 
 try {
@@ -2645,6 +2907,8 @@ lbScheduleActiveDay = lbScheduleWeek.some(function (d) { return d.day === todayN
 
 renderScheduleTabs();
 renderScheduleDay(lbScheduleActiveDay);
+renderScheduleByProgram_();
+renderNextSession_();
 
 }
 
@@ -2661,8 +2925,129 @@ return `<button class="sched-tab ${cls}" onclick="renderScheduleDay('${d.day}')"
 
 }
 
-function getProgramScheduleText_(programTitle) {
-if (!lbScheduleWeek) return null; // hindi pa naka-load — gagamit ng fallback sa caller
+let lbCurrentProgramFlat_ = [];
+const WEEK_DAY_SHORT_ = { Monday:'MON', Tuesday:'TUE', Wednesday:'WED', Thursday:'THU', Friday:'FRI', Saturday:'SAT', Sunday:'SUN' };
+
+function renderScheduleByProgram_() {
+const container = document.getElementById('scheduleProgramView');
+if (!container || !lbScheduleWeek) return;
+
+const groups = {};
+const order = [];
+lbCurrentProgramFlat_ = [];
+
+lbScheduleWeek.forEach(function (d) {
+if (!d.active) return;
+(d.sessions || []).forEach(function (s) {
+const name = lbShortProgramName_(s.programName);
+if (!groups[name]) { groups[name] = []; order.push(name); }
+groups[name].push({ day: d.day, startTime: s.startTime, endTime: s.endTime, venue: s.venue, notes: s.notes });
+});
+});
+
+if (order.length === 0) {
+container.innerHTML = `<p class="lb-text" style="color:var(--muted)">No scheduled sessions this week.</p>`;
+return;
+}
+
+container.innerHTML = order.map(function (name) {
+const rows = groups[name].map(function (r) {
+return `
+<div class="program-group-row">
+<div class="program-group-day">${WEEK_DAY_SHORT_[r.day] || r.day.slice(0,3).toUpperCase()}</div>
+<div class="program-group-info">
+<b>${lbFormatTimeRange_(r.startTime, r.endTime)}</b>
+<span>${r.venue}</span>
+</div>
+</div>
+`;
+}).join('');
+return `<div class="program-group"><div class="program-group-title">${name}</div>${rows}</div>`;
+}).join('');
+}
+
+function getTodayIndex_() {
+return (new Date().getDay() + 6) % 7; // Monday = 0 ... Sunday = 6, matches WEEK_DAY_ORDER
+}
+
+/** Scans forward from today (including today, if not yet started) to find the next upcoming session. */
+function findNextSession_() {
+if (!lbScheduleWeek) return null;
+const todayIdx = getTodayIndex_();
+const now = new Date();
+const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+for (let offset = 0; offset < 7; offset++) {
+const idx = (todayIdx + offset) % 7;
+const dayData = lbScheduleWeek[idx];
+if (!dayData || !dayData.active || !dayData.sessions || dayData.sessions.length === 0) continue;
+
+const sorted = dayData.sessions.slice().sort(function (a, b) { return a.startTime.localeCompare(b.startTime); });
+
+for (let i = 0; i < sorted.length; i++) {
+const s = sorted[i];
+if (offset === 0) {
+const parts = s.startTime.split(':');
+const startMinutes = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+if (startMinutes <= nowMinutes) continue; // already started/passed today
+}
+return { day: dayData.day, session: s, isToday: offset === 0 };
+}
+}
+return null;
+}
+
+function renderNextSession_() {
+const container = document.getElementById('nextSessionCard');
+if (!container) return;
+
+const next = findNextSession_();
+if (!next) {
+container.innerHTML = `<div class="panel" style="margin:0"><p class="lb-text" style="color:var(--muted);margin:0">No upcoming sessions scheduled.</p></div>`;
+return;
+}
+
+const dayLabel = next.isToday ? 'Today' : next.day;
+container.innerHTML = `
+<div class="panel next-session-card" style="margin:0" onclick="jumpToScheduleDay_('${next.day}')">
+<div class="next-session-label">Next Training</div>
+<div class="next-session-title">${lbShortProgramName_(next.session.programName)}</div>
+<div class="next-session-meta">${dayLabel} · ${lbFormatTimeRange_(next.session.startTime, next.session.endTime)}</div>
+<div class="next-session-venue">${next.session.venue}</div>
+<div class="next-session-link">View schedule →</div>
+</div>
+`;
+}
+
+function jumpToScheduleDay_(day) {
+switchScheduleView_('day');
+renderScheduleDay(day);
+const dayView = document.getElementById('scheduleDayView');
+if (dayView) dayView.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function switchScheduleView_(mode) {
+const dayView = document.getElementById('scheduleDayView');
+const programView = document.getElementById('scheduleProgramView');
+const btnDay = document.getElementById('schedViewBtnDay');
+const btnProgram = document.getElementById('schedViewBtnProgram');
+if (!dayView || !programView) return;
+
+if (mode === 'program') {
+dayView.style.display = 'none';
+programView.style.display = 'block';
+btnDay.classList.remove('active');
+btnProgram.classList.add('active');
+renderScheduleByProgram_();
+} else {
+dayView.style.display = 'block';
+programView.style.display = 'none';
+btnProgram.classList.remove('active');
+btnDay.classList.add('active');
+}
+}
+
+function getProgramScheduleText_(programTitle) {if (!lbScheduleWeek) return null; // hindi pa naka-load — gagamit ng fallback sa caller
 const lines = [];
 lbScheduleWeek.forEach(function (d) {
 if (!d.active) return;
@@ -2676,30 +3061,51 @@ lines.push(d.day.slice(0,3) + ' ' + lbFormatTime12_(s.startTime) + '–' + lbFor
 return lines.length ? lines.join(' | ') : null;
 }
 
+function updateScheduleHeading_(day) {
+const headingEl = document.getElementById('schedDayHeading');
+const subEl = document.getElementById('schedDateSub');
+if (!headingEl || !subEl) return;
+const todayName = WEEK_DAY_ORDER[(new Date().getDay() + 6) % 7];
+if (day === todayName) {
+headingEl.textContent = 'Today · ' + day;
+subEl.textContent = new Date().toLocaleDateString(undefined, { month:'long', day:'numeric' });
+} else {
+headingEl.textContent = day;
+subEl.textContent = 'This week';
+}
+}
+
 function renderScheduleDay(day) {
 
 lbScheduleActiveDay = day;
 renderScheduleTabs();
-
+updateScheduleHeading_(day);
 const body = document.getElementById('schedBody');
 const dayData = lbScheduleWeek.find(function (d) { return d.day === day; });
 
 if (!dayData || !dayData.active || !dayData.sessions || dayData.sessions.length === 0) {
-body.innerHTML = `<p class="lb-text" style="color:var(--muted);text-align:center;padding:20px 0">No training scheduled — OFF day.</p>`;
+body.innerHTML = `<p class="lb-text" style="color:var(--muted);padding:6px 0 2px">No scheduled sessions.</p>`;
 return;
 }
 
-body.innerHTML = dayData.sessions.map(function (s) {
-const notesLine = s.notes ? ' · ' + s.notes : '';
+lbCurrentDaySessions = dayData.sessions;
+
+body.innerHTML = dayData.sessions.map(function (s, i) {
+const isPrivate = /private/i.test(s.programName);
+const tagLabel = lbSessionTagLabel_(s.programName, s.notes);
+const tagHtml = !tagLabel ? '' :
+isPrivate
+? `<div class="event-tags">${tagLabel}</div>`
+: `<div class="event-tags" onclick="openSessionDetail_(${i})">${tagLabel} ›</div>`;
 return `
 <div class="event">
-<b>${s.programName}</b>
-<span>${lbFormatTime12_(s.startTime)}–${lbFormatTime12_(s.endTime)} · ${s.venue}${notesLine}</span>
+<div class="event-time">${lbFormatTimeRange_(s.startTime, s.endTime)}</div>
+<div class="event-title">${lbShortProgramName_(s.programName)}</div>
+<div class="event-venue">${s.venue}</div>
+${tagHtml}
 </div>
 `;
-}).join('');
-
-}
+}).join('');}
 /* === END: DYNAMIC SCHEDULE — FETCH + RENDER (with hardcoded fallback) === */
 
 
@@ -2788,6 +3194,34 @@ document.getElementById('livityBackdrop').classList.add('open');
 
 }
 
+/* === START: ACCESS GATE — NEW VS EXISTING PLAYER === */
+let lbPendingProgramId = '';
+
+/** Universal entry point for every "Register Now" CTA — never lands on the full form directly, always confirms New vs Existing first. */
+function lbGateThenEnroll_(programId) {
+lbPendingProgramId = programId || '';
+lbGoTo('accessGate');
+document.getElementById('livityModal').classList.add('open');
+document.getElementById('livityBackdrop').classList.add('open');
+}
+
+function lbRenderAccessGate_() {
+return `
+<h5 class="lb-step-title">New to Livity?</h5>
+<p class="lb-text">Create a new player profile and register for training.</p>
+<button class="btn primary" style="width:100%;margin-bottom:14px" onclick="lbAccessGateNew_()">I'm New — Register →</button>
+
+<h5 class="lb-step-title">Already training with us?</h5>
+<p class="lb-text">Access your player profile — top up sessions, check schedule, payments, or update info. No need to register again.</p>
+<button class="btn outline" style="width:100%" onclick="lbGoTo('topupFind')">Already Registered — Access My Player →</button>
+`;
+}
+
+function lbAccessGateNew_() {
+lbStartDirectEnroll(lbPendingProgramId || 'PRG-REG');
+}
+/* === END: ACCESS GATE — NEW VS EXISTING PLAYER === */
+
 function lbGoTo(screen) {
 
 lbScreen = screen;
@@ -2809,6 +3243,17 @@ back.style.display = 'grid';
 title.textContent = 'Ask Admin JA';
 back.style.display = 'grid';
 lbOpenAskAdmin_();
+} else if (screen === 'topupFind') {
+lbBackTarget = 'menu';
+title.textContent = 'Access Your Player';
+back.style.display = 'grid';
+lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
+body.innerHTML = lbRenderTopupFind_();
+} else if (screen === 'accessGate') {
+lbBackTarget = 'menu';
+title.textContent = 'Welcome to Livity';
+back.style.display = 'grid';
+body.innerHTML = lbRenderAccessGate_();
 }
 
 body.scrollTop = 0;
@@ -2817,6 +3262,9 @@ body.scrollTop = 0;
 
 function lbScreenMenu() {
 return `
+<button class="lb-item" onclick="lbGoTo('topupFind')">
+<span class="lb-ico">⟳</span> Top Up Sessions
+</button>
 <button class="lb-item" onclick="lbGoTo('askadmin')">
 <span class="lb-ico">☷</span> Ask Admin JA
 </button>`;
@@ -3199,6 +3647,432 @@ lbGoTo('menu');
 
 }
 /* === END: ANYTIME LIVITY ASSISTANT — SCREENS === */
+
+
+/* === START: TOP-UP FLOW — EXISTING PLAYER (Identify → Top Up → Payment → Confirm) === */
+let lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
+const LB_TOPUP_PRICE = { 'U5-U7':3500, 'U9-U13':4500, 'U15+':5000 };
+
+function lbRenderTopupFind_() {
+return `
+<h5 class="lb-step-title">Find Your Player</h5>
+<p class="lb-text">Enter the WhatsApp / mobile number used at registration, or the Player ID.</p>
+<input class="lb-input" id="topupQuery" placeholder="Mobile / WhatsApp number or Player ID" value="${lbTopup.query}">
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" onclick="lbSubmitTopupFind_()">Find My Player →</button>
+`;
+}
+
+async function lbSubmitTopupFind_() {
+const input = document.getElementById('topupQuery');
+const query = input ? input.value.trim() : '';
+const err = document.getElementById('lbErr');
+if (!query) { if (err) err.textContent = 'Please enter a mobile number or Player ID.'; return; }
+
+lbTopup.query = query;
+if (err) err.textContent = '';
+
+try {
+const res = await fetch(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(query));
+const json = await res.json();
+if (!json.success) throw new Error(json.error || 'Search failed.');
+if (!json.players || json.players.length === 0) {
+if (err) err.textContent = "We couldn't find a player with that number/ID. Please check and try again, or WhatsApp Admin JA.";
+return;
+}
+lbTopup.players = json.players;
+if (json.players.length === 1) {
+lbTopup.selected = json.players[0];
+lbBody().innerHTML = lbRenderPlayerHub_();
+document.getElementById('lbTitle').textContent = lbTopup.selected.fullName;
+} else {
+lbBody().innerHTML = lbRenderTopupPlayerList_();
+}
+} catch (e) {
+if (err) err.textContent = "We couldn't reach the server (" + e.message + "). Please try again.";
+}
+}
+
+function lbRenderTopupPlayerList_() {
+const opts = lbTopup.players.map(function (p, i) {
+return `
+<button type="button" class="lb-pkg" onclick="lbSelectTopupPlayer_(${i})">
+<b>${p.fullName}</b>
+<span>${p.programName}</span>
+</button>
+`;
+}).join('');
+return `
+<h5 class="lb-step-title">Select Player</h5>
+${opts}
+`;
+}
+
+function lbSelectTopupPlayer_(i) {
+lbTopup.selected = lbTopup.players[i];
+lbBody().innerHTML = lbRenderPlayerHub_();
+document.getElementById('lbTitle').textContent = lbTopup.selected.fullName;
+}
+
+function lbTopupRemaining_(programId) {
+const p = lbTopup.selected;
+if (!p || !p.packages) return 0;
+const pid = programId || lbTopup.activeProgramId;
+return p.packages
+.filter(function (pkg) { return pkg.programId === pid; })
+.reduce(function (sum, pkg) { return sum + Math.max(0, pkg.remaining); }, 0);
+}
+
+function lbRenderPlayerHub_() {
+const p = lbTopup.selected;
+const rels = (p.relationships && p.relationships.length) ? p.relationships : [{ programId:p.programId, programName:p.programName, remaining:0, hasPackage:false }];
+
+const relCards = rels.map(function (r) {
+const sub = r.programId === 'PRG-PRIV'
+? 'Rate confirmed by coach'
+: (r.hasPackage ? (r.remaining + ' session' + (r.remaining === 1 ? '' : 's') + ' remaining') : 'No active package');
+return `
+<button type="button" class="lb-pkg" style="margin-bottom:8px" onclick="lbTopup.activeProgramId='${r.programId}';lbBody().innerHTML=lbRenderTopupSummary_()">
+<b>${lbShortProgramName_(r.programName)}</b>
+<span>${sub}</span>
+</button>
+`;
+}).join('');
+
+return `
+<div class="panel" style="margin:0 0 12px;padding:14px">
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin:0 0 2px;letter-spacing:.5px">${p.playerId}</p>
+<p class="lb-text" style="font-size:16px;font-weight:800;color:var(--text);margin:0">${p.fullName}</p>
+</div>
+<div class="session-detail-label">Training</div>
+${relCards}
+<button class="lb-item" onclick="lbOpenAddProgram_()">
+<span class="lb-ico">＋</span> Add Another Program
+</button>
+<button class="lb-item" onclick="closeLivityBall();show('schedule')">
+<span class="lb-ico">◷</span> View Training Schedule
+</button>
+<button class="lb-item" onclick="lbGoTo('askadmin')">
+<span class="lb-ico">₱</span> Payments & Balance
+</button>
+<button class="lb-item" onclick="lbGoTo('askadmin')">
+<span class="lb-ico">✎</span> Update Player Info
+</button>
+`;
+}
+
+function lbActiveProgramName_() {
+const p = lbTopup.selected;
+const rel = (p.relationships || []).find(function (r) { return r.programId === lbTopup.activeProgramId; });
+return rel ? rel.programName : p.programName;
+}
+
+function lbRenderTopupSummary_() {
+const pid = lbTopup.activeProgramId || lbTopup.selected.programId;
+if (pid === 'PRG-ACAD') return lbRenderTopupAcademyPackage_();
+if (pid === 'PRG-ADV')  return lbRenderTopupAdvanced_();
+if (pid === 'PRG-PRIV') return lbRenderTopupPrivateUnavailable_();
+return lbRenderTopupRegular_(); // PRG-REG
+}
+
+function lbRenderTopupRegular_() {
+const p = lbTopup.selected;
+const remaining = lbTopupRemaining_('PRG-REG');
+const topupPrice = LB_TOPUP_PRICE[p.category];
+
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderPlayerHub_()">← Back</button>
+<h5 class="lb-step-title">${p.fullName}</h5>
+<p class="lb-text">${lbActiveProgramName_()} · ${p.category || '—'}</p>
+<p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">${remaining} session${remaining === 1 ? '' : 's'} remaining</p>
+<div class="lb-err" id="lbErr"></div>
+${topupPrice
+? `<button class="btn primary" style="width:100%" onclick="lbTopup.packageKey='';lbBody().innerHTML=lbRenderTopupPayment_()">Top Up → ₱${topupPrice.toLocaleString()}</button>`
+: `<p class="lb-text" style="color:var(--muted)">Top-up rate for this category isn't set yet — please WhatsApp Admin JA.</p>`}
+`;
+}
+
+function lbRenderTopupAcademyPackage_() {
+const p = lbTopup.selected;
+const remaining = lbTopupRemaining_('PRG-ACAD');
+const opts = Object.entries(lbPackages).map(([key, pkg]) => `
+<button type="button" class="lb-pkg ${lbTopup.packageKey === key ? 'sel' : ''}" onclick="lbTopup.packageKey='${key}';lbBody().innerHTML=lbRenderTopupAcademyPackage_()">
+<b>${pkg.label}</b>
+<span>₱${pkg.price.toLocaleString()}</span>
+</button>
+`).join('');
+
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderPlayerHub_()">← Back</button>
+<h5 class="lb-step-title">${p.fullName}</h5>
+<p class="lb-text">${lbActiveProgramName_()}</p>
+<p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">${remaining} session${remaining === 1 ? '' : 's'} remaining</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin:6px 0 10px">Choose a package to renew — no Membership Fee this time, it's already on file.</p>
+${opts}
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" ${lbTopup.packageKey ? '' : 'disabled style="opacity:.5"'} onclick="lbBody().innerHTML=lbRenderTopupPayment_()">Continue →</button>
+`;
+}
+
+function lbRenderTopupAdvanced_() {
+const p = lbTopup.selected;
+lbTopup.packageKey = '';
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderPlayerHub_()">← Back</button>
+<h5 class="lb-step-title">${p.fullName}</h5>
+<p class="lb-text">${lbActiveProgramName_()} · Per Session</p>
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" onclick="lbBody().innerHTML=lbRenderTopupPayment_()">Book Session → ₱1,300</button>
+`;
+}
+
+function lbRenderTopupPrivateUnavailable_() {
+const p = lbTopup.selected;
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderPlayerHub_()">← Back</button>
+<h5 class="lb-step-title">${p.fullName}</h5>
+<p class="lb-text">Private Training rates are confirmed directly by your coach.</p>
+<a href="https://wa.me/639762675397" target="_blank" rel="noopener" class="btn primary" style="width:100%;display:block;text-align:center;box-sizing:border-box;text-decoration:none">Message Admin JA →</a>
+`;
+}
+
+function lbTopupPaymentDetailsHtml_() {
+const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
+if (lbTopup.paymentMethod === 'GCash') {
+return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
+}
+if (lbTopup.paymentMethod === 'Bank Transfer / BPI') {
+return `<div class="notice" style="margin-top:8px"><b>${info.bank.name} Bank Transfer</b><br>${info.bank.accountName} · ${info.bank.accountNumber}</div>`;
+}
+return '';
+}
+
+function lbTopupAmount_() {
+const p = lbTopup.selected;
+const pid = lbTopup.activeProgramId;
+if (pid === 'PRG-ACAD' && lbTopup.packageKey) return lbPackages[lbTopup.packageKey].price;
+if (pid === 'PRG-ADV') return 1300;
+if (pid === 'PRG-REG') return LB_TOPUP_PRICE[p.category] || 0;
+return 0;
+}
+
+function lbRenderTopupPayment_() {
+const amount = lbTopupAmount_();
+const methods = ['GCash', 'Bank Transfer / BPI'];
+const opts = methods.map(function (m) {
+return `<button type="button" class="lb-pill ${lbTopup.paymentMethod === m ? 'sel' : ''}" onclick="lbTopup.paymentMethod='${m}';lbBody().innerHTML=lbRenderTopupPayment_()">${m}</button>`;
+}).join('');
+
+return `
+<h5 class="lb-step-title">Payment</h5>
+<p class="lb-text">Total amount due: <b>₱${amount.toLocaleString()}</b></p>
+<div class="lb-pills">${opts}</div>
+${lbTopupPaymentDetailsHtml_()}
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbBody().innerHTML=lbRenderTopupSummary_()">← Back</button>
+<button class="btn primary" id="lbTopupSubmitBtn" onclick="lbSubmitTopup_()">Confirm Payment →</button>
+</div>
+`;
+}
+
+async function lbSubmitTopup_() {
+const err = document.getElementById('lbErr');
+const btn = document.getElementById('lbTopupSubmitBtn');
+if (!lbTopup.paymentMethod) { if (err) err.textContent = 'Please select a payment method.'; return; }
+if (err) err.textContent = '';
+if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+try {
+const result = await doFetch('topup', {
+playerId: lbTopup.selected.playerId,
+programId: lbTopup.activeProgramId,
+category: lbTopup.selected.category,
+packageKey: lbTopup.packageKey || '',
+paymentMethod: lbTopup.paymentMethod
+});
+lbShowTopupSuccess_(result);
+} catch (e) {
+if (btn) { btn.disabled = false; btn.textContent = 'Confirm Payment →'; }
+if (err) err.textContent = "We couldn't process your payment (" + e.message + "). Please try again.";
+}
+}
+
+function lbShowTopupSuccess_(result) {
+document.getElementById('lbTitle').textContent = 'Topped Up!';
+document.getElementById('lbBackBtn').style.display = 'none';
+lbBody().innerHTML = `
+<p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">Top-up submitted successfully.</p>
+<p class="lb-text">Livity will confirm once payment is verified.</p>
+${result.amountDue ? `<p class="lb-text" style="font-size:11px;color:var(--muted)">Amount: ₱${Number(result.amountDue).toLocaleString()}</p>` : ''}
+<button class="btn primary" style="width:100%;margin-top:8px" onclick="lbTopup={query:'',players:[],selected:null,paymentMethod:'',packageKey:'',activeProgramId:''};lbGoTo('menu')">Done</button>
+`;
+}
+/* === END: TOP-UP FLOW — EXISTING PLAYER === */
+
+
+/* === START: ADD ANOTHER PROGRAM — SAME IDENTITY, NO RE-ENTRY === */
+let lbAddProgram = { programId:'', category:'', packageKey:'', paymentMethod:'' };
+
+function lbOpenAddProgram_() {
+lbAddProgram = { programId:'', category:'', packageKey:'', paymentMethod:'' };
+lbBody().innerHTML = lbRenderAddProgramChoose_();
+document.getElementById('lbTitle').textContent = 'Add a Program';
+}
+
+function lbBackToHub_() {
+lbBody().innerHTML = lbRenderPlayerHub_();
+document.getElementById('lbTitle').textContent = lbTopup.selected.fullName;
+}
+
+function lbRenderAddProgramChoose_() {
+const p = lbTopup.selected;
+const existingIds = (p.relationships || []).map(function (r) { return r.programId; });
+const allPrograms = [
+{ id:'PRG-REG', label:'Specialized Training — Regular' },
+{ id:'PRG-PRIV', label:'Specialized Training — Private' },
+{ id:'PRG-ADV', label:'Advanced Performance' },
+{ id:'PRG-ACAD', label:'Academy Training' }
+];
+const available = allPrograms.filter(function (pr) { return existingIds.indexOf(pr.id) === -1; });
+
+if (available.length === 0) {
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBackToHub_()">← Back</button>
+<p class="lb-text">${p.fullName} is already in every program we offer.</p>
+`;
+}
+
+const opts = available.map(function (pr) {
+return `<button type="button" class="lb-pkg" onclick="lbAddProgram.programId='${pr.id}';lbBody().innerHTML=lbRenderAddProgramPackage_()"><b>${pr.label}</b></button>`;
+}).join('');
+
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBackToHub_()">← Back</button>
+<h5 class="lb-step-title">Which program?</h5>
+<p class="lb-text">${p.fullName}'s player and guardian info is already on file — no need to re-enter it.</p>
+${opts}
+`;
+}
+
+function lbRenderAddProgramPackage_() {
+
+if (lbAddProgram.programId === 'PRG-ACAD') {
+const opts = Object.entries(lbPackages).map(([key, pkg]) => `
+<button type="button" class="lb-pkg ${lbAddProgram.packageKey === key ? 'sel' : ''}" onclick="lbAddProgram.packageKey='${key}';lbBody().innerHTML=lbRenderAddProgramPackage_()">
+<b>${pkg.label}</b><span>₱${pkg.price.toLocaleString()}</span>
+</button>`).join('');
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderAddProgramChoose_()">← Back</button>
+<h5 class="lb-step-title">Academy Package</h5>
+${opts}
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">+ ₱${LB_MEMBERSHIP_FEE.toLocaleString()} one-time Membership Fee (includes 2 jersey sets).</p>
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" ${lbAddProgram.packageKey ? '' : 'disabled style="opacity:.5"'} onclick="lbBody().innerHTML=lbRenderAddProgramPayment_()">Continue →</button>
+`;
+}
+
+if (lbAddProgram.programId === 'PRG-ADV') {
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderAddProgramChoose_()">← Back</button>
+<h5 class="lb-step-title">Advanced Performance</h5>
+<p class="lb-text">Per-session rate, by assessment.</p>
+<div class="lb-pkg sel"><b>Per Session</b><span>₱1,300</span></div>
+<button class="btn primary" style="width:100%" onclick="lbBody().innerHTML=lbRenderAddProgramPayment_()">Continue →</button>
+`;
+}
+
+if (lbAddProgram.programId === 'PRG-PRIV') {
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderAddProgramChoose_()">← Back</button>
+<h5 class="lb-step-title">Private Training</h5>
+<p class="lb-text">Private sessions are flexible — rates depend on coach & schedule. We'll confirm the rate after you submit.</p>
+<button class="btn primary" style="width:100%" onclick="lbBody().innerHTML=lbRenderAddProgramPayment_()">Continue →</button>
+`;
+}
+
+const cats = ['U5-U7','U9-U13','U15+'];
+const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
+const catOpts = cats.map(c => `<button type="button" class="lb-pill ${lbAddProgram.category === c ? 'sel' : ''}" onclick="lbAddProgram.category='${c}';lbBody().innerHTML=lbRenderAddProgramPackage_()">${c}</button>`).join('');
+const priceLine = lbAddProgram.category ? `<p class="lb-text"><b>${lbAddProgram.category}</b> — ₱${catPrice[lbAddProgram.category].toLocaleString()} / 5-session package</p>` : '';
+
+return `
+<button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderAddProgramChoose_()">← Back</button>
+<h5 class="lb-step-title">Specialized Training — Regular</h5>
+<div class="lb-pills">${catOpts}</div>
+${priceLine}
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" ${lbAddProgram.category ? '' : 'disabled style="opacity:.5"'} onclick="lbBody().innerHTML=lbRenderAddProgramPayment_()">Continue →</button>
+`;
+
+}
+
+function lbAddProgramAmount_() {
+if (lbAddProgram.programId === 'PRG-ACAD' && lbAddProgram.packageKey) return lbPackages[lbAddProgram.packageKey].price + LB_MEMBERSHIP_FEE;
+if (lbAddProgram.programId === 'PRG-ADV') return 1300;
+if (lbAddProgram.programId === 'PRG-REG' && lbAddProgram.category) return { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 }[lbAddProgram.category];
+return null;
+}
+
+function lbAddProgramPaymentDetailsHtml_() {
+const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
+if (lbAddProgram.paymentMethod === 'GCash') return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
+if (lbAddProgram.paymentMethod === 'Bank Transfer / BPI') return `<div class="notice" style="margin-top:8px"><b>${info.bank.name} Bank Transfer</b><br>${info.bank.accountName} · ${info.bank.accountNumber}</div>`;
+return '';
+}
+
+function lbRenderAddProgramPayment_() {
+const amount = lbAddProgramAmount_();
+const totalLine = amount !== null ? `Total amount due: <b>₱${amount.toLocaleString()}</b>` : `Amount due will be confirmed by your coach.`;
+const methods = ['GCash', 'Bank Transfer / BPI'];
+const opts = methods.map(m => `<button type="button" class="lb-pill ${lbAddProgram.paymentMethod === m ? 'sel' : ''}" onclick="lbAddProgram.paymentMethod='${m}';lbBody().innerHTML=lbRenderAddProgramPayment_()">${m}</button>`).join('');
+
+return `
+<h5 class="lb-step-title">Payment</h5>
+<p class="lb-text">${totalLine}</p>
+<div class="lb-pills">${opts}</div>
+${lbAddProgramPaymentDetailsHtml_()}
+<div class="lb-err" id="lbErr"></div>
+<div class="lb-nav">
+<button class="btn outline" onclick="lbBody().innerHTML=lbRenderAddProgramPackage_()">← Back</button>
+<button class="btn primary" id="lbAddProgramSubmitBtn" onclick="lbSubmitAddProgram_()">Confirm →</button>
+</div>
+`;
+}
+
+async function lbSubmitAddProgram_() {
+const err = document.getElementById('lbErr');
+const btn = document.getElementById('lbAddProgramSubmitBtn');
+if (!lbAddProgram.paymentMethod) { if (err) err.textContent = 'Please select a payment method.'; return; }
+if (err) err.textContent = '';
+if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+try {
+const result = await doFetch('addProgram', {
+playerId: lbTopup.selected.playerId,
+programId: lbAddProgram.programId,
+category: lbAddProgram.category,
+packageKey: lbAddProgram.packageKey,
+paymentMethod: lbAddProgram.paymentMethod
+});
+lbShowAddProgramSuccess_(result);
+} catch (e) {
+if (btn) { btn.disabled = false; btn.textContent = 'Confirm →'; }
+if (err) err.textContent = "We couldn't add this program (" + e.message + "). Please try again.";
+}
+}
+
+function lbShowAddProgramSuccess_(result) {
+document.getElementById('lbTitle').textContent = 'Program Added!';
+document.getElementById('lbBackBtn').style.display = 'none';
+lbBody().innerHTML = `
+<p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">New program added successfully.</p>
+<p class="lb-text">Livity will confirm your enrollment shortly.</p>
+${result.amountDue ? `<p class="lb-text" style="font-size:11px;color:var(--muted)">Amount: ₱${Number(result.amountDue).toLocaleString()}</p>` : ''}
+<button class="btn primary" style="width:100%;margin-top:8px" onclick="lbGoTo('menu')">Done</button>
+`;
+}
+/* === END: ADD ANOTHER PROGRAM === */
 
 
 /* === START: ASK ADMIN JA — CHAT (Sheet-backed) === */
@@ -3647,7 +4521,7 @@ View Prices →
 <button
 class="btn primary"
 style="width:100%"
-onclick="lbStartDirectEnroll('${d.programId}')"
+onclick="lbGateThenEnroll_('${d.programId}')"
 >
 Register Now →
 </button>
@@ -3763,5 +4637,4 @@ el.parentElement.classList.contains('open')
 </script>
 </body>
 </html>
-
 
