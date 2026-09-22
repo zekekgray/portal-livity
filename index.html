@@ -651,6 +651,37 @@ border-radius:8px;
 border:1px solid #ffe38a;
 }
 
+/* === START: DYNAMIC SCHEDULE — TABS === */
+.sched-tabs {
+display:flex;
+overflow-x:auto;
+-webkit-overflow-scrolling:touch;
+background:#171714;
+padding:10px 10px 0;
+gap:6px;
+}
+.sched-tab {
+flex:1 0 auto;
+min-width:44px;
+background:none;
+border:0;
+border-radius:12px 12px 0 0;
+padding:10px 6px;
+font-size:11px;
+font-weight:800;
+letter-spacing:.5px;
+color:#8d8a80;
+cursor:pointer;
+}
+.sched-tab.active {
+background:var(--cream);
+color:var(--navy);
+}
+.sched-tab.off.active {
+color:var(--muted);
+}
+/* === END: DYNAMIC SCHEDULE — TABS === */
+
 /* PRICING */
 
 .price-grid {
@@ -1118,6 +1149,92 @@ height:100%;
 background:var(--navy);
 transition:width .25s ease;
 }
+
+/* === START: ASK ADMIN JA CHAT — STYLES === */
+.chat-header {
+display:flex;
+align-items:center;
+gap:10px;
+padding-bottom:10px;
+margin-bottom:10px;
+border-bottom:1px solid var(--line);
+}
+.chat-avatar {
+width:38px;
+height:38px;
+border-radius:50%;
+background:var(--navy);
+color:#fff;
+display:grid;
+place-items:center;
+font-weight:800;
+font-size:14px;
+flex-shrink:0;
+}
+.chat-header b { display:block; font-size:13px; color:var(--text); }
+.chat-header span { font-size:11px; color:var(--muted); }
+.chat-messages {
+max-height:38vh;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+display:flex;
+flex-direction:column;
+gap:8px;
+padding:2px 2px 8px;
+}
+.chat-bubble {
+max-width:80%;
+padding:9px 12px;
+border-radius:14px;
+font-size:12.5px;
+line-height:1.45;
+}
+.chat-bubble.parent {
+align-self:flex-end;
+background:var(--navy);
+color:#fff;
+border-bottom-right-radius:4px;
+}
+.chat-bubble.admin {
+align-self:flex-start;
+background:#f5f2ea;
+color:var(--text);
+border-bottom-left-radius:4px;
+}
+.chat-empty { text-align:center; color:var(--muted); font-size:12px; padding:16px 0; }
+.chat-quick { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.chat-quick button {
+border:1px solid var(--line);
+background:#fff;
+border-radius:12px;
+padding:7px 11px;
+font-size:11px;
+font-weight:650;
+color:var(--navy);
+cursor:pointer;
+}
+.chat-input-row { display:flex; gap:8px; margin-top:6px; }
+.chat-input-row input {
+flex:1;
+border:1px solid var(--line);
+border-radius:14px;
+padding:10px 14px;
+font-size:14px;
+font-family:inherit;
+background:#fafaf8;
+color:var(--text);
+}
+.chat-send-btn {
+background:var(--navy);
+color:#fff;
+border:0;
+border-radius:14px;
+padding:0 16px;
+font-weight:800;
+font-size:13px;
+cursor:pointer;
+}
+/* === END: ASK ADMIN JA CHAT — STYLES === */
 /* === END: ANYTIME LIVITY BALL — STYLES === */
 
 /* === START: TRAINED WITH LIVITY — SOCIAL PROOF STYLES === */
@@ -1465,7 +1582,7 @@ U5 · U7 · U9 · U11 · U13 · Team pathway
 </div>
 
 
-<div class="notice" onclick="window.open('https://wa.me/639762675397','_blank')" style="cursor:pointer">
+<div class="notice" onclick="toggleLivityBall();lbGoTo('askadmin')" style="cursor:pointer">
 Not sure which is right for your child?
 <b>Ask Admin JA →</b>
 </div>
@@ -1495,95 +1612,12 @@ See when and where we train.
 </p>
 
 
-<div class="panel schedule">
+<div class="panel" style="padding:0;overflow:hidden">
 
-<div class="day">
-TUESDAY
-</div>
+<div class="sched-tabs" id="schedTabs"></div>
 
-<div class="event">
-<b>
-Specialized Training — Regular
-</b>
-
-<span>
-6:30–8:30 PM · PAREF Southridge · Ages 4+ · Beginners & Non-Beginners Welcome
-</span>
-</div>
-
-
-<div class="day">
-THURSDAY
-</div>
-
-<div class="event">
-
-<b>
-Private Training
-</b>
-
-<span>
-4:00–6:00 PM · Pacific Malayan · Ages 4+ · Beginners & Non-Beginners Welcome
-</span>
-
-</div>
-
-
-<div class="event">
-
-<b>
-Advanced Performance — Pro Session
-</b>
-
-<span>
-6:30–8:30 PM · PAREF Southridge
-· Ages 13+ (12 & below require Coach's Assessment) · Strong Technical & Tactical Foundation Required
-</span>
-
-</div>
-
-
-<div class="event">
-
-<b>
-Academy Training
-</b>
-
-<span>
-6:30–8:30 PM · PAREF Southridge
-</span>
-
-</div>
-
-
-<div class="day">
-SATURDAY
-</div>
-
-
-<div class="event">
-
-<b>
-Specialized Training — Regular
-</b>
-
-<span>
-7:00–9:00 AM · PAREF Southridge · Ages 4+ · Beginners & Non-Beginners Welcome
-</span>
-
-</div>
-
-
-<div class="event">
-
-<b>
-Academy Training
-</b>
-
-<span>
-7:00–9:00 AM · PAREF Southridge
-</span>
-
+<div class="sched-body" id="schedBody" style="padding:16px">
+<p class="lb-text" style="color:var(--muted);text-align:center;padding:12px 0">Loading schedule…</p>
 </div>
 
 </div>
@@ -2421,6 +2455,8 @@ Enroll
 
 <script>
 
+const LB_SCHEDULE_UNAVAILABLE_MSG = "Schedule temporarily unavailable — check the Schedule tab or WhatsApp Admin JA.";
+
 const data = {
 
 regular: {
@@ -2450,8 +2486,7 @@ best:
 "Players looking to develop a strong technical foundation and receive consistent training.",
 
 schedule:
-"Tue 6:30–8:30 PM · PAREF Southridge · Ages 4+ | Sat 7:00–9:00 AM · PAREF Southridge · Ages 4+",
-
+LB_SCHEDULE_UNAVAILABLE_MSG,
 registerUrl:
 "https://bit.ly/LivityTrainingRegistration"
 
@@ -2459,6 +2494,8 @@ registerUrl:
 
 
 private: {
+
+programId:"PRG-PRIV",
 
 title:"Specialized Training — Private",
 
@@ -2480,8 +2517,7 @@ best:
 "Players wanting focused development, flexible scheduling, or extra training.",
 
 schedule:
-"Thu 4:00–6:00 PM · Pacific Malayan · Ages 4+. Additional sessions flexible — based on coach & field availability. Separate rates apply.",
-
+LB_SCHEDULE_UNAVAILABLE_MSG,
 registerUrl:
 "https://bit.ly/LivityTrainingRegistration"
 
@@ -2490,8 +2526,9 @@ registerUrl:
 
 advanced: {
 
-title:"Advanced Performance Training",
+programId:"PRG-ADV",
 
+title:"Advanced Performance Training",
 sub:"Assessment Required · U11+",
 
 what:
@@ -2512,8 +2549,7 @@ best:
 "Players with strong fundamentals ready for a more advanced, competitive environment.",
 
 schedule:
-"Thu 6:30–8:30 PM · PAREF Southridge · Ages 13+ (12 & below require Coach's Assessment). Eligibility confirmed by Coach Sam.",
-
+LB_SCHEDULE_UNAVAILABLE_MSG,
 registerUrl:
 "https://bit.ly/LivityTrainingRegistration"
 
@@ -2521,6 +2557,8 @@ registerUrl:
 
 
 academy: {
+
+programId:"PRG-ACAD",
 
 title:"Academy Training",
 
@@ -2545,13 +2583,124 @@ best:
 "Players seeking a complete football experience combining individual growth, teamwork, and long-term development.",
 
 schedule:
-"Thu 6:30–8:30 PM · PAREF Southridge | Sat 7:00–9:00 AM · PAREF Southridge.",
+LB_SCHEDULE_UNAVAILABLE_MSG,
 registerUrl:
 "https://bit.ly/LivityAcademyEnrollment"
 
 }
 
 };
+
+
+/* === START: DYNAMIC SCHEDULE — FETCH + RENDER (with hardcoded fallback) === */
+const WEEK_DAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+const LIVITY_SCHEDULE_FALLBACK = [
+{ day:'Monday', active:false, sessions:[] },
+{ day:'Tuesday', active:true, sessions:[
+{ programName:'Specialized Training — Regular', startTime:'18:30', endTime:'20:30', venue:'PAREF Southridge', notes:"Ages 4+ · Beginners & Non-Beginners Welcome" }
+]},
+{ day:'Wednesday', active:false, sessions:[] },
+{ day:'Thursday', active:true, sessions:[
+{ programName:'Private Training', startTime:'16:00', endTime:'18:00', venue:'Pacific Malayan', notes:"Ages 4+ · Beginners & Non-Beginners Welcome" },
+{ programName:'Advanced Performance — Pro Session', startTime:'18:30', endTime:'20:30', venue:'PAREF Southridge', notes:"Ages 13+ (12 & below require Coach's Assessment) · Strong Technical & Tactical Foundation Required" },
+{ programName:'Academy Training', startTime:'18:30', endTime:'20:30', venue:'PAREF Southridge', notes:'' }
+]},
+{ day:'Friday', active:false, sessions:[] },
+{ day:'Saturday', active:true, sessions:[
+{ programName:'Specialized Training — Regular', startTime:'07:00', endTime:'09:00', venue:'PAREF Southridge', notes:"Ages 4+ · Beginners & Non-Beginners Welcome" },
+{ programName:'Academy Training', startTime:'07:00', endTime:'09:00', venue:'PAREF Southridge', notes:'' }
+]},
+{ day:'Sunday', active:false, sessions:[] }
+];
+
+let lbScheduleWeek = null;
+let lbScheduleActiveDay = null;
+
+function lbFormatTime12_(t) {
+if (!t || t.indexOf(':') === -1) return t || '';
+const parts = t.split(':');
+let h = parseInt(parts[0], 10);
+const m = parts[1];
+const suffix = h >= 12 ? 'PM' : 'AM';
+h = h % 12; if (h === 0) h = 12;
+return h + ':' + m + ' ' + suffix;
+}
+
+async function loadSchedule() {
+
+try {
+const res = await fetch(LIVITY_API_URL + '?action=schedule');
+const json = await res.json();
+if (!json.success || !json.week) throw new Error('bad schedule payload');
+lbScheduleWeek = json.week;
+} catch (e) {
+lbScheduleWeek = LIVITY_SCHEDULE_FALLBACK;
+}
+
+const todayName = WEEK_DAY_ORDER[(new Date().getDay() + 6) % 7];
+lbScheduleActiveDay = lbScheduleWeek.some(function (d) { return d.day === todayName; })
+? todayName
+: lbScheduleWeek[0].day;
+
+renderScheduleTabs();
+renderScheduleDay(lbScheduleActiveDay);
+
+}
+
+function renderScheduleTabs() {
+
+const tabsEl = document.getElementById('schedTabs');
+if (!tabsEl || !lbScheduleWeek) return;
+
+tabsEl.innerHTML = lbScheduleWeek.map(function (d) {
+const short = d.day.slice(0, 3).toUpperCase();
+const cls = (d.day === lbScheduleActiveDay ? 'active ' : '') + (d.active ? '' : 'off');
+return `<button class="sched-tab ${cls}" onclick="renderScheduleDay('${d.day}')">${short}</button>`;
+}).join('');
+
+}
+
+function getProgramScheduleText_(programTitle) {
+if (!lbScheduleWeek) return null; // hindi pa naka-load — gagamit ng fallback sa caller
+const lines = [];
+lbScheduleWeek.forEach(function (d) {
+if (!d.active) return;
+(d.sessions || []).forEach(function (s) {
+if (s.programName === programTitle) {
+const notesLine = s.notes ? ' · ' + s.notes : '';
+lines.push(d.day.slice(0,3) + ' ' + lbFormatTime12_(s.startTime) + '–' + lbFormatTime12_(s.endTime) + ' · ' + s.venue + notesLine);
+}
+});
+});
+return lines.length ? lines.join(' | ') : null;
+}
+
+function renderScheduleDay(day) {
+
+lbScheduleActiveDay = day;
+renderScheduleTabs();
+
+const body = document.getElementById('schedBody');
+const dayData = lbScheduleWeek.find(function (d) { return d.day === day; });
+
+if (!dayData || !dayData.active || !dayData.sessions || dayData.sessions.length === 0) {
+body.innerHTML = `<p class="lb-text" style="color:var(--muted);text-align:center;padding:20px 0">No training scheduled — OFF day.</p>`;
+return;
+}
+
+body.innerHTML = dayData.sessions.map(function (s) {
+const notesLine = s.notes ? ' · ' + s.notes : '';
+return `
+<div class="event">
+<b>${s.programName}</b>
+<span>${lbFormatTime12_(s.startTime)}–${lbFormatTime12_(s.endTime)} · ${s.venue}${notesLine}</span>
+</div>
+`;
+}).join('');
+
+}
+/* === END: DYNAMIC SCHEDULE — FETCH + RENDER (with hardcoded fallback) === */
 
 
 /* === START: ANYTIME LIVITY ASSISTANT — SCREENS === */
@@ -2562,6 +2711,38 @@ let lbEnrollStep = 0;
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
 const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyfgpWMbCmzFwYssnn1wLvtbU3iX8T60renhcP_33DxWdCpStJs4X8XgJJ0_0yq4lPlRQ/exec';
 
+const LIVITY_PAYMENT_INFO_FALLBACK = {
+gcash: { number:'09762675397', accountName:'Livity Training & Academy' },
+bank: { name:'BPI', accountNumber:'Ask Admin JA for details', accountName:'Livity Training & Academy' }
+};
+
+let lbPaymentInfo = null;
+
+async function loadPaymentInfo() {
+try {
+const res = await fetch(LIVITY_API_URL + '?action=paymentInfo');
+const json = await res.json();
+if (!json.success) throw new Error('bad payment info payload');
+lbPaymentInfo = json;
+} catch (e) {
+lbPaymentInfo = LIVITY_PAYMENT_INFO_FALLBACK;
+}
+}
+
+async function loadPackages() {
+try {
+const res = await fetch(LIVITY_API_URL + '?action=academyPackages');
+const json = await res.json();
+if (!json.success) throw new Error('bad packages payload');
+Object.keys(json.packages).forEach(function (key) {
+const p = json.packages[key];
+lbPackages[key] = { label: LB_PACKAGE_DESC[key] + ' — ' + p.sessions + ' Sessions', price: p.price, sessions: p.sessions };
+});
+if (json.membershipFee) LB_MEMBERSHIP_FEE = json.membershipFee;
+} catch (e) {
+// keep hardcoded fallback values sa lbPackages — huwag baguhin
+}
+}
 let lbForm = {
 programId:'', category:'',
 firstName:'', lastName:'', dob:'', age:'', gender:'', nationality:'', area:'',
@@ -2570,13 +2751,16 @@ package:'', paymentMethod:'',
 consentPrivacy:false
 };
 
-const lbPackages = {
-regular:{ label:'Regular — 8 Academy Sessions', price:7500 },
-mixedA:{ label:'Mixed A — 4 Private + 4 Academy', price:8800 },
-mixedB:{ label:'Mixed B — 4 Private + 8 Academy', price:12000 },
-mixedC:{ label:'Mixed C — 8 Private + 4 Academy', price:14400 }
+const LB_PACKAGE_DESC = {
+regular:'Regular', mixedA:'Mixed A — 4 Private + 4 Academy', mixedB:'Mixed B — 4 Private + 8 Academy', mixedC:'Mixed C — 8 Private + 4 Academy'
 };
-const LB_MEMBERSHIP_FEE = 4000;
+let lbPackages = {
+regular:{ label:'Regular — 8 Academy Sessions', price:7500, sessions:8 },
+mixedA:{ label:'Mixed A — 4 Private + 4 Academy', price:8800, sessions:8 },
+mixedB:{ label:'Mixed B — 4 Private + 8 Academy', price:12000, sessions:12 },
+mixedC:{ label:'Mixed C — 8 Private + 4 Academy', price:14400, sessions:12 }
+};
+let LB_MEMBERSHIP_FEE = 4000;
 const LB_ENROLL_STEPS = ['program','player','guardian','package','payment','consent','review'];
 
 /* === START: LIVITY ENROLL — NATIONALITY LIST === */
@@ -2589,29 +2773,20 @@ function lbBody() {
 return document.getElementById('lbBody');
 }
 
-/* === START: LIVITY — DIRECT ENROLL FROM ENROLL SECTION BUTTONS === */
 function lbStartDirectEnroll(programId) {
 
 lbForm.programId = programId;
 lbForm.package = '';
 lbForm.category = '';
-lbEnrollStep = 1; // skip Program step — preset na ang program
 
-lbScreen = 'enroll';
-lbBackTarget = 'menu';
+lbGoTo('enroll'); // canonical entry — same logic ginagamit ng lahat ng enroll triggers
 
-document.getElementById('lbTitle').textContent =
-programId === 'PRG-ACAD' ? 'Academy Enrollment' : 'Private Training Registration';
-document.getElementById('lbBackBtn').style.display = 'grid';
-
-lbBody().innerHTML = lbRenderEnrollStep();
 lbBody().scrollTop = 0;
 
 document.getElementById('livityModal').classList.add('open');
 document.getElementById('livityBackdrop').classList.add('open');
 
 }
-/* === END: LIVITY — DIRECT ENROLL FROM ENROLL SECTION BUTTONS === */
 
 function lbGoTo(screen) {
 
@@ -2624,32 +2799,16 @@ if (screen === 'menu') {
 body.innerHTML = lbScreenMenu();
 title.textContent = 'Anytime Livity';
 back.style.display = 'none';
-} else if (screen === 'programs') {
-lbBackTarget = 'menu';
-body.innerHTML = lbScreenPrograms();
-title.textContent = 'Programs';
-back.style.display = 'grid';
-} else if (screen === 'schedule') {
-lbBackTarget = 'menu';
-body.innerHTML = lbScreenSchedule();
-title.textContent = 'Schedule';
-back.style.display = 'grid';
-} else if (screen === 'pricing') {
-lbBackTarget = 'menu';
-body.innerHTML = lbScreenPricing();
-title.textContent = 'Pricing';
-back.style.display = 'grid';
-} else if (screen === 'coach') {
-lbBackTarget = 'menu';
-body.innerHTML = lbScreenCoach();
-title.textContent = 'Ask Admin Jah';
-back.style.display = 'grid';
 } else if (screen === 'enroll') {
 lbBackTarget = 'menu';
-lbEnrollStep = 0;
+lbEnrollStep = lbForm.programId ? 1 : 0;
 body.innerHTML = lbRenderEnrollStep();
-title.textContent = 'Enroll';
+title.textContent = lbForm.programId ? (lbProgramLabel_(lbForm.programId) + ' — Enroll') : 'Enroll';
 back.style.display = 'grid';
+} else if (screen === 'askadmin') {lbBackTarget = 'menu';
+title.textContent = 'Ask Admin JA';
+back.style.display = 'grid';
+lbOpenAskAdmin_();
 }
 
 body.scrollTop = 0;
@@ -2658,101 +2817,9 @@ body.scrollTop = 0;
 
 function lbScreenMenu() {
 return `
-<button class="lb-item" onclick="lbGoTo('programs')">
-<span class="lb-ico">⚽</span> Programs
-</button>
-<button class="lb-item" onclick="lbGoTo('schedule')">
-<span class="lb-ico">◷</span> Schedule
-</button>
-<button class="lb-item" onclick="lbGoTo('pricing')">
-<span class="lb-ico">₱</span> Pricing
-</button>
-<button class="lb-item" onclick="lbGoTo('enroll')">
-<span class="lb-ico">↗</span> Enroll
-</button>
-<button class="lb-item" onclick="window.open('https://wa.me/639762675397','_blank')">
-<span class="lb-ico">☷</span> Ask Admin JA (WhatsApp)
+<button class="lb-item" onclick="lbGoTo('askadmin')">
+<span class="lb-ico">☷</span> Ask Admin JA
 </button>`;
-}
-
-function lbScreenPrograms() {
-return `
-<button class="lb-item" onclick="lbShowProgram('regular')">
-<span class="lb-ico">⚽</span> Specialized Training — Regular
-</button>
-<button class="lb-item" onclick="lbShowProgram('private')">
-<span class="lb-ico">◎</span> Specialized Training — Private
-</button>
-<button class="lb-item" onclick="lbShowProgram('advanced')">
-<span class="lb-ico">ϟ</span> Advanced Performance
-</button>
-<button class="lb-item" onclick="lbShowProgram('academy')">
-<span class="lb-ico">♙</span> Academy Training
-</button>
-`;
-}
-
-function lbShowProgram(k) {
-
-const d = data[k];
-lbBackTarget = 'programs';
-document.getElementById('lbTitle').textContent = d.title;
-document.getElementById('lbBackBtn').style.display = 'grid';
-
-lbBody().innerHTML = `
-<p class="lb-sub">${d.sub}</p>
-<p class="lb-text">${d.what}</p>
-<div class="tags">${d.focus.map(x => `<span class="tag">${x}</span>`).join('')}</div>
-<p class="lb-text" style="margin-top:8px">${d.dev}</p>
-<p class="lb-text"><b>Schedule:</b> ${d.schedule}</p>
-<button class="btn primary" style="width:100%;margin-top:6px" onclick="lbForm.programId='${d.programId}';lbGoTo('enroll')">Enroll in This Program →</button>
-`;
-
-}
-
-function lbScreenSchedule() {
-return `
-<p class="lb-text"><b>Tue</b> 6:30–8:30 PM · Regular · PAREF Southridge · Ages 4+</p>
-<p class="lb-text"><b>Thu</b> 4:00–6:00 PM · Private · Pacific Malayan · Ages 4+</p>
-<p class="lb-text"><b>Thu</b> 6:30–8:30 PM · Advanced Performance (Pro Session) · PAREF Southridge · Ages 13+</p>
-<p class="lb-text"><b>Thu</b> 6:30–8:30 PM · Academy · PAREF Southridge</p>
-<p class="lb-text"><b>Sat</b> 7:00–9:00 AM · Regular & Academy · PAREF Southridge</p>
-<p class="lb-text" style="color:var(--muted);font-size:11px">Private training now has a fixed Thursday slot; additional sessions are flexible and booked separately.</p>
-`;
-}
-
-/* === START: LIVITY BALL — PRICING FULL AGE LABELS === */
-function lbScreenPricing() {
-return `
-<p class="lb-text"><b>Under 5 to Under 7</b> ₱4,000 / 5 sessions · Single ₱1,000</p>
-<p class="lb-text"><b>Under 9 to Under 13</b> ₱5,000 / 5 sessions · Single ₱1,200</p>
-<p class="lb-text"><b>Under 15 and Above</b> ₱6,000 / 5 sessions · Single ₱1,300</p>
-<p class="lb-text"><b>Advanced</b> ₱1,300 / session, by assessment</p>
-<p class="lb-text" style="margin-top:8px"><b>Academy Packages</b> · 30 days, Under 5 to Under 13</p>
-<p class="lb-text">Regular ₱7,500 · Mixed A ₱8,800 · Mixed B ₱12,000 · Mixed C ₱14,400</p>
-<p class="lb-text" style="color:var(--muted);font-size:11px">+ ₱4,000 one-time Membership Fee (includes 2 jersey sets), required for Academy players.</p>
-<button class="btn primary" style="width:100%;margin-top:6px" onclick="lbGoTo('enroll')">Start Enrollment →</button>
-`;
-}
-/* === END: LIVITY BALL — PRICING FULL AGE LABELS === */
-
-function lbScreenCoach() {
-return `
-<div class="coach" style="border-top:0;padding-top:0">
-<div class="avatar">J</div>
-<div><b>Admin JA</b><span>Private Training Session / Training</span></div>
-</div>
-<div class="coach">
-<div class="avatar">C</div>
-<div><b>Admin Chelsi</b><span>Academy</span></div>
-</div>
-<div class="coach">
-<div class="avatar">S</div>
-<div><b>Coach Sam</b><span>Advanced Performance Assessment</span></div>
-</div>
-<p class="lb-text" style="margin-top:10px">Not sure which program fits your child? Start enrollment below and the team will help match the right path.</p>
-<button class="btn primary" style="width:100%;margin-top:4px" onclick="lbGoTo('enroll')">Start Enrollment →</button>
-`;
 }
 
 function lbRerender() {
@@ -2926,6 +2993,17 @@ ${priceLine}
 }
 /* === END: LIVITY ENROLL — PROGRAM-AWARE PACKAGE STEP === */
 
+function lbPaymentDetailsHtml_() {
+const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
+if (lbForm.paymentMethod === 'GCash') {
+return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
+}
+if (lbForm.paymentMethod === 'Bank Transfer / BPI') {
+return `<div class="notice" style="margin-top:8px"><b>${info.bank.name} Bank Transfer</b><br>${info.bank.accountName} · ${info.bank.accountNumber}</div>`;
+}
+return '';
+}
+
 function lbStepPayment() {
 
 const methods = ['GCash', 'Bank Transfer / BPI'];const opts = methods.map(m => `
@@ -2938,6 +3016,7 @@ return `
 <h5 class="lb-step-title">Payment Method</h5>
 <p class="lb-text">${totalLine}</p>
 <div class="lb-pills">${opts}</div>
+${lbPaymentDetailsHtml_()}
 <p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">Proof of payment can be sent to your coach after Livity confirms your enrollment.</p>
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
@@ -3122,6 +3201,142 @@ lbGoTo('menu');
 /* === END: ANYTIME LIVITY ASSISTANT — SCREENS === */
 
 
+/* === START: ASK ADMIN JA — CHAT (Sheet-backed) === */
+const LB_CHAT_CONTACT_KEY = 'livity_chat_contact_v1';
+let lbChatContact = null;
+let lbChatMessages = [];
+
+function lbGetSavedContact_() {
+try {
+const raw = localStorage.getItem(LB_CHAT_CONTACT_KEY);
+return raw ? JSON.parse(raw) : null;
+} catch (e) { return null; }
+}
+
+function lbSaveContact_(contact) {
+try { localStorage.setItem(LB_CHAT_CONTACT_KEY, JSON.stringify(contact)); } catch (e) {}
+}
+
+function lbOpenAskAdmin_() {
+lbChatContact = lbGetSavedContact_();
+if (!lbChatContact || !lbChatContact.whatsapp) {
+lbRenderChatIdentify_();
+} else {
+lbRenderChatScreen_();
+lbLoadChatMessages_();
+}
+}
+
+function lbRenderChatIdentify_() {
+lbBody().innerHTML = `
+<h5 class="lb-step-title">Before we connect you</h5>
+<p class="lb-text">Ilagay lang ang pangalan at WhatsApp number para malaman ni Admin JA kung sino ang nagtatanong.</p>
+<input class="lb-input" id="chatName" placeholder="Your Name (Guardian)">
+<input class="lb-input" id="chatWhatsapp" placeholder="WhatsApp Number">
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" onclick="lbSubmitChatIdentify_()">Start Conversation →</button>
+`;
+}
+
+function lbSubmitChatIdentify_() {
+const name = document.getElementById('chatName').value.trim();
+const whatsapp = document.getElementById('chatWhatsapp').value.trim();
+const err = document.getElementById('lbErr');
+if (!name || !whatsapp) {
+if (err) err.textContent = 'Please fill in both fields.';
+return;
+}
+lbChatContact = { guardianName: name, whatsapp: whatsapp };
+lbSaveContact_(lbChatContact);
+lbRenderChatScreen_();
+lbLoadChatMessages_();
+}
+
+function lbRenderChatScreen_() {
+lbBody().innerHTML = `
+<div class="chat-header">
+<div class="chat-avatar">J</div>
+<div>
+<b>Admin JA</b>
+<span>Academy Support</span>
+</div>
+</div>
+<div class="chat-quick">
+<button onclick="lbSendQuickPrompt_('Ask about my schedule')">Ask about my schedule</button>
+<button onclick="lbSendQuickPrompt_('Ask about payment')">Ask about payment</button>
+<button onclick="lbSendQuickPrompt_('Ask about remaining sessions')">Ask about remaining sessions</button>
+</div>
+<div class="chat-messages" id="chatMessages">
+<p class="chat-empty">Loading conversation…</p>
+</div>
+<div class="chat-input-row">
+<input type="text" id="chatInput" placeholder="Type your message…" onkeydown="if(event.key==='Enter')lbSendChatMessage_()">
+<button class="chat-send-btn" onclick="lbSendChatMessage_()">Send</button>
+</div>
+<p class="lb-text" style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
+Prefer WhatsApp? <a href="https://wa.me/639762675397" target="_blank" rel="noopener" style="color:var(--royal);font-weight:700;text-decoration:none">Message Admin JA directly →</a>
+</p>
+`;
+}
+
+async function lbLoadChatMessages_() {
+try {
+const res = await fetch(LIVITY_API_URL + '?action=messages&contact=' + encodeURIComponent(lbChatContact.whatsapp));
+const json = await res.json();
+lbChatMessages = (json.success && json.messages) ? json.messages : [];
+} catch (e) {
+lbChatMessages = [];
+}
+lbRenderChatMessages_();
+}
+
+function lbRenderChatMessages_() {
+const box = document.getElementById('chatMessages');
+if (!box) return;
+if (lbChatMessages.length === 0) {
+box.innerHTML = `<p class="chat-empty">Wala pang mensahe. Magtanong ka kay Admin JA!</p>`;
+return;
+}
+box.innerHTML = lbChatMessages.map(function (m) {
+const cls = m.sender === 'Admin' ? 'admin' : 'parent';
+return `<div class="chat-bubble ${cls}">${lbEscapeHtml_(m.body)}</div>`;
+}).join('');
+box.scrollTop = box.scrollHeight;
+}
+
+function lbEscapeHtml_(s) {
+return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function lbSendQuickPrompt_(text) {
+const input = document.getElementById('chatInput');
+if (input) input.value = text;
+lbSendChatMessage_();
+}
+
+async function lbSendChatMessage_() {
+const input = document.getElementById('chatInput');
+const text = input ? input.value.trim() : '';
+if (!text || !lbChatContact) return;
+
+lbChatMessages.push({ sender: 'Parent', body: text });
+lbRenderChatMessages_();
+if (input) input.value = '';
+
+try {
+await doFetch('sendMessage', {
+contactKey: lbChatContact.whatsapp,
+guardianName: lbChatContact.guardianName,
+whatsapp: lbChatContact.whatsapp,
+body: text
+});
+} catch (e) {
+// stays visible locally kahit mag-fail yung send sa likod
+}
+}
+/* === END: ASK ADMIN JA — CHAT (Sheet-backed) === */
+
+
 /* === START: ANYTIME LIVITY BALL — LOGIC === */
 let lbDragging = false;
 let lbMoved = false;
@@ -3286,6 +3501,9 @@ ball.classList.remove('active');
 
 document.addEventListener('DOMContentLoaded', function() {
 initLivityBall();
+loadSchedule();
+loadPaymentInfo();
+loadPackages();
 });
 /* === END: ANYTIME LIVITY BALL — LOGIC === */
 
@@ -3429,11 +3647,10 @@ View Prices →
 <button
 class="btn primary"
 style="width:100%"
-onclick="window.open('${d.registerUrl}','_blank')"
+onclick="lbStartDirectEnroll('${d.programId}')"
 >
 Register Now →
 </button>
-
 `;
 
 show('detail');
@@ -3546,4 +3763,5 @@ el.parentElement.classList.contains('open')
 </script>
 </body>
 </html>
+
 
