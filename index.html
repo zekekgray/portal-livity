@@ -1173,12 +1173,16 @@ font-style:italic;
 position:fixed;
 bottom:0;
 left:50%;
-transform:translateX(-50%);
+transform:translate3d(-50%,0,0);
+-webkit-transform:translate3d(-50%,0,0);
+will-change:transform;
 max-width:480px;
 width:100%;
-height:70px;
+height:calc(78px + env(safe-area-inset-bottom,0px));
+padding-bottom:env(safe-area-inset-bottom,0px);
 background:#171714ee;
 backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
 display:grid;
 grid-template-columns:repeat(5,1fr);
 z-index:20;
@@ -1189,14 +1193,28 @@ border-top:1px solid #ffffff18;
 background:none;
 border:0;
 color:#aaa;
-font-size:10px;
+font-size:11px;
+font-weight:600;
 cursor:pointer;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:5px;
+padding:8px 0 4px;
+-webkit-tap-highlight-color:transparent;
+transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+
+.bottom button:active {
+transform:scale(.9);
 }
 
 .bottom button b {
 display:block;
-font-size:18px;
-margin-bottom:4px;
+font-size:27px;
+line-height:1;
+margin-bottom:0;
 }
 
 .bottom button.active {
@@ -1489,7 +1507,7 @@ Specialized Training — Regular
 </b>
 
 <span>
-6:30–8:30 PM · PAREF Southridge · Ages 4+
+6:30–8:30 PM · PAREF Southridge · Ages 4+ · Beginners & Non-Beginners Welcome
 </span>
 </div>
 
@@ -1505,7 +1523,7 @@ Private Training
 </b>
 
 <span>
-4:00–6:00 PM · Pacific Malayan · Ages 4+
+4:00–6:00 PM · Pacific Malayan · Ages 4+ · Beginners & Non-Beginners Welcome
 </span>
 
 </div>
@@ -1519,7 +1537,7 @@ Advanced Performance — Pro Session
 
 <span>
 6:30–8:30 PM · PAREF Southridge
-· Ages 13+ (12 & below require Coach's Assessment)
+· Ages 13+ (12 & below require Coach's Assessment) · Strong Technical & Tactical Foundation Required
 </span>
 
 </div>
@@ -1550,7 +1568,7 @@ Specialized Training — Regular
 </b>
 
 <span>
-7:00–9:00 AM · PAREF Southridge · Ages 4+
+7:00–9:00 AM · PAREF Southridge · Ages 4+ · Beginners & Non-Beginners Welcome
 </span>
 
 </div>
@@ -2143,7 +2161,8 @@ after the session ends.
 
 <br><br>
 
-Late payments incur a 1.5× charge.
+Payments still unpaid by 5:00 PM the following day
+incur a flat ₱100 overdue penalty.
 
 </div>
 
@@ -2909,7 +2928,7 @@ ${priceLine}
 
 function lbStepPayment() {
 
-const methods = ['GCash', 'Bank Transfer'];const opts = methods.map(m => `
+const methods = ['GCash', 'Bank Transfer / BPI'];const opts = methods.map(m => `
 <button type="button" class="lb-pill ${lbForm.paymentMethod === m ? 'sel' : ''}" onclick="lbForm.paymentMethod='${m}';lbRerender()">${m}</button>
 `).join('');
 const total = lbComputeTotal_();
