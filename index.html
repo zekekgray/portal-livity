@@ -454,8 +454,9 @@ padding:10px 0;
 }
 /* === END: RATE US WIDGET — STYLES === */
 
-/* === START: APP TUTORIAL — STYLES === */
+/* === START: APP TUTORIAL — STYLES (v3, full-screen carousel) === */
 .tutorial-fab {
+position:relative;
 width:50px;
 height:50px;
 border-radius:50%;
@@ -473,81 +474,230 @@ box-shadow:0 4px 14px rgba(0,0,0,.25);
 .tutorial-fab:active {
 transform:scale(.92);
 }
+.tutorial-fab:after {
+content:"";
+position:absolute;
+inset:-4px;
+border-radius:50%;
+border:1.5px solid var(--gold);
+opacity:.6;
+animation:tutorialPulse 2.4s ease-out infinite;
+pointer-events:none;
+}
+@keyframes tutorialPulse {
+0%   { transform:scale(1); opacity:.55; }
+70%  { transform:scale(1.35); opacity:0; }
+100% { transform:scale(1.35); opacity:0; }
+}
+
+.tutorial-sheet-backdrop {
+position:fixed;
+inset:0;
+z-index:80;
+background:rgba(11,47,100,.5);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+opacity:0;
+pointer-events:none;
+transition:opacity .3s ease;
+}
+.tutorial-sheet-backdrop.open {
+opacity:1;
+pointer-events:auto;
+}
+
+.tutorial-sheet {
+position:fixed;
+z-index:81;
+left:50%;
+bottom:0;
+transform:translate(-50%,100%);
+width:100%;
+max-width:480px;
+height:86vh;
+background:#fff;
+border-radius:28px 28px 0 0;
+box-shadow:0 -24px 70px rgba(0,0,0,.4);
+display:flex;
+flex-direction:column;
+transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.tutorial-sheet.open {
+transform:translate(-50%,0);
+}
+
+.tutorial-sheet-handle {
+width:36px;
+height:4px;
+border-radius:2px;
+background:var(--line);
+margin:10px auto 0;
+flex-shrink:0;
+}
+
+.tutorial-sheet-head {
+display:flex;
+align-items:center;
+gap:10px;
+padding:14px 18px 6px;
+flex-shrink:0;
+}
+.tutorial-sheet-head h4 {
+flex:1;
+margin:0;
+font-size:15px;
+color:var(--text);
+}
+.tutorial-sheet-close {
+background:#f5f2ea;
+border:0;
+border-radius:10px;
+width:30px;
+height:30px;
+display:grid;
+place-items:center;
+font-size:14px;
+cursor:pointer;
+color:var(--text);
+flex-shrink:0;
+}
+
+.tutorial-sheet-body {
+flex:1;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+padding:8px 18px 20px;
+}
+
+.tutorial-intro {
+text-align:center;
+margin:8px 0 18px;
+}
+.tutorial-intro-ico {
+width:56px;
+height:56px;
+border-radius:50%;
+background:#fff8dd;
+border:1px solid #ffe38a;
+display:grid;
+place-items:center;
+font-size:28px;
+margin:0 auto 10px;
+}
+.tutorial-intro h4 {
+margin:0 0 4px;
+font-size:17px;
+color:var(--text);
+}
+.tutorial-intro p {
+margin:0;
+font-size:12.5px;
+color:var(--muted);
+line-height:1.5;
+}
+
 .tutorial-role-grid {
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:10px;
+gap:12px;
 }
-.tutorial-role-btn {
+.tutorial-role-card {
+position:relative;
+aspect-ratio:1/.9;
+border-radius:20px;
+border:0;
+cursor:pointer;
 display:flex;
 flex-direction:column;
 align-items:center;
+justify-content:center;
 gap:8px;
-background:#fff;
-border:1.5px solid var(--line);
-border-radius:16px;
-padding:16px 10px;
-font-size:12.5px;
-font-weight:750;
-color:var(--text);
-cursor:pointer;
+padding:14px 10px;
+color:#fff;
 text-align:center;
+overflow:hidden;
 }
-.tutorial-role-btn:active {
-transform:scale(.97);
+.tutorial-role-card:active {
+transform:scale(.96);
 }
-.tutorial-role-ico {
-width:44px;
-height:44px;
+.tutorial-role-card-ico {
+font-size:34px;
+}
+.tutorial-role-card b {
+font-size:14px;
+font-weight:800;
+}
+.tutorial-role-card span {
+font-size:10.5px;
+font-weight:600;
+opacity:.85;
+line-height:1.35;
+}
+
+.tutorial-progress-bar {
+height:5px;
+background:var(--line);
+border-radius:3px;
+overflow:hidden;
+margin:4px 0 22px;
+}
+.tutorial-progress-bar span {
+display:block;
+height:100%;
+background:var(--navy);
+border-radius:3px;
+transition:width .3s ease;
+}
+
+.tutorial-carousel-step {
+text-align:center;
+padding:6px 0 4px;
+}
+.tutorial-carousel-ico {
+width:84px;
+height:84px;
 border-radius:50%;
 display:grid;
 place-items:center;
-font-size:22px;
+font-size:40px;
+margin:0 auto 18px;
 }
-.tutorial-steps {
-display:flex;
-flex-direction:column;
-gap:12px;
+.tutorial-carousel-step h5 {
+margin:0 0 10px;
+font-size:19px;
+color:var(--text);
 }
-.tutorial-step {
+.tutorial-carousel-step p {
+margin:0;
+font-size:13.5px;
+color:#5e5a52;
+line-height:1.6;
+max-width:280px;
+margin-left:auto;
+margin-right:auto;
+}
+
+.tutorial-carousel-counter {
+text-align:center;
+font-size:11px;
+font-weight:700;
+color:var(--muted);
+letter-spacing:.5px;
+margin:16px 0 4px;
+}
+
+.tutorial-nav-row {
 display:flex;
 gap:10px;
-align-items:flex-start;
-background:#faf8f2;
-border-radius:14px;
-padding:12px;
+margin-top:18px;
 }
-.tutorial-step-num {
-width:22px;
-height:22px;
-border-radius:50%;
-background:var(--navy);
-color:#fff;
-font-size:11px;
-font-weight:800;
-display:grid;
-place-items:center;
-flex-shrink:0;
-margin-top:1px;
-}
-.tutorial-step-ico {
-font-size:22px;
-flex-shrink:0;
-line-height:1;
-}
-.tutorial-step-body b {
-display:block;
+.tutorial-nav-row .btn {
+flex:1;
+padding:13px;
 font-size:13px;
-color:var(--text);
-margin-bottom:2px;
 }
-.tutorial-step-body p {
-margin:0;
-font-size:12px;
-color:#5e5a52;
-line-height:1.5;
-}
-/* === END: APP TUTORIAL — STYLES === */
+/* === END: APP TUTORIAL — STYLES (v3, full-screen carousel) === */
 
 /* BUTTONS */
 
@@ -2704,13 +2854,18 @@ Coach Sam — Advanced Assessment
 </div>
 <!-- === END: RATE US WIDGET — MARKUP === -->
 
-<!-- === START: APP TUTORIAL — MARKUP === -->
-<div class="rate-backdrop" id="tutorialBackdrop" onclick="closeTutorial()"></div>
+<!-- === START: APP TUTORIAL — MARKUP (v3) === -->
+<div class="tutorial-sheet-backdrop" id="tutorialBackdrop" onclick="closeTutorial()"></div>
 
-<div class="rate-modal" id="tutorialModal" style="max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
-<div id="tutorialBody"></div>
+<div class="tutorial-sheet" id="tutorialModal">
+<div class="tutorial-sheet-handle"></div>
+<div class="tutorial-sheet-head">
+<h4 id="tutorialSheetTitle">How to Use Livity</h4>
+<button class="tutorial-sheet-close" onclick="closeTutorial()">✕</button>
 </div>
-<!-- === END: APP TUTORIAL — MARKUP === -->
+<div class="tutorial-sheet-body" id="tutorialBody"></div>
+</div>
+<!-- === END: APP TUTORIAL — MARKUP (v3) === -->
 
 <!-- === START: SESSION DETAIL MODAL — MARKUP === -->
 <div class="rate-backdrop" id="sessionDetailBackdrop" onclick="closeSessionDetail_()"></div>
@@ -4957,44 +5112,44 @@ document.getElementById('rateModalBody').innerHTML = `
 }
 /* === END: RATE US WIDGET — LOGIC === */
 
-/* === START: APP TUTORIAL — HOW TO USE (ROLE-BASED, KID-SIMPLE) === */
+/* === START: APP TUTORIAL — HOW TO USE (ROLE-BASED) v2 === */
 const TUTORIAL_ROLES = {
 student: {
-icon:'⚽', label:'Player / Student', color:'#1C68D4',
+icon:'⚽', label:'Player', color:'#1C68D4', caption:'Find your training & squad',
 steps:[
-{ icon:'🏠', title:'Home Button', text:'Tap ⌂ Home sa ibaba anumang oras para bumalik sa simula.' },
-{ icon:'◫', title:'Tingnan ang Programs', text:'Tap "Programs" para makita lahat ng klase ng training — piliin ang gusto mong laruin!' },
-{ icon:'◷', title:'Kailan ang Training Mo?', text:'Tap "Schedule" para malaman kung anong ARAW at anong ORAS ang training mo.' },
-{ icon:'⚽', title:'Tap ang Gumagalaw na Bola', text:'May lumulutang na bola sa screen — tap ito para magtanong kay Admin JA o mag-top up.' },
-{ icon:'↗', title:'Bago Ka Pa Lang?', text:'Tap "Enroll" para magparehistro — kasama mo ang magulang mo dito.' }
+{ icon:'🏠', title:'Home Anytime', text:'Tap ⌂ Home at the bottom to jump back to the start screen.' },
+{ icon:'◫', title:'Browse Programs', text:'Tap "Programs" to see every training type and pick the one you play.' },
+{ icon:'◷', title:'Know Your Schedule', text:'Tap "Schedule" to see exactly what day and time your training is.' },
+{ icon:'⚽', title:'Tap the Floating Ball', text:'Ask Admin JA a question or top up your sessions anytime.' },
+{ icon:'↗', title:'New Here? Enroll', text:'Tap "Enroll" and sign up together with your parent.' }
 ]
 },
 parent: {
-icon:'👨‍👩‍👧', label:'Parent / Guardian', color:'#ED1C24',
+icon:'👨‍👩‍👧', label:'Parent', color:'#ED1C24', caption:'Enroll, pay, and track sessions',
 steps:[
-{ icon:'↗', title:'Bagong Player? Mag-Enroll', text:'Tap "Enroll" sa ibaba, piliin ang program, sagutan ang maikling form.' },
-{ icon:'⚽', title:'Meron Nang Anak Dito?', text:'Tap ang lumulutang na bola → "Top Up Sessions" → ilagay ang WhatsApp number para makita agad ang lahat ng info ng anak niyo.' },
-{ icon:'₱', title:'Payments & Balance', text:'Sa loob ng player profile, tap "Payments & Balance" para malaman kung magkano at kailan babayaran.' },
-{ icon:'◷', title:'Weekly Schedule', text:'Tap "Schedule" sa ibabang menu para makita ang buong linggong iskedyul.' },
-{ icon:'☷', title:'May Tanong?', text:'Tap ang bola → "Ask Admin JA" para direktang makipag-chat sa staff namin.' }
+{ icon:'↗', title:'Enroll a New Player', text:'Tap "Enroll" below, choose a program, and fill out the short form.' },
+{ icon:'⚽', title:'Manage an Existing Player', text:'Tap the floating ball → "Top Up Sessions" → enter your WhatsApp number to see your child\'s full profile.' },
+{ icon:'₱', title:'Payments & Balance', text:'Inside the player profile, check "Payments & Balance" for what\'s due and when.' },
+{ icon:'◷', title:'Weekly Schedule', text:'Tap "Schedule" in the bottom menu to see the whole week at a glance.' },
+{ icon:'☷', title:'Talk to Admin JA', text:'Tap the ball → "Ask Admin JA" to chat directly with our staff.' }
 ]
 },
 coach: {
-icon:'🥅', label:'Coach', color:'#0B2F64',
+icon:'🥅', label:'Coach', color:'#0B2F64', caption:'Sessions, programs & support',
 steps:[
-{ icon:'◷', title:'Tingnan ang Schedule', text:'Tap "Schedule" para makita ang oras at venue ng bawat session ngayong linggo.' },
-{ icon:'◫', title:'Alamin ang Bawat Program', text:'Tap "Programs" para makita ang detalye ng Regular, Private, Advanced, at Academy Training.' },
-{ icon:'☷', title:'Makipag-ugnayan', text:'Gamitin ang "Ask Admin JA" para sa updates tungkol sa schedule o player.' },
-{ icon:'ℹ️', title:'Full na Impormasyon', text:'Tap "More" sa ibaba para makita ang mission, values, at policies ng academy.' }
+{ icon:'◷', title:'Check the Schedule', text:'Tap "Schedule" to see the time and venue for every session this week.' },
+{ icon:'◫', title:'Know Each Program', text:'Tap "Programs" for the details of Regular, Private, Advanced, and Academy Training.' },
+{ icon:'☷', title:'Reach Admin JA', text:'Use "Ask Admin JA" for quick updates on schedules or a player.' },
+{ icon:'ℹ️', title:'Full Academy Details', text:'Tap "More" at the bottom for the academy\'s mission, values, and policies.' }
 ]
 },
 admin: {
-icon:'🗂️', label:'Admin', color:'#171714',
+icon:'🗂️', label:'Admin', color:'#171714', caption:'Manage schedule, payments & players',
 steps:[
-{ icon:'◷', title:'I-manage ang Schedule', text:'Galing direkta sa Google Sheet ang Schedule tab — anumang baguhin doon, doon din agad lalabas sa app.' },
-{ icon:'₱', title:'I-verify ang Payments', text:'"Pending" muna ang bayad hanggang i-verify sa Sheet menu: "Livity Admin → Verify a Payment."' },
-{ icon:'👤', title:'Bagong Player', text:'Awtomatikong maidadagdag sa Players sheet ang sinumang mag-enroll o mag-add ng child sa app.' },
-{ icon:'☷', title:'Sagutin ang Mensahe', text:'Ang mga tanong sa "Ask Admin JA" ay napupunta sa Messages sheet at sa email niyo.' }
+{ icon:'◷', title:'Manage the Schedule', text:'The Schedule tab pulls straight from the Google Sheet — edits there show up in the app right away.' },
+{ icon:'₱', title:'Verify Payments', text:'Payments stay "Pending" until verified via "Livity Admin → Verify a Payment" in the Sheet menu.' },
+{ icon:'👤', title:'Players Added Automatically', text:'Anyone who enrolls or adds a child in the app is added to the Players sheet automatically.' },
+{ icon:'☷', title:'Reply to Messages', text:'Questions from "Ask Admin JA" land in the Messages sheet and your email.' }
 ]
 }
 };
@@ -5011,52 +5166,56 @@ document.getElementById('tutorialBackdrop').classList.remove('open');
 }
 
 function renderTutorialRoleSelect_() {
+document.getElementById('tutorialSheetTitle').textContent = 'How to Use Livity';
+
 const roleButtons = Object.entries(TUTORIAL_ROLES).map(function ([key, r]) {
 return `
-<button type="button" class="tutorial-role-btn" onclick="renderTutorialSteps_('${key}')">
-<span class="tutorial-role-ico" style="background:${r.color}18">${r.icon}</span>
-<span>${r.label}</span>
+<button type="button" class="tutorial-role-card" style="background:${r.color}" onclick="renderTutorialSteps_('${key}',0)">
+<span class="tutorial-role-card-ico">${r.icon}</span>
+<b>${r.label}</b>
+<span>${r.caption}</span>
 </button>
 `;
 }).join('');
 
 document.getElementById('tutorialBody').innerHTML = `
-<div class="lb-header" style="margin-bottom:4px">
-<h4 style="flex:1;font-size:15px;color:var(--text)">Paano Gamitin ang Livity App?</h4>
-<button class="lb-close" onclick="closeTutorial()">✕</button>
+<div class="tutorial-intro">
+<div class="tutorial-intro-ico">👋</div>
+<h4>Who are you?</h4>
+<p>Pick your role for a quick, tailored walkthrough.</p>
 </div>
-<p class="lb-text" style="margin:0 0 14px">Sino ka? Piliin para makita ang madaling gabay 👇</p>
 <div class="tutorial-role-grid">${roleButtons}</div>
 `;
 }
 
-function renderTutorialSteps_(roleKey) {
+function renderTutorialSteps_(roleKey, stepIndex) {
 const role = TUTORIAL_ROLES[roleKey];
-const stepsHtml = role.steps.map(function (s, i) {
-return `
-<div class="tutorial-step">
-<div class="tutorial-step-num">${i + 1}</div>
-<div class="tutorial-step-ico">${s.icon}</div>
-<div class="tutorial-step-body">
-<b>${s.title}</b>
-<p>${s.text}</p>
-</div>
-</div>
-`;
-}).join('');
+const i = stepIndex || 0;
+const total = role.steps.length;
+const s = role.steps[i];
+const pct = ((i + 1) / total * 100);
+
+document.getElementById('tutorialSheetTitle').textContent = role.label + ' Guide';
 
 document.getElementById('tutorialBody').innerHTML = `
-<div class="lb-header" style="margin-bottom:4px">
-<button class="lb-back" onclick="renderTutorialRoleSelect_()">←</button>
-<h4 style="flex:1;font-size:15px;color:var(--text)">${role.icon} ${role.label} Guide</h4>
-<button class="lb-close" onclick="closeTutorial()">✕</button>
+<div class="tutorial-progress-bar"><span style="width:${pct}%;background:${role.color}"></span></div>
+<div class="tutorial-carousel-step">
+<div class="tutorial-carousel-ico" style="background:${role.color}18">${s.icon}</div>
+<h5>${s.title}</h5>
+<p>${s.text}</p>
 </div>
-<div class="tutorial-steps">${stepsHtml}</div>
-<button class="btn primary" style="width:100%;margin-top:6px" onclick="closeTutorial()">Nakuha ko na! →</button>
+<div class="tutorial-carousel-counter">STEP ${i + 1} OF ${total}</div>
+<div class="tutorial-nav-row">
+${i === 0
+? `<button class="btn outline" onclick="renderTutorialRoleSelect_()">← Roles</button>`
+: `<button class="btn outline" onclick="renderTutorialSteps_('${roleKey}',${i - 1})">← Back</button>`}
+${i === total - 1
+? `<button class="btn primary" onclick="closeTutorial()">Got it! →</button>`
+: `<button class="btn primary" onclick="renderTutorialSteps_('${roleKey}',${i + 1})">Next →</button>`}
+</div>
 `;
 }
 /* === END: APP TUTORIAL === */
-
 /* === START: NO ZOOM — LOGIC === */
 ['gesturestart','gesturechange','gestureend'].forEach(function(t) {
 document.addEventListener(t, function(e) { e.preventDefault(); });
