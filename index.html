@@ -4030,7 +4030,7 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyPivDfIkLza9Nx1OR4NbtrxEcldyJhZZSsJ9k50heD1idEifTEOcAsQASis9wGzxJZIw/exec';
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbwb8V5WhoRZXp8ARuEYHu4OGWmOHU8g-QGT_ShwsC9RxC7sX8vOvFTjpZPqZnXY0CyC2Q/exec';
 
 const LIVITY_PAYMENT_INFO_FALLBACK = {
 gcash: { number:'09762675397', accountName:'Livity Training & Academy' },
@@ -4044,7 +4044,7 @@ try {
 const res = await fetch(LIVITY_API_URL + '?action=paymentInfo');
 const json = await res.json();
 if (!json.success) throw new Error('bad payment info payload');
-lbPaymentInfo = json;
+lbPaymentInfo = json; lbMethodsSet_(json.methods);
 } catch (e) {
 lbPaymentInfo = LIVITY_PAYMENT_INFO_FALLBACK;
 }
@@ -4445,6 +4445,7 @@ ${priceLine}
 /* === END: LIVITY ENROLL — PROGRAM-AWARE PACKAGE STEP === */
 
 function lbPaymentDetailsHtml_() {
+return lbMethodDetailsHtml_(lbForm.paymentMethod); // dynamic from GSheet — old code below unused
 const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
 if (lbForm.paymentMethod === 'GCash') {
 return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
@@ -4457,7 +4458,7 @@ return '';
 
 function lbStepPayment() {
 
-const methods = ['GCash', 'Bank Transfer / BPI'];const opts = methods.map(m => `
+const methods = lbMethodNames_();const opts = methods.map(m => `
 <button type="button" class="lb-pill ${lbForm.paymentMethod === m ? 'sel' : ''}" onclick="lbForm.paymentMethod='${m}';lbRerender()">${m}</button>
 `).join('');
 const total = lbComputeTotal_();
@@ -4468,7 +4469,7 @@ return `
 <p class="lb-text">${totalLine}</p>
 <div class="lb-pills">${opts}</div>
 ${lbPaymentDetailsHtml_()}
-<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">Proof of payment can be sent to your coach after Livity confirms your enrollment.</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">After you submit, you'll see the payment details and can send your amount and reference number right here.</p>
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
 <button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
@@ -4606,7 +4607,8 @@ document.getElementById('lbTitle').textContent = 'Payment Submitted';
 document.getElementById('lbBackBtn').style.display = 'none';
 lbBody().innerHTML = `
 <p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">Enrollment received.</p>
-<div class="pay-badge pending">⏳ Pending — we're confirming your payment</div>
+<div class="pay-badge pending">⏳ Payment due — send your details below</div>
+${lbPaySlotHtml_(result.enrollmentId, lbForm.whatsapp, result.paymentId)}
 <p class="lb-text" style="margin-top:10px">Livity will notify you once it's confirmed.</p>
 ${result.enrollmentId ? `<div class="panel" style="margin:12px 0;padding:12px 14px;display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><div class="session-detail-label" style="margin:0 0 2px">Reference No.</div><div style="font-size:14px;font-weight:800;color:var(--text);word-break:break-all">${lbEscapeHtml_(result.enrollmentId)}</div></div><button type="button" class="btn outline" style="padding:9px 14px;font-size:12px;flex-shrink:0" data-ref="${lbEscapeHtml_(result.enrollmentId).replace(/"/g, '&quot;')}" onclick="lbCopyRef_(this)">Copy Reference</button></div>` : ''}
 ${lbNextStepsHtml_('Enrollment received', 'Training activated')}
@@ -4707,7 +4709,8 @@ if (!p) return '';
 
 const map = {
 Paid: { bg:'#eafbef', bd:'#b8e6c3', fg:'#1f7a3a', head:'🟢 PAID', when:'Paid', note:'' },
-Pending: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'⏳ PAYMENT PENDING', when:'Submitted', note:"We're confirming your payment." },
+Pending: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'⏳ PAYMENT DUE', when:'Created', note:'Send your payment, then enter the reference number below.' },
+Submitted: { bg:'#eef4ff', bd:'#b7d0f7', fg:'var(--navy)', head:'🕓 PAYMENT SENT — VERIFYING', when:'', note:"We're confirming your payment." },
 Overdue: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT OVERDUE', when:'', note:'Please settle this payment or message Admin JA.' }
 };
 const st = map[p.status] || { bg:'#f5f2ea', bd:'#e2e2e2', fg:'var(--text)', head:'PAYMENT DUE', when:'', note:'' };
@@ -4721,7 +4724,8 @@ return `
 <div class="panel" style="margin:0 0 14px;background:${st.bg};border:1px solid ${st.bd}">
 <div style="font-size:20px;font-weight:850;letter-spacing:.3px;color:${st.fg}">${st.head}</div>
 <div class="event-title" style="margin-top:8px">${p.label}</div>
-<div style="font-size:26px;font-weight:850;color:var(--text);margin-top:2px">₱${Number(p.amount).toLocaleString()}</div>
+<div style="font-size:26px;font-weight:850;color:var(--text);margin-top:2px">₱${Number(p.total != null ? p.total : p.amount).toLocaleString()}</div>
+${p.penalty ? `<div class="event-venue">Includes ₱${Number(p.penalty).toLocaleString()} late penalty</div>` : ''}
 ${meta.length ? `<div class="event-venue">${meta.join(' · ')}</div>` : ''}
 ${st.note ? `<p style="margin:10px 0 0;font-size:13px;font-weight:650;color:${st.fg}">${st.note}</p>` : ''}
 </div>`;
@@ -4731,8 +4735,8 @@ ${st.note ? `<p style="margin:10px 0 0;font-size:13px;font-weight:650;color:${st
 function lbNextStepsHtml_(first, last) {
 const steps = [
 { done:true, text:first },
-{ done:true, text:'Payment submitted' },
-{ done:false, now:true, text:'Payment verification' },
+{ done:false, now:true, text:'Send payment & reference no.' },
+{ done:false, text:'Payment verification' },
 { done:false, text:last }
 ];
 const rows = steps.map(function (s) {
@@ -4779,6 +4783,7 @@ const res = await fetch(LIVITY_API_URL + '?action=payments&playerId=' + encodeUR
 const json = await res.json();
 if (!json.success) throw new Error(json.error || 'Could not load payments.');
 lbPayments = { loading:false, balanceDue: json.balanceDue, payments: json.payments };
+lbPayApply_(json);
 } catch (e) {
 lbPayments = { loading:false, error: e.message, balanceDue:0, payments:[] };
 }
@@ -4793,7 +4798,8 @@ return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
 function lbPaymentStatusLabel_(status) {
 if (status === 'Paid') return 'Paid';
 if (status === 'Overdue') return 'Overdue';
-if (status === 'Pending') return 'Pending';
+if (status === 'Pending') return 'Due';
+if (status === 'Submitted') return 'Verifying';
 return 'Due';
 }
 
@@ -4833,7 +4839,7 @@ return `
 `;
 }).join('');
 
-return back + `<h5 class="lb-step-title">Payments</h5>` + lbPaymentHeroHtml_() + (lbPayments.payments.some(function (p) { return p.status === 'Pending'; }) ? ctxHelp_('payment') : '') + balanceHtml + `<div class="panel" style="padding:0 16px">${rows}</div>`;
+return back + `<h5 class="lb-step-title">Payments</h5>` + lbPaymentHeroHtml_() + lbPayDuePanelsHtml_() + (lbPayments.payments.some(function (p) { return p.status === 'Submitted'; }) ? ctxHelp_('payment') : '') + balanceHtml + `<div class="panel" style="padding:0 16px">${rows}</div>`;
 }
 /* === END: PAYMENTS & BALANCE — SCREEN === */
 
@@ -5190,6 +5196,7 @@ return `
 }
 
 function lbTopupPaymentDetailsHtml_() {
+return lbMethodDetailsHtml_(lbTopup.paymentMethod); // dynamic from GSheet — old code below unused
 const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
 if (lbTopup.paymentMethod === 'GCash') {
 return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
@@ -5252,11 +5259,12 @@ if (err) err.textContent = "We couldn't process your payment (" + e.message + ")
 }
 
 function lbShowTopupSuccess_(result) {
-document.getElementById('lbTitle').textContent = 'Payment Submitted';
+document.getElementById('lbTitle').textContent = 'Send Your Payment';
 document.getElementById('lbBackBtn').style.display = 'none';
 lbBody().innerHTML = `
 <p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">Top-up received.</p>
 <div class="pay-badge pending">⏳ Pending — we're confirming your payment</div>
+${lbPaySlotHtml_(lbTopup.selected.playerId, lbTopup.selected.whatsapp, result.paymentId)}
 ${lbNextStepsHtml_('Top-up received', 'Sessions added')}
 ${result.amountDue ? `<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:10px">Amount: ₱${Number(result.amountDue).toLocaleString()}</p>` : ''}
 <button class="btn primary" style="width:100%;margin-top:8px" onclick="lbTopup={query:'',players:[],selected:null,paymentMethod:'',packageKey:'',activeProgramId:''};lbGoTo('menu')">Done</button>
@@ -5369,6 +5377,7 @@ return null;
 }
 
 function lbAddProgramPaymentDetailsHtml_() {
+return lbMethodDetailsHtml_(lbAddProgram.paymentMethod); // dynamic from GSheet — old code below unused
 const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
 if (lbAddProgram.paymentMethod === 'GCash') return `<div class="notice" style="margin-top:8px"><b>GCash</b><br>${info.gcash.accountName} · ${info.gcash.number}</div>`;
 if (lbAddProgram.paymentMethod === 'Bank Transfer / BPI') return `<div class="notice" style="margin-top:8px"><b>${info.bank.name} Bank Transfer</b><br>${info.bank.accountName} · ${info.bank.accountNumber}</div>`;
@@ -5422,6 +5431,7 @@ document.getElementById('lbBackBtn').style.display = 'none';
 lbBody().innerHTML = `
 <p class="lb-text" style="font-size:15px;font-weight:750;color:var(--text)">New program added.</p>
 <div class="pay-badge pending">⏳ Pending — we're confirming your payment</div>
+${lbPaySlotHtml_(lbTopup.selected.playerId, lbTopup.selected.whatsapp, result.paymentId)}
 ${lbNextStepsHtml_('Program added', 'Training activated')}
 ${result.amountDue ? `<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:10px">Amount: ₱${Number(result.amountDue).toLocaleString()}</p>` : ''}
 <button class="btn primary" style="width:100%;margin-top:8px" onclick="lbGoTo('menu')">Done</button>
@@ -6237,13 +6247,43 @@ s.onerror = function () { cb(false); };
 document.head.appendChild(s);
 }
 
+/* === START: QR SELF-CHECK EDIT === */
+function pfVerifyQr_(p, dataUrl) {
+  const decode = function () {
+    const img = new Image();
+    img.onload = function () {
+      const el = document.getElementById('pfQrStatus');
+      if (!el) return;
+      try {
+        const pad = 40, c = document.createElement('canvas');
+        c.width = img.width + pad * 2; c.height = img.height + pad * 2;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+        x.drawImage(img, pad, pad);
+        const im = x.getImageData(0, 0, c.width, c.height);
+        const hit = jsQR(im.data, im.width, im.height, { inversionAttempts: 'dontInvert' });
+        const ok = !!(hit && hit.data === pfQrPayload_(p));
+        el.textContent = ok ? '✓ QR verified — ready to scan' : '⚠️ QR check failed — show your Player ID to the coach';
+        el.style.color = ok ? '#1f7a3a' : 'var(--red)';
+      } catch (e) { el.textContent = ''; }
+    };
+    img.src = dataUrl;
+  };
+  if (window.jsQR) return decode();
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+  s.onload = decode;
+  document.head.appendChild(s);
+}
+/* === END: QR SELF-CHECK EDIT === */
+
 function pfDrawQr_(p) {
 const box = document.getElementById('pfQrBox');
 if (!box) return;
 const ck = PF_QR_KEY + p.playerId + '_' + p.qrToken;
 let cached = '';
 try { cached = localStorage.getItem(ck) || ''; } catch (e) {}
-if (cached) { box.innerHTML = '<img alt="QR pass" src="' + cached + '">'; return; }
+if (cached) { box.innerHTML = '<img alt="QR pass" src="' + cached + '">'; pfVerifyQr_(p, cached); return; }
 pfQrLib_(function (ok) {
 const b = document.getElementById('pfQrBox');
 if (!b) return;
@@ -6252,7 +6292,7 @@ b.innerHTML = '';
 new QRCode(b, { text: pfQrPayload_(p), width: 400, height: 400, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
 setTimeout(function () {
 const c = b.querySelector('canvas');
-if (c) { try { localStorage.setItem(ck, c.toDataURL('image/png')); } catch (e) {} }
+if (c) { const du_ = c.toDataURL('image/png'); try { localStorage.setItem(ck, du_); } catch (e) {} pfVerifyQr_(p, du_); }
 }, 150);
 });
 }
@@ -6274,6 +6314,7 @@ lbBody().innerHTML = back + `
 <div class="pf-qrbox" id="pfQrBox"></div>
 <div class="next-session-title" style="font-size:18px">${lbEscapeHtml_(p.fullName)}</div>
 <div class="next-session-venue">Player ID: ${lbEscapeHtml_(p.playerId)}</div>
+<div id="pfQrStatus" style="font-size:12px;font-weight:750;min-height:16px;margin-top:8px"></div>
 <p class="lb-text" style="margin:12px 0 0">Show this to the coach at check-in. Brighten your screen for faster scanning.</p>
 </div>`;
 pfDrawQr_(p);
@@ -6286,6 +6327,280 @@ const h = lbHubBase2_();
 const row = `<button type="button" class="lb-pkg" onclick="pfShowQr_()"><b>${pfIco_('qr', 18)}&nbsp; My QR Pass</b><span>›</span></button>`;
 return h.replace('<button class="lb-item" onclick="lbOpenAddProgram_()">', row + '<button class="lb-item" onclick="lbOpenAddProgram_()">');
 };
+
+/* === START: PAYMENT PANEL EDIT — METHODS (GSHEET), LIVE CLOCK, PROOF SUBMIT, OFFLINE QUEUE === */
+let lbMethods = null;
+let lbPayCur = null;
+let lbPayTimer_ = null;
+let lbPayCtx = { offset: 0, rule: { flat: 0, perDay: 0, graceMinutes: 0 } };
+const PAY_METHODS_KEY = 'livity_methods_v1';
+const PAY_QUEUE_KEY = 'livity_paypending_v1';
+
+/* ---- methods (galing GSheet; naka-cache para gumana kahit offline) ---- */
+function lbMethodsSet_(list) {
+if (!Array.isArray(list)) return;
+lbMethods = list;
+try { localStorage.setItem(PAY_METHODS_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function lbMethodsList_() {
+if (lbMethods && lbMethods.length) return lbMethods;
+try { const r = localStorage.getItem(PAY_METHODS_KEY); if (r) return JSON.parse(r) || []; } catch (e) {}
+return [];
+}
+
+function lbMethodNames_() {
+const n = lbMethodsList_().map(function (m) { return m.name; });
+return n.length ? n : ['Ask Admin JA'];
+}
+
+function lbMethodDetailsHtml_(name) {
+const m = lbMethodsList_().filter(function (x) { return x.name === name; })[0];
+if (!m) return '';
+const esc = lbEscapeHtml_;
+return `<div class="notice" style="margin-top:8px"><b>${esc(m.name)}</b><br>${esc(m.accountName)} · ${esc(m.accountNumber)}${m.notes ? '<br>' + esc(m.notes) : ''}</div>`;
+}
+
+/* ---- server time offset + penalty rule ---- */
+function lbPayApply_(json) {
+if (json.serverNow) lbPayCtx.offset = new Date(json.serverNow).getTime() - Date.now();
+if (json.penaltyRule) lbPayCtx.rule = json.penaltyRule;
+if (json.methods) lbMethodsSet_(json.methods);
+}
+
+/* ---- live clock ---- */
+function lbPayFmt_(ms) {
+const s = Math.max(0, Math.floor(ms / 1000));
+const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+const p = function (n) { return String(n).padStart(2, '0'); };
+return (d ? d + 'd ' : '') + p(h) + ':' + p(m) + ':' + p(sec);
+}
+
+function lbPayTick_() {
+const box = document.getElementById('payClock');
+if (!box) { if (lbPayTimer_) { clearInterval(lbPayTimer_); lbPayTimer_ = null; } return; }
+const due = new Date(box.getAttribute('data-due')).getTime();
+const base = Number(box.getAttribute('data-base')) || 0;
+const diff = due - (Date.now() + lbPayCtx.offset);
+const over = diff <= 0;
+const r = lbPayCtx.rule;
+const overMs = -diff;
+let pen = 0;
+if (over && overMs - r.graceMinutes * 60000 > 0) pen = r.flat + (r.perDay > 0 ? r.perDay * Math.floor(overMs / 86400000) : 0); // same formula as backend
+const peso = function (n) { return '₱' + Number(n).toLocaleString(); };
+
+box.className = 'pay-clock ' + (over ? 'over' : 'due');
+document.getElementById('payClockLabel').textContent = over ? 'OVERDUE FOR' : 'PAY WITHIN';
+document.getElementById('payClockTime').textContent = lbPayFmt_(Math.abs(diff));
+document.getElementById('payClockSub').innerHTML = 'Amount ' + peso(base)
++ (pen > 0 ? ' + Late penalty ' + peso(pen) : (r.flat > 0 && !over ? ' · ' + peso(r.flat) + ' penalty if late' : ''))
++ '<br><b>Total ' + peso(base + pen) + '</b>';
+
+const amt = document.getElementById('payAmt');
+if (amt && !amt.dataset.touched && document.activeElement !== amt) amt.value = base + pen;
+}
+
+function lbPayClockStart_() {
+if (!lbPayTimer_) lbPayTimer_ = setInterval(lbPayTick_, 1000);
+lbPayTick_();
+}
+
+/* ---- panel ---- */
+function lbPayObj_(p, playerId, contact) {
+return { paymentId: p.paymentId, playerId: playerId, contact: contact, amount: p.amount, penalty: p.penalty, total: p.total, dueAt: p.dueAt, status: p.status, reference: p.reference || '', label: p.label };
+}
+
+/** Unpaid muna (pinakamaagang due), kung wala — pinakabagong Submitted. */
+function lbPayPick_(list) {
+const unpaid = list.filter(function (p) { return p.status === 'Pending' || p.status === 'Overdue'; })
+.sort(function (a, b) { return new Date(a.dueAt) - new Date(b.dueAt); });
+if (unpaid.length) return unpaid[0];
+return list.filter(function (p) { return p.status === 'Submitted'; })[0] || null;
+}
+
+function lbPayPanelHtml_(pay) {
+lbPayCur = pay;
+const esc = lbEscapeHtml_;
+const attr = function (s) { return esc(s).replace(/"/g, '&quot;'); };
+if (pay.status === 'Paid') return '';
+
+if (pay.status === 'Submitted') {
+return `<div id="payPanel"><div class="pay-badge pending">🕓 Payment sent — verifying</div>${pay.reference ? `<p class="lb-text" style="margin:8px 0 0">Reference no. <b>${esc(pay.reference)}</b>. Livity will confirm it shortly.</p>` : ''}</div>`;
+}
+
+const methods = lbMethodsList_();
+const list = methods.length ? methods.map(function (m) {
+return `<div class="pay-method"><div style="min-width:0"><div class="pay-m-name">${esc(m.name)}<span class="pay-m-type">${esc(m.type)}</span></div><div class="pay-acct">${esc(m.accountNumber)}</div><div class="pay-m-holder">${esc(m.accountName)}${m.notes ? ' · ' + esc(m.notes) : ''}</div></div><button type="button" class="pay-copy" data-copy="${attr(m.accountNumber)}" onclick="lbPayCopy_(this)">Copy</button></div>`;
+}).join('') : `<div class="notice">Payment details aren't available right now. <a href="https://wa.me/639762675397" target="_blank" rel="noopener" style="color:var(--royal);font-weight:800;text-decoration:none">Message Admin JA →</a></div>`;
+const opts = methods.map(function (m) { return `<option value="${attr(m.name)}">${esc(m.name)}</option>`; }).join('');
+
+return `
+<div id="payPanel">
+<div class="session-detail-label" style="margin-top:0">Pay now</div>
+<div class="pay-clock due" id="payClock" data-due="${attr(pay.dueAt)}" data-base="${Number(pay.amount) || 0}">
+<div class="pay-clock-label" id="payClockLabel"></div>
+<div class="pay-clock-time" id="payClockTime">--:--:--</div>
+<div class="pay-clock-sub" id="payClockSub"></div>
+</div>
+${list}
+<div class="session-detail-label">Already paid? Send your details</div>
+${methods.length ? `<select class="lb-input" id="payMethodSel">${opts}</select>` : ''}
+<input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="${Number(pay.total) || Number(pay.amount) || ''}" oninput="this.dataset.touched='1'">
+<input class="lb-input" id="payRef" placeholder="Reference number" autocapitalize="characters" autocomplete="off">
+<div class="lb-err" id="payErr"></div>
+<button type="button" class="btn primary" id="payBtn" style="width:100%" onclick="lbPaySubmit_()">Send Payment Details →</button>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0 0">The time you send this is recorded by Livity's server and can't be edited.</p>
+</div>`;
+}
+
+function lbPayCopy_(btn) {
+const t = btn.getAttribute('data-copy') || '';
+const done = function () { btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+const fallback = function () {
+const ta = document.createElement('textarea');
+ta.value = t; ta.setAttribute('readonly', '');
+ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+document.body.appendChild(ta); ta.select();
+try { if (document.execCommand('copy')) done(); } catch (e) {}
+ta.remove();
+};
+if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fallback);
+else fallback();
+}
+
+/* ---- payments screen ---- */
+function lbPayDuePanelsHtml_() {
+const p = lbPayPick_(lbPayments.payments || []);
+if (!p || !lbTopup.selected) return '';
+setTimeout(lbPayClockStart_, 0);
+return '<div class="panel" style="margin:0 0 14px">' + lbPayPanelHtml_(lbPayObj_(p, lbTopup.selected.playerId, lbTopup.selected.whatsapp)) + '</div>';
+}
+
+/* ---- success screens (enroll / top-up / add program) ---- */
+function lbPaySlotHtml_(playerId, contact, paymentId) {
+if (!playerId || !paymentId) return '';
+setTimeout(function () { lbPaySlotLoad_(playerId, contact, paymentId); }, 0);
+return '<div id="lbPaySlot">' + lbLoadingHtml_('Loading payment details…') + '</div>';
+}
+
+async function lbPaySlotLoad_(playerId, contact, paymentId) {
+try {
+const res = await fetch(LIVITY_API_URL + '?action=payments&playerId=' + encodeURIComponent(playerId));
+const json = await res.json();
+if (!json.success) throw new Error(json.error || 'Could not load payment.');
+lbPayApply_(json);
+const p = (json.payments || []).filter(function (x) { return x.paymentId === paymentId; })[0];
+const slot = document.getElementById('lbPaySlot');
+if (!slot) return;
+slot.innerHTML = p ? lbPayPanelHtml_(lbPayObj_(p, playerId, contact)) : '';
+lbPayClockStart_();
+} catch (e) {
+const slot = document.getElementById('lbPaySlot');
+if (slot) slot.innerHTML = '<p class="lb-text">Payment details will also be in My Player → Payments.</p>';
+}
+}
+
+/* ---- profile hub: lumalabas sa taas kapag may unpaid ---- */
+async function lbHubDueLoad_() {
+const p = lbTopup && lbTopup.selected;
+if (!p || !document.getElementById('lbHubDue')) return;
+try {
+const res = await fetch(LIVITY_API_URL + '?action=payments&playerId=' + encodeURIComponent(p.playerId));
+const json = await res.json();
+if (!json.success || lbTopup.selected !== p) return;
+lbPayApply_(json);
+const slot = document.getElementById('lbHubDue');
+if (!slot) return;
+const pick = lbPayPick_(json.payments || []);
+slot.innerHTML = pick ? '<div class="panel" style="margin:0 0 14px">' + lbPayPanelHtml_(lbPayObj_(pick, p.playerId, p.whatsapp)) + '</div>' : '';
+lbPayClockStart_();
+} catch (e) { /* silent */ }
+}
+
+const lbHubBase3_ = lbRenderPlayerHub_;
+lbRenderPlayerHub_ = function () {
+const h = lbHubBase3_();
+setTimeout(lbHubDueLoad_, 0);
+return '<div id="lbHubDue"></div>' + h;
+};
+
+/* ---- submit + offline queue (fail-safe) ---- */
+function lbPayQueueGet_() { try { return JSON.parse(localStorage.getItem(PAY_QUEUE_KEY) || '[]'); } catch (e) { return []; } }
+function lbPayQueueSet_(a) { try { localStorage.setItem(PAY_QUEUE_KEY, JSON.stringify(a)); } catch (e) {} }
+function lbPayQueueAdd_(job) { const q = lbPayQueueGet_().filter(function (x) { return x.requestId !== job.requestId; }); q.push(job); lbPayQueueSet_(q); }
+function lbPayQueueRemove_(rid) { lbPayQueueSet_(lbPayQueueGet_().filter(function (x) { return x.requestId !== rid; })); }
+
+async function lbPaySend_(job, isRetry) {
+try {
+const result = await doFetch('submitPayment', Object.assign({}, job, { retry: isRetry ? 1 : 0 }));
+lbPayQueueRemove_(job.requestId);
+return { ok: true, result: result };
+} catch (e) {
+const retryable = /reach the server|unexpected response|responded with status|Server error/i.test(e.message || '');
+if (!retryable) lbPayQueueRemove_(job.requestId); // sinabi ng server na hindi — huwag nang ulitin
+return { ok: false, error: e.message, permanent: !retryable };
+}
+}
+
+let lbPayFlushing_ = false;
+async function lbPayQueueFlush_() {
+if (lbPayFlushing_) return;
+lbPayFlushing_ = true;
+try {
+const q = lbPayQueueGet_();
+for (let i = 0; i < q.length; i++) {
+const r = await lbPaySend_(q[i], true);
+if (!r.ok && !r.permanent) break; // offline pa rin
+}
+} finally { lbPayFlushing_ = false; }
+}
+window.addEventListener('online', lbPayQueueFlush_);
+document.addEventListener('DOMContentLoaded', function () { setTimeout(lbPayQueueFlush_, 1500); });
+
+function lbPayDoneHtml_(r) {
+const esc = lbEscapeHtml_;
+const flags = r.flags || [];
+const low = flags.indexOf('UNDERPAID') > -1 || flags.indexOf('MISSING_PENALTY') > -1;
+return `<div class="pay-badge pending">🕓 Payment sent — verifying</div>
+<p class="lb-text" style="margin:8px 0 2px">Reference no. <b>${esc(r.reference)}</b></p>
+<p class="lb-text" style="margin:0 0 2px">Recorded ${esc(r.submittedAtLabel)}${r.receiptCode ? ' · Receipt <b>' + esc(r.receiptCode) + '</b>' : ''}</p>
+${r.penalty > 0 ? `<p class="lb-text" style="margin:0">Total due at that time: ₱${Number(r.total).toLocaleString()} (includes ₱${Number(r.penalty).toLocaleString()} late penalty)</p>` : ''}
+${low ? `<p class="lb-text" style="color:var(--red);font-weight:700;margin:8px 0 0">The amount you sent is lower than the total due (₱${Number(r.total).toLocaleString()}). Admin JA may message you.</p>` : ''}`;
+}
+
+async function lbPaySubmit_() {
+const pay = lbPayCur;
+if (!pay) return;
+const err = document.getElementById('payErr');
+const btn = document.getElementById('payBtn');
+const ref = (document.getElementById('payRef').value || '').replace(/\s+/g, '').toUpperCase();
+const amt = Number(document.getElementById('payAmt').value);
+const sel = document.getElementById('payMethodSel');
+
+if (!/^[A-Z0-9-]{6,32}$/.test(ref)) { if (err) err.textContent = 'Enter the reference number from your payment receipt (6–32 letters or numbers).'; return; }
+if (!(amt > 0)) { if (err) err.textContent = 'Enter the amount you sent.'; return; }
+if (err) err.textContent = '';
+if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+const job = {
+paymentId: pay.paymentId, playerId: pay.playerId, contact: pay.contact,
+reference: ref, amount: amt, method: sel ? sel.value : '',
+requestId: 'RQ' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+clientTs: new Date().toISOString(), ua: (navigator.userAgent || '').slice(0, 80)
+};
+lbPayQueueAdd_(job); // i-save muna sa device bago i-send
+
+const r = await lbPaySend_(job, false);
+const panel = document.getElementById('payPanel');
+if (r.ok) { if (panel) panel.innerHTML = lbPayDoneHtml_(r.result); return; }
+if (r.permanent) {
+if (err) err.textContent = r.error;
+if (btn) { btn.disabled = false; btn.textContent = 'Send Payment Details →'; }
+return;
+}
+if (panel) panel.innerHTML = `<div class="pay-badge pending">📶 Saved on this device</div><p class="lb-text" style="margin-top:8px">We couldn't reach the server. Your reference number is saved and will be sent automatically once you're online — no need to send it again.</p>`;
+}
+/* === END: PAYMENT PANEL EDIT === */
 
 /* ---- SCAN: gumagamit na ng Livity backend (overrides) ---- */
 async function scApi_(action, params) {
@@ -7207,7 +7522,9 @@ document.addEventListener(t, function(e) { e.preventDefault(); });
 });
 /* === END: NO ZOOM — LOGIC === */
 /* === START: SCAN MODAL — LOGIC (QR attendance) === */
-const SCAN_API_URL = 'PASTE_SCAN_EXEC_URL_HERE';
+/* === START: SCAN API URL EDIT === */
+const SCAN_API_URL = LIVITY_API_URL; // legacy constant — scanner shares the Livity backend
+/* === END: SCAN API URL EDIT === */
 const SCAN_KEY_STORE = 'livity_scan_key_v1'; // staff key — nasa device lang ng staff, hindi sa source code
 const SC_RESULT_MS = 1700;
 let scStream = null, scScanning = false, scBusy = false, scLastCode = '', scLastAt = 0;
