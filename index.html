@@ -832,6 +832,212 @@ transform:rotate(45deg);
 }
 /* === END: GUIDED TOUR — STYLES === */
 
+/* === START: SCAN MODAL — STYLES === */
+.scan-modal {
+position:fixed;
+z-index:210;
+top:0;
+bottom:0;
+left:0;
+right:0;
+max-width:480px;
+margin:0 auto;
+background:#171714;
+color:#fff;
+display:flex;
+flex-direction:column;
+transform:translateY(100%);
+visibility:hidden;
+transition:transform .4s cubic-bezier(.34,1.56,.64,1), visibility 0s .4s;
+padding-top:env(safe-area-inset-top,0px);
+}
+.scan-modal.open {
+transform:none;
+visibility:visible;
+transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.scan-head {
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:16px 18px 8px;
+flex-shrink:0;
+}
+.scan-head b {
+font-size:11px;
+font-weight:800;
+letter-spacing:2.2px;
+text-transform:uppercase;
+color:var(--gold);
+}
+.scan-close {
+background:rgba(255,255,255,.1);
+border:0;
+border-radius:10px;
+width:32px;
+height:32px;
+color:#fff;
+font-size:14px;
+cursor:pointer;
+}
+.scan-body {
+flex:1;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+padding:6px 18px calc(24px + env(safe-area-inset-bottom,0px));
+}
+.scan-modal .lb-input {
+background:#1f1f1b;
+color:#fff;
+border-color:rgba(255,255,255,.14);
+}
+.scan-modal .lb-text {
+color:#c8c4bb;
+}
+.scan-modal .lb-err {
+color:#ff8a80;
+}
+.sc-cam {
+position:relative;
+width:240px;
+height:240px;
+margin:14px auto 12px;
+border-radius:50%;
+overflow:hidden;
+background:#0b0b0b;
+box-shadow:0 0 0 4px rgba(255,222,0,.55), 0 14px 40px rgba(0,0,0,.5);
+transition:box-shadow .2s ease;
+}
+.sc-cam.ok   { box-shadow:0 0 0 5px #34C759, 0 0 30px rgba(52,199,89,.5); }
+.sc-cam.late { box-shadow:0 0 0 5px #FF9F0A, 0 0 30px rgba(255,159,10,.5); }
+.sc-cam.dup  { box-shadow:0 0 0 5px #4A9DE0, 0 0 30px rgba(74,157,224,.5); }
+.sc-cam.err  { box-shadow:0 0 0 5px #FF453A, 0 0 30px rgba(255,69,58,.5); }
+.sc-cam video {
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+object-fit:cover;
+}
+.sc-idle {
+position:absolute;
+inset:0;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:8px;
+background:#0b0b0b;
+border:0;
+width:100%;
+color:var(--gold);
+font-size:10px;
+font-weight:800;
+letter-spacing:2px;
+cursor:pointer;
+}
+.sc-idle.hide {
+opacity:0;
+pointer-events:none;
+}
+.sc-result {
+text-align:center;
+min-height:64px;
+border-radius:16px;
+padding:12px 14px;
+background:rgba(255,255,255,.06);
+border:1px solid rgba(255,255,255,.08);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:3px;
+}
+.sc-result b {
+font-size:15px;
+letter-spacing:.8px;
+text-transform:uppercase;
+}
+.sc-result span {
+font-size:12px;
+color:#c8c4bb;
+}
+.sc-result.ok   { background:rgba(52,199,89,.16); border-color:rgba(52,199,89,.5); }
+.sc-result.late { background:rgba(255,159,10,.16); border-color:rgba(255,159,10,.5); }
+.sc-result.dup  { background:rgba(74,157,224,.16); border-color:rgba(74,157,224,.5); }
+.sc-result.err  { background:rgba(255,69,58,.16); border-color:rgba(255,69,58,.5); }
+.sc-counts {
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+margin:12px 0;
+}
+.sc-counts div {
+background:rgba(255,255,255,.06);
+border-radius:14px;
+padding:10px 6px;
+text-align:center;
+}
+.sc-counts b {
+display:block;
+font-size:22px;
+font-weight:850;
+}
+.sc-counts span {
+font-size:10px;
+font-weight:700;
+letter-spacing:.8px;
+text-transform:uppercase;
+color:#a8a49a;
+}
+.sc-att {
+display:flex;
+justify-content:space-between;
+align-items:baseline;
+font-size:12px;
+color:#c8c4bb;
+margin:14px 2px 0;
+}
+.sc-att b { color:#fff; font-size:20px; }
+.sc-bar {
+height:4px;
+border-radius:2px;
+background:rgba(255,255,255,.14);
+overflow:hidden;
+margin:6px 0 0;
+}
+.sc-bar i {
+display:block;
+height:100%;
+width:0;
+background:var(--gold);
+transition:width .4s ease;
+}
+.sc-manual {
+display:flex;
+gap:8px;
+}
+.sc-manual .lb-input { margin:0; flex:1; }
+.sc-manual .btn { padding:0 18px; }
+.sc-label {
+font-size:10px;
+font-weight:800;
+letter-spacing:1.4px;
+text-transform:uppercase;
+color:#a8a49a;
+margin:14px 2px 6px;
+}
+.sc-link {
+background:none;
+border:0;
+color:#a8a49a;
+font-size:11px;
+text-decoration:underline;
+cursor:pointer;
+margin-top:14px;
+}
+/* === END: SCAN MODAL — STYLES === */
+
 /* BUTTONS */
 
 .btn {
@@ -1876,6 +2082,78 @@ margin:10px 0 0;
 }
 /* === END: PROFILE SHEET — STYLES === */
 
+/* === START: PROFILE PHOTO + MONO ICONS — STYLES === */
+.pf-avatar-wrap {
+position:relative;
+width:68px;
+height:68px;
+flex-shrink:0;
+}
+.pf-avatar {
+width:68px;
+height:68px;
+border-radius:50%;
+background:#fff center/cover no-repeat;
+color:#000;
+border:0;
+padding:0;
+display:grid;
+place-items:center;
+font-family:inherit;
+font-weight:800;
+font-size:22px;
+letter-spacing:.5px;
+cursor:pointer;
+box-shadow:0 0 0 2px rgba(255,255,255,.9), 0 6px 18px rgba(0,0,0,.4);
+}
+.pf-avatar:active {
+transform:scale(.96);
+}
+.pf-cam {
+position:absolute;
+right:-2px;
+bottom:-2px;
+width:24px;
+height:24px;
+border-radius:50%;
+background:#000;
+color:#fff;
+border:2px solid #171714;
+display:grid;
+place-items:center;
+pointer-events:none;
+}
+.pf-photo-rm {
+background:none;
+border:0;
+padding:0;
+margin-top:6px;
+font-size:11px;
+font-weight:700;
+color:#a8a49a;
+text-decoration:underline;
+cursor:pointer;
+}
+.quick .icon,
+.lb-item .lb-ico {
+color:#000;
+}
+.quick .icon svg {
+width:22px;
+height:22px;
+display:block;
+}
+.lb-item .lb-ico {
+display:grid;
+place-items:center;
+}
+.bottom button b svg {
+width:26px;
+height:26px;
+display:block;
+}
+/* === END: PROFILE PHOTO + MONO ICONS — STYLES === */
+
 /* === START: TRAINED WITH LIVITY — SOCIAL PROOF STYLES === */
 .proof-card {
 display:flex;
@@ -2006,9 +2284,7 @@ box-shadow:0 20px 80px #0008;
 <div class="hero">
 
 <div class="top-actions">
-<a class="app-link-btn" href="https://livity.artiplay.app" target="_blank" rel="noopener" onclick="return appLinkClick(event)">
-APP
-</a>
+<button type="button" class="app-link-btn" onclick="openScan_()" aria-label="Scan player QR">▣ SCAN</button>
 <button class="rate-btn" onclick="openRateModal()">
 ★ Rate Us
 </button>
@@ -2097,7 +2373,7 @@ aria-label="How to use the app"
 </button>
 
 <button style="grid-column:1/-1" onclick="openProfile_()">
-<div class="icon">👤</div>
+<div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
 <b>My Player</b>
 <span>Profile, sessions & payments</span>
 </button>
@@ -3091,6 +3367,16 @@ Coach Sam — Advanced Assessment
 </div>
 <!-- === END: SESSION DETAIL MODAL — MARKUP === -->
 
+
+<!-- === START: SCAN MODAL — MARKUP === -->
+<div class="scan-modal" id="scanModal" role="dialog" aria-modal="true" aria-label="Scan attendance">
+<div class="scan-head">
+<b>Scan Attendance</b>
+<button type="button" class="scan-close" onclick="closeScan_()" aria-label="Close">✕</button>
+</div>
+<div class="scan-body" id="scanBody"></div>
+</div>
+<!-- === END: SCAN MODAL — MARKUP === -->
 
 <!-- BOTTOM NAV -->
 
@@ -5449,7 +5735,7 @@ const btn = document.querySelector('.bottom button[data-v="enroll"]');
 if (!btn) return;
 btn.setAttribute('data-v', 'player');
 btn.setAttribute('onclick', 'openProfile_()');
-btn.innerHTML = '<b>👤</b>Profile';
+btn.innerHTML = '<b>' + pfIco_('user', 26) + '</b>Profile';
 }
 
 function lbRenderTopupFind_() {
@@ -5516,7 +5802,145 @@ ${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb
 <p class="pf-remember">🔒 Remembered on this device only</p>` : ''}
 `;
 }
-/* === END: PROFILE SHEET — LOGIC === */
+/* === START: PROFILE PHOTO + MONO ICONS — LOGIC === */
+const PF_PHOTO_KEY = 'livity_pfphoto_v1_'; // + playerId → compressed JPEG data URL, sa device lang
+
+const PF_ICO = {
+user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ticket:'<path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M14 5v14" stroke-dasharray="2 3"/>',
+card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+swap:'<path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>'
+};
+
+function pfIco_(name, size) {
+const s = size || 22;
+return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (PF_ICO[name] || '') + '</svg>';
+}
+
+function pfPhotoGet_(pid) { try { return localStorage.getItem(PF_PHOTO_KEY + pid) || ''; } catch (e) { return ''; } }
+function pfPhotoSet_(pid, data) { try { localStorage.setItem(PF_PHOTO_KEY + pid, data); return true; } catch (e) { return false; } }
+function pfPhotoDel_(pid) { try { localStorage.removeItem(PF_PHOTO_KEY + pid); } catch (e) {} }
+
+function pfPickPhoto_() {
+const f = document.getElementById('pfFile');
+if (f) f.click();
+}
+
+function pfPhotoChosen_(input) {
+const file = input.files && input.files[0];
+if (!file || !lbTopup.selected) return;
+const pid = lbTopup.selected.playerId;
+const rd = new FileReader();
+rd.onload = function () {
+const img = new Image();
+img.onload = function () {
+const S = 320, c = document.createElement('canvas');
+c.width = S; c.height = S;
+const m = Math.min(img.width, img.height);
+c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+const dataUrl_ = c.toDataURL('image/jpeg', 0.82);
+pfPhotoSet_(pid, dataUrl_);
+pfPhotoUpload_(dataUrl_);
+lbBody().innerHTML = lbRenderPlayerHub_();
+};
+img.src = rd.result;
+};
+rd.readAsDataURL(file);
+input.value = '';
+}
+
+function pfPhotoRemove_() {
+if (!lbTopup.selected) return;
+pfPhotoDel_(lbTopup.selected.playerId);
+doFetch('removePhoto', { playerId: lbTopup.selected.playerId, contact: lbTopup.selected.whatsapp }).catch(function () {});
+lbTopup.selected.photoUrl = '';
+lbBody().innerHTML = lbRenderPlayerHub_();
+}
+
+/* overrides (last declaration wins) — walang "Enter it once…" text na */
+function lbRenderTopupFind_() {
+const intro = lbProfileMode
+? `<div class="tutorial-intro"><div class="tutorial-intro-ico" style="background:#000;border-color:#000;color:#fff">${pfIco_('user', 26)}</div><h4>Your Player Profile</h4></div>`
+: '';
+return `
+${intro}
+<h5 class="lb-step-title">Find your player's profile</h5>
+<p class="lb-text">Use the WhatsApp / mobile number from registration, or the Player ID.</p>
+<input class="lb-input" id="topupQuery" placeholder="Player ID / Mobile Number" value="${lbTopup.query}" onkeydown="if(event.key==='Enter')lbSubmitTopupFind_()">
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" id="lbFindBtn" onclick="lbSubmitTopupFind_()">View My Player →</button>
+<div id="lbFindEmpty"></div>
+`;
+}
+
+function lbRenderPlayerHub_() {
+const p = lbTopup.selected;
+pfSave_({ q: lbTopup.query || (pfLoad_() || {}).q || '', pid: p.playerId });
+
+const rels = lbPlayerRels_();
+const status = lbPlayerStatus_(rels);
+const programLine = (p.category ? p.category + ' · ' : '') + rels.map(function (r) { return lbShortProgramName_(r.programName); }).join(' + ');
+const initials = String(p.fullName || '?').trim().split(/\s+/).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase();
+const photo = pfPhotoGet_(p.playerId) || p.photoUrl || '';
+
+const activeIds = rels.filter(function (r) { return r.state === 'active' && r.programId !== 'PRG-PRIV'; }).map(function (r) { return r.programId; });
+const next = activeIds.length ? findNextSession_(activeIds) : null;
+const nextHtml = next ? `
+<div style="border-top:1px solid #ffffff22;margin-top:14px;padding-top:12px">
+<div class="next-session-label">Next training</div>
+<div class="next-session-meta">${next.isToday ? 'Today' : next.day} · ${lbFormatTimeRange_(next.session.startTime, next.session.endTime)}</div>
+<div class="next-session-venue">${next.session.venue}</div>
+</div>` : '';
+
+return `
+<input type="file" id="pfFile" accept="image/*" hidden onchange="pfPhotoChosen_(this)">
+<div class="panel next-session-card" style="margin:0 0 14px;cursor:default">
+<div class="pf-head">
+<div>
+<div class="pf-avatar-wrap">
+<button type="button" class="pf-avatar" onclick="pfPickPhoto_()" aria-label="Change photo"${photo ? ` style="background-image:url('${photo}')"` : ''}>${photo ? '' : initials}</button>
+<span class="pf-cam">${pfIco_('camera', 12)}</span>
+</div>
+</div>
+<div style="min-width:0">
+<div class="next-session-title" style="margin:0;font-size:20px">${p.fullName}</div>
+<div class="next-session-venue">Player ID: ${p.playerId}</div>
+${photo ? '<button type="button" class="pf-photo-rm" onclick="pfPhotoRemove_()">Remove photo</button>' : ''}
+</div>
+</div>
+<div class="pay-badge ${status.cls}" style="margin-top:12px">${status.label}</div>
+<div class="next-session-meta" style="margin-top:12px">${programLine}</div>
+<div class="next-session-title" style="font-size:18px;margin:4px 0 0">${lbPlayerSummaryLine_(rels)}</div>
+${nextHtml}
+</div>
+${ctxHelp_('playerId')}${ctxHelp_('sessions')}
+<div class="quick" style="margin-bottom:10px">
+<button type="button" onclick="closeLivityBall();show('schedule')"><div class="icon">${pfIco_('clock')}</div><b>Schedule</b><span>Upcoming training</span></button>
+<button type="button" onclick="lbOpenSessions_()"><div class="icon">${pfIco_('ticket')}</div><b>Sessions</b><span>Check & top up</span></button>
+<button type="button" onclick="lbOpenPayments_()"><div class="icon">${pfIco_('card')}</div><b>Payments</b><span>Balance & history</span></button>
+<button type="button" onclick="lbOpenPlayerDetails_()"><div class="icon">${pfIco_('user')}</div><b>Details</b><span>Player info</span></button>
+</div>
+<button class="lb-item" onclick="lbOpenAddProgram_()">
+<span class="lb-ico">${pfIco_('plus', 20)}</span> Add Another Program
+</button>
+<button class="lb-item" onclick="lbOpenAddChild_()">
+<span class="lb-ico">${pfIco_('user', 20)}</span> Add Another Player
+</button>
+${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb-ico">${pfIco_('swap', 20)}</span><span><b style="display:block;font-size:13px">Not you? Switch player</b><span style="font-size:11px;color:var(--muted)">Forget this device</span></span></button>` : ''}
+`;
+}
+async function pfPhotoUpload_(dataUrl) {
+const p = lbTopup.selected;
+if (!p) return;
+try {
+const r = await doFetch('savePhoto', { playerId: p.playerId, contact: p.whatsapp, image: dataUrl });
+p.photoUrl = r.photoUrl;
+} catch (e) { /* nasa device pa rin ang photo kahit mag-fail */ }
+}
+/* === END: PROFILE PHOTO + MONO ICONS — LOGIC === */
 
 function show(id) {
 
@@ -6303,6 +6727,255 @@ e.stopPropagation();
 document.addEventListener(t, function(e) { e.preventDefault(); });
 });
 /* === END: NO ZOOM — LOGIC === */
+/* === START: SCAN MODAL — LOGIC (QR attendance) === */
+const SCAN_API_URL = 'PASTE_SCAN_EXEC_URL_HERE';
+const SCAN_KEY_STORE = 'livity_scan_key_v1'; // staff key — nasa device lang ng staff, hindi sa source code
+const SC_RESULT_MS = 1700;
+let scStream = null, scScanning = false, scBusy = false, scLastCode = '', scLastAt = 0;
+let scSession = null, scSessions = [], scDetector = null, scFlashTimer = null;
+
+function scEl_(id) { return document.getElementById(id); }
+function scKey_() { try { return localStorage.getItem(SCAN_KEY_STORE) || ''; } catch (e) { return ''; } }
+function scToday_() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+async function scApi_(action, params) {
+const res = await fetch(SCAN_API_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // simple request = walang CORS preflight
+body: JSON.stringify(Object.assign({ action: action, key: scKey_() }, params || {})),
+redirect: 'follow'
+});
+const data = await res.json();
+if (!data.ok) throw new Error(data.error || 'Server error');
+return data;
+}
+
+function openScan_() {
+scEl_('scanModal').classList.add('open');
+document.body.style.overflow = 'hidden';
+if (!scKey_()) return scRenderGate_('');
+scRenderMain_();
+}
+
+function closeScan_() {
+scStop_();
+scEl_('scanModal').classList.remove('open');
+document.body.style.overflow = '';
+}
+
+function scRenderGate_(msg) {
+scEl_('scanBody').innerHTML = `
+<div class="tutorial-intro" style="margin-top:24px"><div class="tutorial-intro-ico">🔐</div><h4 style="color:#fff">Staff access</h4><p style="color:#c8c4bb">Enter the staff key once. It's saved on this device only.</p></div>
+<input class="lb-input" id="scKeyInput" type="password" placeholder="Staff key" autocomplete="off" onkeydown="if(event.key==='Enter')scSaveKey_()">
+<div class="lb-err">${lbEscapeHtml_(msg)}</div>
+<button class="btn primary" style="width:100%" onclick="scSaveKey_()">Unlock →</button>`;
+}
+
+function scSaveKey_() {
+const v = scEl_('scKeyInput').value.trim();
+if (!v) return;
+try { localStorage.setItem(SCAN_KEY_STORE, v); } catch (e) {}
+scRenderMain_();
+}
+
+function scForgetKey_(msg) {
+scStop_();
+try { localStorage.removeItem(SCAN_KEY_STORE); } catch (e) {}
+scRenderGate_(msg || '');
+}
+
+function scRenderMain_() {
+scEl_('scanBody').innerHTML = `
+<div class="sc-label" style="margin-top:6px">Session</div>
+<select class="lb-input" id="scSessionSel" onchange="scPickSession_(this.value)"><option>Loading sessions…</option></select>
+
+<div class="sc-cam" id="scCam">
+<video id="scVideo" playsinline muted></video>
+<button type="button" class="sc-idle" id="scIdle" onclick="scStart_()">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFDE00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>
+TAP TO SCAN
+</button>
+</div>
+
+<div class="sc-result" id="scResult"><span>Tap the circle, then hold the player's QR inside it.</span></div>
+
+<div class="sc-att"><span>Attended</span><span><b id="scAtt">0</b> / <span id="scTot">0</span></span></div>
+<div class="sc-bar"><i id="scBar"></i></div>
+<div class="sc-counts">
+<div><b id="scP">0</b><span>Present</span></div>
+<div><b id="scL">0</b><span>Late</span></div>
+<div><b id="scU">0</b><span>Unconfirmed</span></div>
+</div>
+
+<div class="sc-label">No QR? Enter Player ID</div>
+<div class="sc-manual">
+<input class="lb-input" id="scManual" placeholder="LVTFA-0001" autocapitalize="characters" autocomplete="off" onkeydown="if(event.key==='Enter')scManualSubmit_()">
+<button class="btn primary" onclick="scManualSubmit_()">Record</button>
+</div>
+<div style="text-align:center"><button class="sc-link" onclick="scForgetKey_('')">Change staff key</button></div>`;
+scLoadSessions_();
+}
+
+async function scLoadSessions_() {
+const sel = scEl_('scSessionSel');
+try {
+if (!SCAN_API_URL || SCAN_API_URL.indexOf('PASTE') === 0) throw new Error('Scan server URL is not set yet.');
+const r = await scApi_('sessions', {});
+const today = scToday_();
+scSessions = r.sessions.slice().sort(function (a, b) { return (b.date + b.start).localeCompare(a.date + a.start); }).slice(0, 10);
+const pick = scSessions.filter(function (s) { return s.date === today && s.status === 'Open'; })[0]
+|| scSessions.filter(function (s) { return s.date === today; })[0]
+|| scSessions[0] || null;
+scSession = pick ? pick.sessionId : null;
+sel.innerHTML = scSessions.length ? scSessions.map(function (s) {
+const label = s.team + ' · ' + (s.date === today ? 'Today' : s.date) + ' · ' + lbFormatTime12_(s.start) + (s.status === 'Closed' ? ' · Closed' : '');
+return '<option value="' + lbEscapeHtml_(s.sessionId) + '"' + (s.sessionId === scSession ? ' selected' : '') + '>' + lbEscapeHtml_(label) + '</option>';
+}).join('') : '<option value="">No sessions yet</option>';
+scRefreshCounts_();
+} catch (e) {
+if (/key|unauthor|denied/i.test(e.message)) return scForgetKey_('Wrong or missing staff key.');
+sel.innerHTML = '<option value="">Could not load sessions</option>';
+scShow_('err', 'Server error', e.message);
+}
+}
+
+function scPickSession_(id) { scSession = id || null; scRefreshCounts_(); }
+
+async function scRefreshCounts_() {
+if (!scSession) return scRenderCounts_({ total: 0, present: 0, late: 0, unconfirmed: 0 });
+try { const r = await scApi_('roster', { sessionId: scSession }); scRenderCounts_(r.counts); } catch (e) { /* silent */ }
+}
+
+function scRenderCounts_(c) {
+if (!c || !scEl_('scAtt')) return;
+const att = (c.present || 0) + (c.late || 0), tot = c.total || 0, pct = tot ? Math.round(att / tot * 100) : 0;
+scEl_('scAtt').textContent = att; scEl_('scTot').textContent = tot;
+scEl_('scP').textContent = c.present || 0; scEl_('scL').textContent = c.late || 0; scEl_('scU').textContent = c.unconfirmed || 0;
+scEl_('scBar').style.width = pct + '%';
+}
+
+function scShow_(kind, title, sub) {
+const box = scEl_('scResult'), cam = scEl_('scCam');
+if (!box) return;
+box.className = 'sc-result ' + kind;
+box.innerHTML = '<b>' + lbEscapeHtml_(title) + '</b>' + (sub ? '<span>' + lbEscapeHtml_(sub) + '</span>' : '');
+if (cam) cam.className = 'sc-cam ' + kind;
+}
+
+/* ---- camera + QR decode ---- */
+function scEnsureDecoder_() {
+if ('BarcodeDetector' in window && !scDetector) { try { scDetector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) {} }
+if (!scDetector && !window.jsQR && !document.getElementById('jsqrLib')) {
+const s = document.createElement('script');
+s.id = 'jsqrLib';
+s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+document.head.appendChild(s);
+}
+}
+
+async function scStart_() {
+if (scStream) return;
+if (!scSession) return scShow_('err', 'Pick a session first', '');
+if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+return scShow_('err', 'Camera not available', 'Use Enter Player ID below.');
+}
+try {
+scStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+} catch (e1) {
+try { scStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); }
+catch (e2) { return scShow_('err', 'Camera blocked', 'Allow camera access, or use Enter Player ID.'); }
+}
+try {
+const v = scEl_('scVideo');
+v.srcObject = scStream;
+await v.play();
+scEl_('scIdle').classList.add('hide');
+scScanning = true;
+scEnsureDecoder_();
+scShow_('', 'Ready for next player', 'Hold the QR inside the circle.');
+scEl_('scCam').className = 'sc-cam';
+scTick_();
+} catch (e) { scStop_(); scShow_('err', 'Camera could not start', 'Use Enter Player ID below.'); }
+}
+
+function scStop_() {
+scScanning = false;
+scBusy = false;
+clearTimeout(scFlashTimer);
+if (scStream) { scStream.getTracks().forEach(function (t) { t.stop(); }); scStream = null; }
+const idle = scEl_('scIdle'); if (idle) idle.classList.remove('hide');
+}
+
+async function scTick_() {
+if (!scScanning) return;
+const v = scEl_('scVideo');
+if (!scBusy && v && v.readyState >= 2 && v.videoWidth) {
+try {
+let text = '';
+if (scDetector) {
+const found = await scDetector.detect(v);
+if (found.length) text = found[0].rawValue;
+}
+if (!text && window.jsQR) {
+const c = document.createElement('canvas');
+const k = Math.min(1, 720 / v.videoWidth);
+c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+const x = c.getContext('2d', { willReadFrequently: true });
+x.drawImage(v, 0, 0, c.width, c.height);
+const im = x.getImageData(0, 0, c.width, c.height);
+const hit = jsQR(im.data, im.width, im.height, { inversionAttempts: 'attemptBoth' });
+if (hit && hit.data) text = hit.data;
+}
+if (text) scHandle_(text, false);
+} catch (e) { /* skip frame */ }
+}
+requestAnimationFrame(scTick_);
+}
+
+/* ---- record attendance ---- */
+async function scHandle_(code, manual) {
+if (scBusy) return;
+const now = Date.now();
+if (!manual && code === scLastCode && now - scLastAt < 2500) return;
+scBusy = true; scLastCode = code; scLastAt = now;
+if (!scSession) { scBusy = false; return scShow_('err', 'Pick a session first', ''); }
+
+let kind = 'err', title = 'Error', sub = '';
+try {
+const r = await scApi_('scan', { sessionId: scSession, code: String(code).trim(), manual: manual ? '1' : '0' });
+const name = r.player ? r.player.name : '';
+if (r.result === 'PRESENT') { kind = 'ok'; title = name || 'Present'; sub = 'PRESENT'; }
+else if (r.result === 'LATE') { kind = 'late'; title = name || 'Late'; sub = 'LATE ' + (r.minutesLate || 0) + ' MIN'; }
+else if (r.result === 'DUPLICATE') { kind = 'dup'; title = name || 'Already scanned'; sub = r.message || 'Already recorded'; }
+else { kind = 'err'; title = name || 'Not recognised'; sub = r.message || 'Invalid QR'; }
+if (r.counts) scRenderCounts_(r.counts);
+} catch (e) {
+if (/key|unauthor|denied/i.test(e.message)) { scBusy = false; return scForgetKey_('Wrong or missing staff key.'); }
+title = 'Could not record'; sub = String(e.message || 'No connection').slice(0, 60);
+}
+
+scShow_(kind, title, sub);
+if (navigator.vibrate) navigator.vibrate(kind === 'err' ? [12, 8, 12] : [10, 6, 20]);
+clearTimeout(scFlashTimer);
+scFlashTimer = setTimeout(function () {
+scBusy = false;
+const cam = scEl_('scCam'); if (cam) cam.className = 'sc-cam';
+if (kind !== 'err') scRefreshCounts_();
+}, SC_RESULT_MS);
+}
+
+function scManualSubmit_() {
+const inp = scEl_('scManual');
+let id = (inp.value || '').trim().toUpperCase();
+if (!id) return;
+if (/^\d+$/.test(id)) id = 'LVTFA-' + id.padStart(4, '0');
+inp.value = '';
+scBusy = false;
+scHandle_(id, true);
+}
+
+document.addEventListener('visibilitychange', function () { if (document.hidden && scStream) scStop_(); });
+/* === END: SCAN MODAL — LOGIC === */
 
 /* === START: LOADING STATES === */
 function lbLoadingHtml_(text, sub) {
