@@ -3656,8 +3656,8 @@ return document.getElementById('lbBody');
 
 function lbStartDirectEnroll(programId) {
 
-lbForm.programId = programId;
-lbForm.package = '';
+lbForm._linkedGuardian = false;
+lbForm.programId = programId;lbForm.package = '';
 lbForm.category = '';
 
 lbGoTo('enroll'); // canonical entry — same logic ginagamit ng lahat ng enroll triggers
@@ -4114,6 +4114,13 @@ return result;
 
 async function lbSubmitEnrollment() {
 
+if (lbForm.consentPrivacy !== true) {
+lbEnrollStep = lbActiveSteps_().indexOf('consent');
+lbRerender();
+const consentErr_ = document.getElementById('lbErr');
+if (consentErr_) consentErr_.textContent = 'Please tick the Data Privacy Consent to continue.';
+return;
+}
 const btn = document.getElementById('lbSubmitBtn');
 const err = document.getElementById('lbErr');
 if (err) err.textContent = '';
@@ -4122,7 +4129,7 @@ if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
 const payload = {
 player: { firstName: lbForm.firstName, lastName: lbForm.lastName, dob: lbForm.dob, age: lbForm.age, gender: lbForm.gender, nationality: lbForm.nationality, area: lbForm.area },
 guardian: { guardianName: lbForm.guardianName, relationship: lbForm.relationship, whatsapp: lbForm.whatsapp, email: lbForm.email, emName: lbForm.emName, emNumber: lbForm.emNumber, contactMode: lbForm.contactMode },
-enrollment: { programId: lbForm.programId, category: lbForm.category, packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPrivacy: lbForm.consentPrivacy }
+enrollment: { programId: lbForm.programId, category: lbForm.category, packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPrivacy: lbForm.consentPrivacy === true }
 };
 
 try {
@@ -4185,8 +4192,8 @@ if (step === 'payment' && !lbForm.paymentMethod) {
 if (err) err.textContent = 'Please select a payment method.';
 return;
 }
-if (step === 'consent' && !lbForm.consentPrivacy) {
-if (err) err.textContent = 'Data Privacy Consent is required to continue.';
+if (step === 'consent') { const cb_ = document.querySelector('.lb-check input'); if (cb_) lbForm.consentPrivacy = cb_.checked; }
+if (step === 'consent' && !lbForm.consentPrivacy) {if (err) err.textContent = 'Data Privacy Consent is required to continue.';
 return;
 }
 if (lbEnrollStep < steps.length - 1) {
