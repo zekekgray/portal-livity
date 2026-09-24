@@ -1803,6 +1803,79 @@ cursor:pointer;
 /* === END: ASK ADMIN JA CHAT — STYLES === */
 /* === END: ANYTIME LIVITY BALL — STYLES === */
 
+/* === START: PROFILE SHEET — STYLES === */
+.livity-ball-modal.profile-mode {
+top:auto;
+bottom:0;
+left:50%;
+width:100%;
+max-width:480px;
+height:86vh;
+border-radius:28px 28px 0 0;
+padding:0 18px calc(16px + env(safe-area-inset-bottom,0px));
+display:flex;
+flex-direction:column;
+transform:translate(-50%,100%);
+box-shadow:0 -24px 70px rgba(0,0,0,.4);
+transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+}
+.livity-ball-modal.profile-mode.open {
+transform:translate(-50%,0);
+}
+.livity-ball-modal.profile-mode:before {
+content:"";
+display:block;
+width:36px;
+height:4px;
+border-radius:2px;
+background:var(--line);
+margin:10px auto 6px;
+flex-shrink:0;
+}
+.livity-ball-modal.profile-mode .lb-header {
+padding:6px 0 10px;
+flex-shrink:0;
+}
+.livity-ball-modal.profile-mode .lb-header h4 {
+font-size:16px;
+font-weight:800;
+letter-spacing:0;
+text-transform:none;
+color:var(--text);
+}
+.livity-ball-modal.profile-mode .lb-body {
+flex:1;
+min-height:0;
+max-height:none;
+padding-bottom:12px;
+}
+.pf-head {
+display:flex;
+align-items:center;
+gap:12px;
+}
+.pf-avatar {
+width:54px;
+height:54px;
+border-radius:50%;
+background:var(--gold);
+color:#18150f;
+display:grid;
+place-items:center;
+font-weight:850;
+font-size:19px;
+letter-spacing:.5px;
+flex-shrink:0;
+box-shadow:0 0 0 3px rgba(255,222,0,.25);
+}
+.pf-remember {
+text-align:center;
+font-size:11px;
+color:var(--muted);
+margin:10px 0 0;
+}
+/* === END: PROFILE SHEET — STYLES === */
+
 /* === START: TRAINED WITH LIVITY — SOCIAL PROOF STYLES === */
 .proof-card {
 display:flex;
@@ -2023,7 +2096,7 @@ aria-label="How to use the app"
 <span>Get started today</span>
 </button>
 
-<button style="grid-column:1/-1" onclick="tutOpenLb_('topupFind')">
+<button style="grid-column:1/-1" onclick="openProfile_()">
 <div class="icon">👤</div>
 <b>My Player</b>
 <span>Profile, sessions & payments</span>
@@ -2901,7 +2974,7 @@ Show up, learn, compete, and grow.
 <button
 class="btn outline"
 style="width:100%;display:block;text-align:center;box-sizing:border-box"
-onclick="toggleLivityBall();lbGoTo('topupFind')"
+onclick="openProfile_()"
 >
 Open My Player →
 </button>
@@ -2953,7 +3026,7 @@ Coach Sam — Advanced Assessment
 
 <div class="livity-ball-modal" id="livityModal">
 <div class="lb-header">
-<button class="lb-back" id="lbBackBtn" onclick="lbGoTo(lbBackTarget)" style="display:none">←</button>
+<button class="lb-back" id="lbBackBtn" onclick="lbGoTo(lbProfileMode ? 'profile' : lbBackTarget)" style="display:none">←</button>
 <h4 id="lbTitle">Anytime Livity</h4>
 <button class="lb-close" onclick="closeLivityBall()">✕</button>
 </div>
@@ -3584,7 +3657,7 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbwVknH9iLYMdYQqJihUhh8mYtyRET2qfUGG6lDZVnmxiqYB2u4Euku1Q-pYjLNB5Mub5g/exec';
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyfgpWMbCmzFwYssnn1wLvtbU3iX8T60renhcP_33DxWdCpStJs4X8XgJJ0_0yq4lPlRQ/exec';
 
 const LIVITY_PAYMENT_INFO_FALLBACK = {
 gcash: { number:'09762675397', accountName:'Livity Training & Academy' },
@@ -3699,6 +3772,8 @@ lbStartDirectEnroll(lbPendingProgramId);
 
 function lbGoTo(screen) {
 
+if (lbProfileMode && screen === 'menu') screen = 'profile'; // "Done" buttons balik sa profile, hindi sa ball menu
+
 lbScreen = screen;
 const body = lbBody();
 const title = document.getElementById('lbTitle');
@@ -3725,6 +3800,11 @@ title.textContent = 'My Player';
 back.style.display = 'grid';
 lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
 body.innerHTML = lbRenderTopupFind_();
+} else if (screen === 'profile') {
+lbBackTarget = 'profile';
+title.textContent = 'My Profile';
+back.style.display = 'none';
+lbRenderProfileEntry_();
 } else if (screen === 'accessGate') {
 lbBackTarget = 'menu';
 title.textContent = 'Welcome to Livity';
@@ -4420,14 +4500,17 @@ else if (err) err.textContent = "We couldn't find a player with that number/ID. 
 return;
 }
 lbTopup.players = json.players;
+pfSave_({ q: query, pid: (pfLoad_() || {}).pid || '' });
 navMarkKnown_();
 const okSlot_ = document.getElementById('lbFindEmpty');
 if (!okSlot_) return; // user left this screen while we were searching
 okSlot_.innerHTML = lbSuccessHtml_('Player found');
 await new Promise(function (r) { setTimeout(r, 650); });
-if (lbScreen !== 'topupFind' || !document.getElementById('lbFindEmpty')) return;
-if (json.players.length === 1) {
-lbTopup.selected = json.players[0];
+if ((lbScreen !== 'topupFind' && lbScreen !== 'profile') || !document.getElementById('lbFindEmpty')) return;
+const savedPf_ = pfLoad_() || {};
+const savedIdx_ = lbProfileMode ? json.players.findIndex(function (p) { return p.playerId === savedPf_.pid; }) : -1;
+if (json.players.length === 1 || savedIdx_ > -1) {
+lbTopup.selected = json.players[savedIdx_ > -1 ? savedIdx_ : 0];
 lbBody().innerHTML = lbRenderPlayerHub_();
 document.getElementById('lbTitle').textContent = lbTopup.selected.fullName;
 } else {
@@ -5285,6 +5368,8 @@ const ball = document.getElementById('livityBall');
 modal.classList.remove('open');
 backdrop.classList.remove('open');
 ball.classList.remove('active');
+lbProfileMode = false;
+setTimeout(function () { if (!modal.classList.contains('open')) modal.classList.remove('profile-mode'); }, 450);
 
 }
 
@@ -5317,7 +5402,121 @@ navAdapt_();
 }
 
 document.addEventListener('DOMContentLoaded', navAdapt_);
-/* === END: ADAPTIVE NAV === */
+/* === START: PROFILE SHEET — LOGIC (own modal + remembered player) === */
+const PROFILE_KEY = 'livity_profile_v1'; // { q: typed number/ID, pid: last selected player }
+let lbProfileMode = false;
+
+function pfLoad_() { try { const r = localStorage.getItem(PROFILE_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function pfSave_(o) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(o)); } catch (e) {} }
+function pfClear_() { try { localStorage.removeItem(PROFILE_KEY); } catch (e) {} }
+
+function openProfile_() {
+closeLivityBall();
+lbProfileMode = true;
+const m = document.getElementById('livityModal');
+m.classList.add('profile-mode');
+void m.offsetHeight; // reflow para smooth ang slide-up
+lbGoTo('profile');
+m.classList.add('open');
+document.getElementById('livityBackdrop').classList.add('open');
+hideLivityHint();
+}
+
+function lbRenderProfileEntry_() {
+if (lbTopup.selected) {
+lbBody().innerHTML = lbRenderPlayerHub_();
+return;
+}
+const saved = pfLoad_();
+lbTopup = { query: (saved && saved.q) || '', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
+lbBody().innerHTML = lbRenderTopupFind_();
+if (saved && saved.q) lbSubmitTopupFind_(); // auto-load remembered player
+}
+
+function pfSwitch_() {
+pfClear_();
+lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
+lbBody().innerHTML = lbRenderTopupFind_();
+document.getElementById('lbTitle').textContent = 'My Profile';
+}
+
+/* overrides the earlier declarations (last function declaration wins) */
+function navAdapt_() {
+let known = false;
+try { known = localStorage.getItem(KNOWN_KEY) === '1' || !!pfLoad_(); } catch (e) {}
+if (!known) return;
+const btn = document.querySelector('.bottom button[data-v="enroll"]');
+if (!btn) return;
+btn.setAttribute('data-v', 'player');
+btn.setAttribute('onclick', 'openProfile_()');
+btn.innerHTML = '<b>👤</b>Profile';
+}
+
+function lbRenderTopupFind_() {
+const intro = lbProfileMode
+? `<div class="tutorial-intro"><div class="tutorial-intro-ico">👤</div><h4>Your Player Profile</h4><p>Enter it once — we'll remember it on this device.</p></div>`
+: '';
+return `
+${intro}
+<h5 class="lb-step-title">Find your player's profile</h5>
+<p class="lb-text">Use the WhatsApp / mobile number from registration, or the Player ID.</p>
+<input class="lb-input" id="topupQuery" placeholder="Player ID / Mobile Number" value="${lbTopup.query}" onkeydown="if(event.key==='Enter')lbSubmitTopupFind_()">
+<div class="lb-err" id="lbErr"></div>
+<button class="btn primary" style="width:100%" id="lbFindBtn" onclick="lbSubmitTopupFind_()">View My Player →</button>
+<div id="lbFindEmpty"></div>
+`;
+}
+
+function lbRenderPlayerHub_() {
+const p = lbTopup.selected;
+pfSave_({ q: lbTopup.query || (pfLoad_() || {}).q || '', pid: p.playerId });
+
+const rels = lbPlayerRels_();
+const status = lbPlayerStatus_(rels);
+const programLine = (p.category ? p.category + ' · ' : '') + rels.map(function (r) { return lbShortProgramName_(r.programName); }).join(' + ');
+const initials = String(p.fullName || '?').trim().split(/\s+/).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase();
+
+const activeIds = rels.filter(function (r) { return r.state === 'active' && r.programId !== 'PRG-PRIV'; }).map(function (r) { return r.programId; });
+const next = activeIds.length ? findNextSession_(activeIds) : null;
+const nextHtml = next ? `
+<div style="border-top:1px solid #ffffff22;margin-top:14px;padding-top:12px">
+<div class="next-session-label">Next training</div>
+<div class="next-session-meta">${next.isToday ? 'Today' : next.day} · ${lbFormatTimeRange_(next.session.startTime, next.session.endTime)}</div>
+<div class="next-session-venue">${next.session.venue}</div>
+</div>` : '';
+
+return `
+<div class="panel next-session-card" style="margin:0 0 14px;cursor:default">
+<div class="pf-head">
+<div class="pf-avatar">${initials}</div>
+<div style="min-width:0">
+<div class="next-session-title" style="margin:0;font-size:20px">${p.fullName}</div>
+<div class="next-session-venue">Player ID: ${p.playerId}</div>
+</div>
+</div>
+<div class="pay-badge ${status.cls}" style="margin-top:12px">${status.label}</div>
+<div class="next-session-meta" style="margin-top:12px">${programLine}</div>
+<div class="next-session-title" style="font-size:18px;margin:4px 0 0">${lbPlayerSummaryLine_(rels)}</div>
+${nextHtml}
+</div>
+${ctxHelp_('playerId')}${ctxHelp_('sessions')}
+<div class="quick" style="margin-bottom:10px">
+<button type="button" onclick="closeLivityBall();show('schedule')"><div class="icon">◷</div><b>Schedule</b><span>Upcoming training</span></button>
+<button type="button" onclick="lbOpenSessions_()"><div class="icon">🎟️</div><b>Sessions</b><span>Check & top up</span></button>
+<button type="button" onclick="lbOpenPayments_()"><div class="icon">₱</div><b>Payments</b><span>Balance & history</span></button>
+<button type="button" onclick="lbOpenPlayerDetails_()"><div class="icon">👤</div><b>Details</b><span>Player info</span></button>
+</div>
+<button class="lb-item" onclick="lbOpenAddProgram_()">
+<span class="lb-ico">＋</span> Add Another Program
+</button>
+<button class="lb-item" onclick="lbOpenAddChild_()">
+<span class="lb-ico">👤</span> Add Another Player
+</button>
+${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb-ico">⇄</span><span><b style="display:block;font-size:13px">Not you? Switch player</b><span style="font-size:11px;color:var(--muted)">Forget this device</span></span></button>
+<p class="pf-remember">🔒 Remembered on this device only</p>` : ''}
+`;
+}
+/* === END: PROFILE SHEET — LOGIC === */
 
 function show(id) {
 
