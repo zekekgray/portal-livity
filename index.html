@@ -31,6 +31,22 @@
 box-sizing:border-box;
 }
 
+/* === START: APP SCROLL LOCK — SINGLE REUSABLE SYSTEM === */
+/* One class, one owner. JS only ever toggles this + sets body's `top`
+ offset (which must stay inline since its value is dynamic per-lock). */
+html.scroll-locked,
+body.scroll-locked {
+overflow: hidden !important;
+}
+
+body.scroll-locked {
+position: fixed;
+left: 0;
+right: 0;
+width: 100%;
+}
+/* === END: APP SCROLL LOCK === */
+
 html {
 scroll-behavior:smooth;
 -webkit-text-size-adjust:100%;
@@ -889,6 +905,8 @@ top:0;
 bottom:0;
 left:0;
 right:0;
+height:100dvh;
+min-height:100dvh;
 max-width:480px;
 margin:0 auto;
 background:#171714;
@@ -899,6 +917,10 @@ transform:translateY(100%);
 visibility:hidden;
 transition:transform .4s cubic-bezier(.34,1.56,.64,1), visibility 0s .4s;
 padding-top:env(safe-area-inset-top,0px);
+/* Stops an overscroll at the modal's own edge from bubbling into a scroll
+ gesture on the underlying document — extra safety layer on top of the
+ body lock, especially relevant on mobile rubber-band scrolling. */
+overscroll-behavior:contain;
 }
 .scan-modal.open {
 transform:none;
@@ -933,6 +955,8 @@ cursor:pointer;
 flex:1;
 overflow-y:auto;
 -webkit-overflow-scrolling:touch;
+overscroll-behavior:contain;
+touch-action:pan-y;
 padding:6px 18px calc(24px + env(safe-area-inset-bottom,0px));
 }
 .scan-modal .lb-input {
@@ -1902,6 +1926,7 @@ flex-shrink:0;
 max-height:56vh;
 overflow-y:auto;
 -webkit-overflow-scrolling:touch;
+overscroll-behavior:contain;
 }
 .lb-sub {
 color:var(--muted);
@@ -2124,6 +2149,10 @@ transform:translateX(-50%) translateX(100%);
 box-shadow:none;
 transition:transform .38s cubic-bezier(.4,0,.2,1);
 touch-action:pan-y;
+/* Only .lb-body scrolls inside Profile — this container itself never does,
+ so there's exactly one scroll owner, not two nested ones. */
+overflow:hidden;
+overscroll-behavior:contain;
 }
 .livity-ball-modal.profile-mode.open {
 transform:translateX(-50%) translateX(0%);
@@ -2150,6 +2179,9 @@ flex:1;
 min-height:0;
 max-height:none;
 padding-bottom:12px;
+overflow-y:auto;
+overscroll-behavior:contain;
+-webkit-overflow-scrolling:touch;
 }
 .pf-head {
 display:flex;
@@ -2385,6 +2417,16 @@ color:#5e5a52;
 line-height:1.5;
 font-style:italic;
 }
+
+/* === START: APP ISOLATION — HIDE BOTTOM NAV WITHOUT LAYOUT SHIFT === */
+/* visibility+pointer-events (NOT display:none) so .bottom keeps its box in
+ the layout — no jump/reflow for anything else on the page when an isolated
+ screen (Scanner/Profile/Anytime Livity/Welcome) takes over the viewport. */
+.app-isolated .bottom {
+visibility: hidden;
+pointer-events: none;
+}
+/* === END: APP ISOLATION === */
 
 /* BOTTOM NAV */
 
@@ -3664,6 +3706,54 @@ location.replace(url);
 })();
 /* === END: DAILY AUTO-REFRESH === */
 
+/* === START: SHARED SCROLL LOCK — SINGLE OWNER FOR FULLSCREEN OVERLAYS === */
+let scrollLockY_ = 0;
+let scrollLockCount_ = 0;
+
+/** Single source of truth for "is an isolated screen (Scanner/Profile/Anytime
+ Livity/Welcome) currently owning the viewport?" — toggles a CSS hook on
+ <html>/<body> for any future isolation-aware styling, and explicitly removes
+ the bottom nav from visibility/interaction/tab order without touching layout
+ (it's position:fixed, so display:none isn't needed to free up space). */
+function setAppIsolation_(locked) {
+// The .app-isolated class (see CSS) hides .bottom via visibility +
+// pointer-events, never display:none — same layout box stays in place,
+// so nothing else on the page shifts or jumps when this toggles.
+document.documentElement.classList.toggle('app-isolated', locked);
+document.body.classList.toggle('app-isolated', locked);
+}
+
+function lockBodyScroll_(isHandoff) {
+if (isHandoff && scrollLockCount_ > 0) return; // ownership transfer, not a new lock — count stays as-is
+if (scrollLockCount_ === 0) {
+scrollLockY_ = window.scrollY || window.pageYOffset || 0;
+// `top` stays inline since its value is dynamic per-lock (the exact
+// scroll position at lock time); everything static (position/overflow/
+// width) lives in the .scroll-locked CSS class instead of inline styles.
+document.body.style.top = (-scrollLockY_) + 'px';
+document.documentElement.classList.add('scroll-locked');
+document.body.classList.add('scroll-locked');
+setAppIsolation_(true);
+}
+scrollLockCount_++;
+}
+
+function unlockBodyScroll_() {
+if (scrollLockCount_ === 0) return;
+scrollLockCount_--;
+if (scrollLockCount_ === 0) {
+document.documentElement.classList.remove('scroll-locked');
+document.body.classList.remove('scroll-locked');
+document.body.style.top = '';
+window.scrollTo(0, scrollLockY_);
+setAppIsolation_(false);
+// Nav visibility/pointer-events are restored, but its transform offset
+// may be stale after being hidden while the visualViewport shifted
+// (keyboard, camera permission prompt, etc) — re-sync it now.
+if (window.pinBottomNav_) window.pinBottomNav_();
+}
+}
+
 const LB_SCHEDULE_UNAVAILABLE_MSG = "Schedule temporarily unavailable — check the Schedule tab or WhatsApp Admin JA.";
 
 const data = {
@@ -3921,6 +4011,7 @@ ${lbSessionActionHtml_(s)}
 
 document.getElementById('sessionDetailModal').classList.add('open');
 document.getElementById('sessionDetailBackdrop').classList.add('open');
+lockBodyScroll_();
 }
 
 /** The action a session card offers depends on what actually happens for that program — never "Register". */
@@ -3945,6 +4036,7 @@ return '';
 function closeSessionDetail_() {
 document.getElementById('sessionDetailModal').classList.remove('open');
 document.getElementById('sessionDetailBackdrop').classList.remove('open');
+unlockBodyScroll_();
 }
 
 async function loadSchedule() {
@@ -4511,10 +4603,12 @@ currentSlot.innerHTML = `
 }
 
 function lbResumeReturningGuardian_(whatsapp) {
-closeLivityBall();
+closeLivityBall(true); // hand off the lock — the 50ms gap before reopening must not expose/scroll the dashboard
 setTimeout(function () {
-toggleLivityBall();
 lbGoTo('topupFind');
+document.getElementById('livityModal').classList.add('open');
+document.getElementById('livityBackdrop').classList.add('open');
+lockBodyScroll_(true);
 document.getElementById('topupQuery').value = whatsapp;
 lbSubmitTopupFind_();
 }, 50);
@@ -5886,11 +5980,12 @@ closeLivityBall();
 lbGoTo('menu');
 modal.classList.add('open');
 backdrop.classList.add('open');
+lockBodyScroll_();
 }
 
 }
 
-function closeLivityBall() {
+function closeLivityBall(skipUnlock) {
 
 const modal = document.getElementById('livityModal');
 const backdrop = document.getElementById('livityBackdrop');
@@ -5900,6 +5995,10 @@ modal.classList.remove('open');
 backdrop.classList.remove('open');
 ball.classList.remove('active');
 lbProfileMode = false;
+// skipUnlock=true is used when another isolated screen (e.g. Profile) is
+// taking over the lock in the same call stack — avoids an unlock→relock
+// flicker (nav hide/show/hide, scroll capture/restore/capture) in one frame.
+if (!skipUnlock) unlockBodyScroll_();
 setTimeout(function () { if (!modal.classList.contains('open')) modal.classList.remove('profile-mode'); }, 450);
 
 }
@@ -5962,6 +6061,7 @@ ${item.caption ? `<p class="lb-text" style="margin:10px 0 0;text-align:center">$
 `;
 document.getElementById('galleryModal').classList.add('open');
 document.getElementById('galleryBackdrop').classList.add('open');
+lockBodyScroll_();
 }
 
 function closeGalleryLightbox_() {
@@ -5969,6 +6069,7 @@ const v = document.querySelector('#galleryModalBody video');
 if (v) v.pause();
 document.getElementById('galleryModal').classList.remove('open');
 document.getElementById('galleryBackdrop').classList.remove('open');
+unlockBodyScroll_();
 }
 /* === END: GALLERY === */
 
@@ -6056,7 +6157,7 @@ function pfSave_(o) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(o))
 function pfClear_() { try { localStorage.removeItem(PROFILE_KEY); } catch (e) {} }
 
 function openProfile_() {
-closeLivityBall();
+closeLivityBall(true); // hand off the lock directly — no unlock/relock flicker
 lbProfileMode = true;
 const m = document.getElementById('livityModal');
 m.classList.add('profile-mode');
@@ -6064,6 +6165,7 @@ void m.offsetHeight; // reflow para smooth ang slide-up
 lbGoTo('profile');
 m.classList.add('open');
 document.getElementById('livityBackdrop').classList.add('open');
+lockBodyScroll_(true);
 hideLivityHint();
 }
 
@@ -7283,7 +7385,7 @@ const WELCOME_KEY = 'livity_welcome_seen_v1'; // palitan ang v1 → v2 para luma
 function openWelcome() {
 document.getElementById('welcomeBackdrop').classList.add('open');
 document.getElementById('welcomeModal').classList.add('open');
-document.body.style.overflow = 'hidden';
+lockBodyScroll_();
 setTimeout(function() {
 const b = document.getElementById('welcomeBtn');
 if (b) b.focus();
@@ -7293,7 +7395,7 @@ if (b) b.focus();
 function closeWelcome() {
 document.getElementById('welcomeBackdrop').classList.remove('open');
 document.getElementById('welcomeModal').classList.remove('open');
-document.body.style.overflow = '';
+unlockBodyScroll_();
 try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
 }
 
@@ -7312,12 +7414,14 @@ if (!APP_MAINTENANCE) return true;
 e.preventDefault();
 document.getElementById('maintModal').classList.add('open');
 document.getElementById('maintBackdrop').classList.add('open');
+lockBodyScroll_();
 return false;
 }
 
 function closeMaintModal() {
 document.getElementById('maintModal').classList.remove('open');
 document.getElementById('maintBackdrop').classList.remove('open');
+unlockBodyScroll_();
 }
 /* === END: APP MAINTENANCE — LOGIC === */
 
@@ -7329,11 +7433,13 @@ rateSelected = '';
 document.getElementById('rateModalBody').innerHTML = rateModalForm();
 document.getElementById('rateModal').classList.add('open');
 document.getElementById('rateBackdrop').classList.add('open');
+lockBodyScroll_();
 }
 
 function closeRateModal() {
 document.getElementById('rateModal').classList.remove('open');
 document.getElementById('rateBackdrop').classList.remove('open');
+unlockBodyScroll_();
 }
 
 function rateModalForm() {
@@ -7435,12 +7541,14 @@ function openTutorial() {
 tutFabSeen_();
 document.getElementById('tutorialModal').classList.add('open');
 document.getElementById('tutorialBackdrop').classList.add('open');
+lockBodyScroll_();
 renderTutorialHome_();
 }
 
-function closeTutorial() {
+function closeTutorial(skipUnlock) {
 document.getElementById('tutorialModal').classList.remove('open');
 document.getElementById('tutorialBackdrop').classList.remove('open');
+if (!skipUnlock) unlockBodyScroll_();
 }
 
 /* === START: HELP HOME — TASK-BASED ("How do I...") === */
@@ -7506,10 +7614,11 @@ steps:[
 
 /** Closes the help sheet, then opens Anytime Livity directly on the given screen. */
 function tutOpenLb_(screen) {
-closeTutorial();
+closeTutorial(true); // hand off the lock directly — dashboard stays frozen across the transition
 lbGoTo(screen);
 document.getElementById('livityModal').classList.add('open');
 document.getElementById('livityBackdrop').classList.add('open');
+lockBodyScroll_(true);
 }
 
 function renderTutorialHome_() {
@@ -8199,7 +8308,7 @@ return data;
 
 function openScan_() {
 scEl_('scanModal').classList.add('open');
-document.body.style.overflow = 'hidden';
+lockBodyScroll_();
 if (!scKey_()) return scRenderGate_('');
 scRenderMain_();
 }
@@ -8208,7 +8317,7 @@ function closeScan_() {
 scStop_();
 if (scConnTimer_) { clearInterval(scConnTimer_); scConnTimer_ = null; }
 scEl_('scanModal').classList.remove('open');
-document.body.style.overflow = '';
+unlockBodyScroll_();
 // Camera/permission UI on iOS can leave a stale visualViewport offset applied
 // to the bottom nav (the "lifted tabs" bug) — force it back to baseline,
 // then re-check a couple times as the viewport settles after close.
@@ -8759,3 +8868,4 @@ window.addEventListener('pageshow', safeReset);
 </script>
 </body>
 </html>
+
