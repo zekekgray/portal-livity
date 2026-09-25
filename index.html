@@ -8209,6 +8209,12 @@ scStop_();
 if (scConnTimer_) { clearInterval(scConnTimer_); scConnTimer_ = null; }
 scEl_('scanModal').classList.remove('open');
 document.body.style.overflow = '';
+// Camera/permission UI on iOS can leave a stale visualViewport offset applied
+// to the bottom nav (the "lifted tabs" bug) — force it back to baseline,
+// then re-check a couple times as the viewport settles after close.
+if (window.resetBottomNav_) window.resetBottomNav_();
+setTimeout(function () { if (window.resetBottomNav_) window.resetBottomNav_(); }, 60);
+setTimeout(function () { if (window.pinBottomNav_) window.pinBottomNav_(); }, 400);
 }
 
 function scRenderGate_(msg) {
@@ -8458,7 +8464,10 @@ scBusy = false;
 scHandle_(id, true);
 }
 
-document.addEventListener('visibilitychange', function () { if (document.hidden && scStream) scStop_(); });
+document.addEventListener('visibilitychange', function () {
+if (document.hidden && scStream) scStop_();
+if (!document.hidden && window.resetBottomNav_) setTimeout(window.resetBottomNav_, 100);
+});
 /* === END: SCAN MODAL — LOGIC === */
 
 /* === START: SCAN → LIVITY BACKEND (nasa ilalim para manalo sa lumang declarations) === */
@@ -8683,8 +8692,69 @@ window.addEventListener('DOMContentLoaded', pinBottomNav);
 window.addEventListener('orientationchange', function () {
 setTimeout(pinBottomNav, 250);
 });
+
+window.pinBottomNav_ = pinBottomNav;
+window.resetBottomNav_ = function () {
+if (!nav) nav = document.querySelector('.bottom');
+if (nav) { nav.style.transform = ''; nav.style.webkitTransform = ''; }
+pinBottomNav();
+};
 })();
 /* === END: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
+
+/* === START: GLOBAL VIEWPORT-SHIFT GUARD — catches ANY modal close or keyboard dismiss === */
+(function () {
+function safeReset() {
+if (window.resetBottomNav_) window.resetBottomNav_();
+}
+
+// Every modal/backdrop in this app toggles the same "open" class.
+// Watching for that class being removed (regardless of WHICH modal) means
+// this guard covers Profile, Scanner, Tutorial, Rate Us, Welcome, Session
+// Detail, Gallery — and any modal added later — without editing each one.
+var mo = new MutationObserver(function (mutations) {
+for (var i = 0; i < mutations.length; i++) {
+var m = mutations[i];
+if (m.attributeName === 'class' && m.target.classList && !m.target.classList.contains('open')) {
+safeReset();
+setTimeout(safeReset, 200);
+setTimeout(safeReset, 450); // after the close transition (up to .4s) fully settles
+break;
+}
+}
+});
+
+function attachObserver() {
+document.querySelectorAll(
+'.rate-backdrop,.welcome-backdrop,.tutorial-sheet-backdrop,.livity-ball-backdrop,' +
+'.scan-modal,.livity-ball-modal,.tutorial-sheet,.rate-modal,.welcome-modal'
+).forEach(function (el) { mo.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+}
+
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', attachObserver);
+} else {
+attachObserver();
+}
+
+// Typing in any input (profile lookup, enroll form, chat, payment fields) opens
+// the iOS keyboard, which shifts visualViewport. Dismissing it doesn't always
+// re-fire resize in time — force a re-snap shortly after the field loses focus.
+document.addEventListener('focusout', function (e) {
+if (e.target && e.target.matches && e.target.matches('input,select,textarea')) {
+setTimeout(safeReset, 200);
+setTimeout(safeReset, 550);
+}
+}, true);
+
+// Returning to the app from another tab/app (Safari/PWA suspend-resume) can
+// also leave a stale offset — re-snap once the page is visible again.
+document.addEventListener('visibilitychange', function () {
+if (!document.hidden) setTimeout(safeReset, 150);
+});
+window.addEventListener('pageshow', safeReset);
+})();
+/* === END: GLOBAL VIEWPORT-SHIFT GUARD === */
 
 </script>
 </body>
