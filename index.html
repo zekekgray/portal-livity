@@ -3747,17 +3747,10 @@ document.body.classList.remove('scroll-locked');
 document.body.style.top = '';
 window.scrollTo(0, scrollLockY_);
 setAppIsolation_(false);
-// Nav visibility/pointer-events are restored, but its transform offset
-// may be stale after being hidden while the visualViewport shifted
-// (keyboard, camera permission prompt, browser chrome settling after
-// closing Scanner/Profile/etc). A single immediate re-sync isn't enough —
-// the viewport hasn't always settled yet at this exact frame — so reset
-// the transform outright and re-pin at a few delays until it settles,
-// same pattern closeScan_ already used, now centralized here so every
-// overlay (not just Scanner) gets it for free.
-if (window.resetBottomNav_) window.resetBottomNav_();
-setTimeout(function () { if (window.resetBottomNav_) window.resetBottomNav_(); }, 60);
-setTimeout(function () { if (window.pinBottomNav_) window.pinBottomNav_(); }, 400);
+// Waits for the viewport's own settle event instead of guessing a delay —
+// see settleBottomNav_ for why the old fixed-timeout approach could freeze
+// the nav at a wrong offset ("tabs stay lifted").
+if (window.settleBottomNav_) window.settleBottomNav_();
 }
 }
 
@@ -8784,6 +8777,7 @@ el.parentElement.classList.contains('open')
 /* === START: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
 (function () {
 var nav = null;
+var settleGen = 0;
 
 function pinBottomNav() {
 if (!nav) nav = document.querySelector('.bottom');
@@ -8804,10 +8798,36 @@ setTimeout(pinBottomNav, 250);
 });
 
 window.pinBottomNav_ = pinBottomNav;
+
+// Clears the current offset only — does NOT recompute. Recomputing here
+// (the old behavior) is what caused the bug: called right when a modal
+// closes, before the viewport has necessarily reported its final size.
 window.resetBottomNav_ = function () {
 if (!nav) nav = document.querySelector('.bottom');
 if (nav) { nav.style.transform = ''; nav.style.webkitTransform = ''; }
+};
+
+// Waits for the viewport to actually report its post-close size (a real
+// visualViewport resize/scroll event) before recalculating the nav offset
+// — instead of guessing with a fixed setTimeout delay. A guessed delay can
+// fire mid-transition (camera permission UI, address-bar animation not yet
+// finished), capture a wrong offset, and nothing corrects it afterward if
+// no further viewport event happens to fire naturally. That's exactly the
+// "tabs stay lifted" bug. The 500ms setTimeout below is only a fallback for
+// browsers/cases where no visualViewport event fires at all.
+window.settleBottomNav_ = function () {
+var myGen = ++settleGen; // any earlier pending settle() becomes a no-op
+window.resetBottomNav_();
+if (!window.visualViewport) { pinBottomNav(); return; }
+function settle() {
+if (myGen !== settleGen) return; // superseded by a newer settle call
+window.visualViewport.removeEventListener('resize', settle);
+window.visualViewport.removeEventListener('scroll', settle);
 pinBottomNav();
+}
+window.visualViewport.addEventListener('resize', settle);
+window.visualViewport.addEventListener('scroll', settle);
+setTimeout(settle, 500);
 };
 })();
 /* === END: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
@@ -8815,20 +8835,20 @@ pinBottomNav();
 /* === START: GLOBAL VIEWPORT-SHIFT GUARD — catches ANY modal close or keyboard dismiss === */
 (function () {
 function safeReset() {
-if (window.resetBottomNav_) window.resetBottomNav_();
+if (window.settleBottomNav_) window.settleBottomNav_();
 }
 
 // Every modal/backdrop in this app toggles the same "open" class.
 // Watching for that class being removed (regardless of WHICH modal) means
 // this guard covers Profile, Scanner, Tutorial, Rate Us, Welcome, Session
 // Detail, Gallery — and any modal added later — without editing each one.
+// settleBottomNav_ itself waits for the real viewport-settle event (or a
+// 500ms fallback), so one call here is enough — no more stacked guesses.
 var mo = new MutationObserver(function (mutations) {
 for (var i = 0; i < mutations.length; i++) {
 var m = mutations[i];
 if (m.attributeName === 'class' && m.target.classList && !m.target.classList.contains('open')) {
 safeReset();
-setTimeout(safeReset, 200);
-setTimeout(safeReset, 450); // after the close transition (up to .4s) fully settles
 break;
 }
 }
