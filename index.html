@@ -8784,10 +8784,14 @@ if (!nav) nav = document.querySelector('.bottom');
 if (!nav || !window.visualViewport) return;
 var vv = window.visualViewport;
 var offset = window.innerHeight - (vv.height + vv.offsetTop);
+// Same rule regardless of how the app was opened (bookmark, Safari tab,
+// installed PWA): toolbar animation / scroll-restore jitter is always
+// under ~120px. Only a real on-screen keyboard clears that bar, so
+// anything smaller is treated as noise and the nav stays put.
+if (offset < 120) offset = 0;
 nav.style.transform = 'translate3d(-50%,' + (-offset) + 'px,0)';
 nav.style.webkitTransform = 'translate3d(-50%,' + (-offset) + 'px,0)';
 }
-
 if (window.visualViewport) {
 window.visualViewport.addEventListener('resize', pinBottomNav);
 window.visualViewport.addEventListener('scroll', pinBottomNav);
@@ -8828,6 +8832,7 @@ pinBottomNav();
 window.visualViewport.addEventListener('resize', settle);
 window.visualViewport.addEventListener('scroll', settle);
 setTimeout(settle, 500);
+setTimeout(function () { if (myGen === settleGen) pinBottomNav(); }, 900);
 };
 })();
 /* === END: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
