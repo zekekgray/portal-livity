@@ -3749,8 +3749,15 @@ window.scrollTo(0, scrollLockY_);
 setAppIsolation_(false);
 // Nav visibility/pointer-events are restored, but its transform offset
 // may be stale after being hidden while the visualViewport shifted
-// (keyboard, camera permission prompt, etc) — re-sync it now.
-if (window.pinBottomNav_) window.pinBottomNav_();
+// (keyboard, camera permission prompt, browser chrome settling after
+// closing Scanner/Profile/etc). A single immediate re-sync isn't enough —
+// the viewport hasn't always settled yet at this exact frame — so reset
+// the transform outright and re-pin at a few delays until it settles,
+// same pattern closeScan_ already used, now centralized here so every
+// overlay (not just Scanner) gets it for free.
+if (window.resetBottomNav_) window.resetBottomNav_();
+setTimeout(function () { if (window.resetBottomNav_) window.resetBottomNav_(); }, 60);
+setTimeout(function () { if (window.pinBottomNav_) window.pinBottomNav_(); }, 400);
 }
 }
 
@@ -8317,13 +8324,7 @@ function closeScan_() {
 scStop_();
 if (scConnTimer_) { clearInterval(scConnTimer_); scConnTimer_ = null; }
 scEl_('scanModal').classList.remove('open');
-unlockBodyScroll_();
-// Camera/permission UI on iOS can leave a stale visualViewport offset applied
-// to the bottom nav (the "lifted tabs" bug) — force it back to baseline,
-// then re-check a couple times as the viewport settles after close.
-if (window.resetBottomNav_) window.resetBottomNav_();
-setTimeout(function () { if (window.resetBottomNav_) window.resetBottomNav_(); }, 60);
-setTimeout(function () { if (window.pinBottomNav_) window.pinBottomNav_(); }, 400);
+unlockBodyScroll_(); // now handles the nav reset/re-pin retries centrally
 }
 
 function scRenderGate_(msg) {
