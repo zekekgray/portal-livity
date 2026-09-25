@@ -51,6 +51,55 @@ button {
 font:inherit;
 }
 
+/* === START: GLOBAL SPRING-PRESS + HAPTIC FEEL — APPLE-STYLE === */
+button,
+.btn,
+.lb-item,
+.lb-pkg,
+.lb-pill,
+.quick button,
+.program,
+.price,
+.panel[onclick],
+.notice[onclick],
+.sched-tab,
+.event-tags,
+.coach,
+.acc-head,
+.tutorial-role-card,
+.lb-pay-copy,
+.pay-copy,
+.pf-avatar,
+.pay-method,
+[onclick] {
+transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .18s ease;
+-webkit-tap-highlight-color:transparent;
+}
+
+button:active,
+.btn:active,
+.lb-item:active,
+.lb-pkg:active,
+.lb-pill:active,
+.quick button:active,
+.program:active,
+.price:active,
+.panel[onclick]:active,
+.notice[onclick]:active,
+.sched-tab:active,
+.event-tags:active,
+.coach:active,
+.acc-head:active,
+.tutorial-role-card:active,
+.pay-copy:active,
+.pf-avatar:active,
+.pay-method:active,
+[onclick]:active {
+transform:scale(.94);
+transition:transform .12s cubic-bezier(.4,0,.2,1);
+}
+/* === END: GLOBAL SPRING-PRESS + HAPTIC FEEL === */
+
 .app {
 max-width:480px;
 margin:auto;
@@ -1497,6 +1546,55 @@ color:var(--red);
 border:1px solid #f7c9c6;
 }
 /* === END: PAYMENT STATUS BADGE — STYLES === */
+.pay-clock {
+border-radius:16px;
+padding:14px 16px;
+margin-bottom:12px;
+text-align:center;
+}
+.pay-clock.due { background:#fff8dd; border:1px solid #ffe38a; }
+.pay-clock.over { background:#ffeceb; border:1px solid #f7c9c6; }
+.pay-clock-label {
+font-size:10px;
+font-weight:800;
+letter-spacing:1.2px;
+text-transform:uppercase;
+color:var(--muted);
+margin-bottom:4px;
+}
+.pay-clock.over .pay-clock-label { color:var(--red); }
+.pay-clock-time {
+font-size:26px;
+font-weight:850;
+color:var(--text);
+font-variant-numeric:tabular-nums;
+}
+.pay-clock-sub { font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
+.pay-method {
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+border:1px solid var(--line);
+border-radius:14px;
+padding:12px 14px;
+margin-bottom:8px;
+}
+.pay-m-name { font-size:13px; font-weight:800; color:var(--text); }
+.pay-m-type { font-size:10px; font-weight:700; color:var(--muted); margin-left:6px; text-transform:uppercase; }
+.pay-acct { font-size:15px; font-weight:850; color:var(--text); margin-top:2px; }
+.pay-m-holder { font-size:11px; color:var(--muted); margin-top:2px; }
+.pay-copy {
+background:#f5f2ea;
+border:0;
+border-radius:10px;
+padding:8px 12px;
+font-size:11px;
+font-weight:800;
+color:var(--navy);
+cursor:pointer;
+flex-shrink:0;
+}
 
 /* COACHES */
 
@@ -2011,36 +2109,34 @@ cursor:pointer;
 
 /* === START: PROFILE SHEET — STYLES === */
 .livity-ball-modal.profile-mode {
-top:auto;
+top:0;
 bottom:0;
 left:50%;
 width:100%;
 max-width:480px;
-height:86vh;
-border-radius:28px 28px 0 0;
-padding:0 18px calc(16px + env(safe-area-inset-bottom,0px));
+height:100%;
+height:100dvh;
+border-radius:0;
+padding:calc(14px + env(safe-area-inset-top,0px)) 18px calc(16px + env(safe-area-inset-bottom,0px));
 display:flex;
 flex-direction:column;
-transform:translate(-50%,100%);
-box-shadow:0 -24px 70px rgba(0,0,0,.4);
-transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+transform:translateX(-50%) translateX(100%);
+box-shadow:none;
+transition:transform .38s cubic-bezier(.4,0,.2,1);
+touch-action:pan-y;
 }
 .livity-ball-modal.profile-mode.open {
-transform:translate(-50%,0);
+transform:translateX(-50%) translateX(0%);
 }
 .livity-ball-modal.profile-mode:before {
-content:"";
-display:block;
-width:36px;
-height:4px;
-border-radius:2px;
-background:var(--line);
-margin:10px auto 6px;
-flex-shrink:0;
+display:none;
 }
 .livity-ball-modal.profile-mode .lb-header {
-padding:6px 0 10px;
+padding:0 0 10px;
 flex-shrink:0;
+}
+.livity-ball-modal.profile-mode .lb-close {
+display:none;
 }
 .livity-ball-modal.profile-mode .lb-header h4 {
 font-size:16px;
@@ -2057,8 +2153,10 @@ padding-bottom:12px;
 }
 .pf-head {
 display:flex;
+flex-direction:column;
 align-items:center;
-gap:12px;
+text-align:center;
+gap:10px;
 }
 .pf-avatar {
 width:54px;
@@ -2293,6 +2391,8 @@ font-style:italic;
 .bottom {
 position:fixed;
 bottom:0;
+transform:translate3d(-50%,0,0);
+-webkit-transform:translate3d(-50%,0,0);
 left:50%;
 transform:translate3d(-50%,0,0);
 -webkit-transform:translate3d(-50%,0,0);
@@ -2332,7 +2432,10 @@ transform:scale(.9);
 }
 
 .bottom button b {
-display:block;
+display:flex;
+align-items:center;
+justify-content:center;
+height:27px;
 font-size:27px;
 line-height:1;
 margin-bottom:0;
@@ -2430,7 +2533,6 @@ aria-label="How to use the app"
 
 <div class="section-title">
 <h2>Start Here</h2>
-<small>Find your path</small>
 </div>
 
 <div class="quick">
@@ -2445,12 +2547,6 @@ aria-label="How to use the app"
 <div class="icon">◷</div>
 <b>Schedule</b>
 <span>See training times</span>
-</button>
-
-<button onclick="show('pricing')">
-<div class="icon">₱</div>
-<b>Pricing</b>
-<span>Transparent rates</span>
 </button>
 
 <button onclick="show('enroll')">
@@ -2508,6 +2604,10 @@ Find Your Program →
 <p style="color:var(--muted);font-size:13px">
 See when and where we train.
 </p>
+
+<button class="btn outline" style="width:100%;margin-bottom:14px" onclick="show('pricing')">
+₱ View All Pricing →
+</button>
 
 <div id="nextSessionCard" style="margin:14px 0"></div>
 
@@ -3091,6 +3191,21 @@ Trained with Livity
 <div class="panel">
 
 <h3>
+Academy Gallery
+</h3>
+
+<p style="color:var(--muted);font-size:12px;margin:-4px 0 12px">
+Photos and videos from training and events.
+</p>
+
+<div id="galleryGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>
+
+</div>
+
+
+<div class="panel">
+
+<h3>
 Meet the Team
 </h3>
 
@@ -3455,6 +3570,15 @@ Coach Sam — Advanced Assessment
 <!-- === END: SESSION DETAIL MODAL — MARKUP === -->
 
 
+<!-- === START: GALLERY LIGHTBOX — MARKUP === -->
+<div class="rate-backdrop" id="galleryBackdrop" onclick="closeGalleryLightbox_()"></div>
+
+<div class="rate-modal" id="galleryModal" style="max-width:92vw;width:min(420px,92vw);padding:14px">
+<div id="galleryModalBody"></div>
+</div>
+<!-- === END: GALLERY LIGHTBOX — MARKUP === -->
+
+
 <!-- === START: SCAN MODAL — MARKUP === -->
 <div class="scan-modal" id="scanModal" role="dialog" aria-modal="true" aria-label="Scan attendance">
 <div class="scan-head">
@@ -3507,11 +3631,11 @@ More
 
 
 <button
-data-v="enroll"
-onclick="show('enroll')"
+data-v="player"
+onclick="openProfile_()"
 >
-<b>↗</b>
-Enroll
+<b>👤</b>
+Profile
 </button>
 
 </nav>
@@ -3520,6 +3644,25 @@ Enroll
 
 
 <script>
+
+/* === START: DAILY AUTO-REFRESH — VERSION CACHE-BUST (app shell only, never touches saved profile/photos/staff key) === */
+(function () {
+var REFRESH_KEY = 'livity_last_refresh_v1';
+var DAY_MS = 24 * 60 * 60 * 1000;
+try {
+var last = Number(localStorage.getItem(REFRESH_KEY)) || 0;
+var now = Date.now();
+if (now - last >= DAY_MS) {
+localStorage.setItem(REFRESH_KEY, String(now));
+if (!sessionStorage.getItem('livity_refreshed_this_session')) {
+sessionStorage.setItem('livity_refreshed_this_session', '1');
+var url = location.pathname + '?v=' + now + (location.hash || '');
+location.replace(url);
+}
+}
+} catch (e) {}
+})();
+/* === END: DAILY AUTO-REFRESH === */
 
 const LB_SCHEDULE_UNAVAILABLE_MSG = "Schedule temporarily unavailable — check the Schedule tab or WhatsApp Admin JA.";
 
@@ -3693,6 +3836,10 @@ h = h % 12; if (h === 0) h = 12;
 return h + ':' + m + ' ' + suffix;
 }
 
+function lbMapsLink_(venue) {
+return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue);
+}
+
 function lbFormatTimeRange_(start, end) {
 const sParts = (start || '').split(':');
 const eParts = (end || '').split(':');
@@ -3765,6 +3912,7 @@ document.getElementById('sessionDetailBody').innerHTML = `
 <h4 style="margin:0 0 4px;font-size:16px;color:var(--text)">${lbShortProgramName_(s.programName)}</h4>
 <p class="lb-text" style="color:var(--muted);margin:0 0 2px">${lbFormatTimeRange_(s.startTime, s.endTime)}</p>
 <p class="lb-text" style="color:var(--muted);margin:0 0 4px">${s.venue}</p>
+<a href="${lbMapsLink_(s.venue)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--royal);text-decoration:none;margin-bottom:6px">📍 Get Directions →</a>
 <div class="session-detail-label">Details</div>
 ${detailsHtml}
 ${lbSessionActionHtml_(s)}
@@ -4016,7 +4164,7 @@ return `
 <div class="event">
 <div class="event-time">${lbFormatTimeRange_(s.startTime, s.endTime)}</div>
 <div class="event-title">${lbShortProgramName_(s.programName)}</div>
-<div class="event-venue">${s.venue}</div>
+<a href="${lbMapsLink_(s.venue)}" target="_blank" rel="noopener" class="event-venue" style="text-decoration:underline;text-decoration-color:var(--line);display:inline-block">📍 ${s.venue}</a>
 ${tagHtml}
 </div>
 `;
@@ -5761,8 +5909,122 @@ initLivityBall();
 loadSchedule();
 loadPaymentInfo();
 loadPackages();
+loadGallery_();
 });
 /* === END: ANYTIME LIVITY BALL — LOGIC === */
+
+/* === START: GALLERY — FETCH, RENDER, LIGHTBOX === */
+let lbGalleryItems = [];
+
+async function loadGallery_() {
+const grid = document.getElementById('galleryGrid');
+if (!grid) return;
+try {
+const res = await fetch(LIVITY_API_URL + '?action=gallery');
+const json = await res.json();
+if (!json.success) throw new Error('bad gallery payload');
+lbGalleryItems = json.items || [];
+} catch (e) {
+lbGalleryItems = [];
+}
+renderGallery_();
+}
+
+function renderGallery_() {
+const grid = document.getElementById('galleryGrid');
+if (!grid) return;
+if (lbGalleryItems.length === 0) {
+grid.style.display = 'block';
+grid.innerHTML = `<p class="lb-text" style="color:var(--muted);text-align:center;padding:16px 0;margin:0">No photos or videos yet — check back soon.</p>`;
+return;
+}
+grid.style.display = 'grid';
+grid.innerHTML = lbGalleryItems.map(function (item, i) {
+const thumb = item.type === 'video' ? (item.thumbnailUrl || item.url) : item.url;
+const badge = item.type === 'video' ? `<span style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;font-size:20px">▶</span>` : '';
+return `<button type="button" onclick="openGalleryLightbox_(${i})" style="position:relative;padding:0;border:0;border-radius:10px;overflow:hidden;aspect-ratio:1/1;background:#e7dcc6;cursor:pointer">
+<img src="${thumb}" alt="${lbEscapeHtml_(item.caption)}" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">
+${badge}
+</button>`;
+}).join('');
+}
+
+function openGalleryLightbox_(i) {
+const item = lbGalleryItems[i];
+if (!item) return;
+const media = item.type === 'video'
+? `<video src="${item.url}" controls autoplay playsinline style="width:100%;border-radius:12px;display:block;max-height:70vh"></video>`
+: `<img src="${item.url}" alt="${lbEscapeHtml_(item.caption)}" style="width:100%;border-radius:12px;display:block;max-height:70vh;object-fit:contain">`;
+document.getElementById('galleryModalBody').innerHTML = `
+${media}
+${item.caption ? `<p class="lb-text" style="margin:10px 0 0;text-align:center">${lbEscapeHtml_(item.caption)}</p>` : ''}
+<button class="btn outline" style="width:100%;margin-top:10px" onclick="closeGalleryLightbox_()">Close</button>
+`;
+document.getElementById('galleryModal').classList.add('open');
+document.getElementById('galleryBackdrop').classList.add('open');
+}
+
+function closeGalleryLightbox_() {
+const v = document.querySelector('#galleryModalBody video');
+if (v) v.pause();
+document.getElementById('galleryModal').classList.remove('open');
+document.getElementById('galleryBackdrop').classList.remove('open');
+}
+/* === END: GALLERY === */
+
+/* === START: PROFILE FULLSCREEN — SWIPE LEFT/RIGHT TO CLOSE (no X button) === */
+(function () {
+var modalEl = null, startX = 0, startY = 0, dx = 0, dragging = false, decided = false, horizontal = false;
+var THRESHOLD = 90;
+
+function m_() {
+if (!modalEl) modalEl = document.getElementById('livityModal');
+return modalEl;
+}
+
+function pfSwipeDown_(e) {
+var m = m_();
+if (!m || !m.classList.contains('profile-mode') || !m.classList.contains('open')) return;
+dragging = true; decided = false; horizontal = false; dx = 0;
+startX = e.clientX; startY = e.clientY;
+m.style.transition = 'none';
+}
+
+function pfSwipeMove_(e) {
+if (!dragging) return;
+var m = m_();
+if (!m) return;
+var ddx = e.clientX - startX, ddy = e.clientY - startY;
+if (!decided) {
+if (Math.abs(ddx) > 8 || Math.abs(ddy) > 8) {
+decided = true;
+horizontal = Math.abs(ddx) > Math.abs(ddy);
+if (!horizontal) { dragging = false; m.style.transition = ''; return; }
+}
+}
+if (!horizontal) return;
+dx = ddx;
+m.style.transform = 'translateX(calc(-50% + ' + dx + 'px))';
+}
+
+function pfSwipeUp_() {
+if (!dragging) return;
+dragging = false;
+var m = m_();
+if (m) {
+m.style.transition = '';
+m.style.transform = '';
+if (horizontal && Math.abs(dx) > THRESHOLD) closeLivityBall();
+}
+horizontal = false; decided = false; dx = 0;
+}
+
+document.addEventListener('pointerdown', pfSwipeDown_);
+document.addEventListener('pointermove', pfSwipeMove_);
+document.addEventListener('pointerup', pfSwipeUp_);
+document.addEventListener('pointercancel', pfSwipeUp_);
+})();
+/* === END: PROFILE FULLSCREEN — SWIPE === */
 
 
 /* === START: ADAPTIVE NAV — ENROLL → MY PLAYER === */
@@ -6173,25 +6435,23 @@ const nextHtml = next ? `
 
 return `
 <input type="file" id="pfFile" accept="image/*" hidden onchange="pfPhotoChosen_(this)">
+<div id="lbHubDue"></div>
 <div class="pf-card">
 <div class="pf-head">
-<div>
 <div class="pf-avatar-wrap">
 <button type="button" class="pf-avatar" onclick="pfPickPhoto_()" aria-label="Change photo"${photo ? ` style="background-image:url('${photo}')"` : ''}>${photo ? '' : initials}</button>
 <span class="pf-cam">${pfIco_('camera', 12)}</span>
 </div>
-</div>
-<div style="min-width:0">
+<div>
 <div class="next-session-title" style="margin:0;font-size:20px">${p.fullName}</div>
 <div class="next-session-venue">Player ID: ${p.playerId}</div>
 ${photo ? '<button type="button" class="pf-photo-rm" onclick="pfPhotoRemove_()">Remove photo</button>' : ''}
 </div>
 </div>
 <div class="next-session-meta" style="margin-top:14px">${programLine}</div>
-<div class="next-session-title" style="font-size:18px;margin:4px 0 0">${lbPlayerSummaryLine_(rels)}</div>
+${lbSessionsHubHtml_(rels)}
 ${nextHtml}
 </div>
-${ctxHelp_('playerId')}${ctxHelp_('sessions')}
 <div class="quick" style="margin-bottom:10px">
 <button type="button" onclick="closeLivityBall();show('schedule')"><div class="icon">${pfIco_('clock')}</div><b>Schedule</b><span>Upcoming training</span></button>
 <button type="button" onclick="lbOpenSessions_()"><div class="icon">${pfIco_('ticket')}</div><b>Sessions</b><span>Check & top up</span></button>
@@ -6200,6 +6460,10 @@ ${ctxHelp_('playerId')}${ctxHelp_('sessions')}
 </div>
 <button class="lb-item" onclick="lbOpenAddProgram_()">
 <span class="lb-ico">${pfIco_('plus', 20)}</span> Add Another Program
+</button>
+<button type="button" class="lb-pkg" disabled style="opacity:.55;cursor:default;pointer-events:none">
+<b>🧠&nbsp; Bytesense Score</b>
+<span class="pay-badge pending" style="margin:0">Coming Soon</span>
 </button>
 <button class="lb-item" onclick="lbOpenAddChild_()">
 <span class="lb-ico">${pfIco_('user', 20)}</span> Add Another Player
@@ -6238,13 +6502,24 @@ function pfQrPayload_(p) {
 return PF_QR_BASE + '?lvt=' + encodeURIComponent(p.playerId) + '&t=' + encodeURIComponent(p.qrToken);
 }
 
+/* === START: LOCAL-FIRST SCRIPT LOADER (CDN FALLBACK) === */
+function livityLoadScript_(paths, cb, i) {
+i = i || 0;
+if (i >= paths.length) return cb(false);
+const s = document.createElement('script');
+s.src = paths[i];
+s.onload = function () { cb(true); };
+s.onerror = function () { document.head.removeChild(s); livityLoadScript_(paths, cb, i + 1); };
+document.head.appendChild(s);
+}
+/* === END: LOCAL-FIRST SCRIPT LOADER === */
+
 function pfQrLib_(cb) {
 if (window.QRCode) return cb(true);
-const s = document.createElement('script');
-s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-s.onload = function () { cb(true); };
-s.onerror = function () { cb(false); };
-document.head.appendChild(s);
+livityLoadScript_([
+'/vendor/qrcode.min.js',
+'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+], cb);
 }
 
 /* === START: QR SELF-CHECK EDIT === */
@@ -6270,10 +6545,7 @@ function pfVerifyQr_(p, dataUrl) {
     img.src = dataUrl;
   };
   if (window.jsQR) return decode();
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-  s.onload = decode;
-  document.head.appendChild(s);
+  livityLoadScript_(['/vendor/jsqr.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'], decode);
 }
 /* === END: QR SELF-CHECK EDIT === */
 
@@ -6380,6 +6652,13 @@ function lbPayTick_() {
 const box = document.getElementById('payClock');
 if (!box) { if (lbPayTimer_) { clearInterval(lbPayTimer_); lbPayTimer_ = null; } return; }
 const due = new Date(box.getAttribute('data-due')).getTime();
+if (isNaN(due)) {
+box.className = 'pay-clock due';
+document.getElementById('payClockLabel').textContent = 'PAY NOW';
+document.getElementById('payClockTime').textContent = '—';
+document.getElementById('payClockSub').innerHTML = 'Amount ₱' + (Number(box.getAttribute('data-base')) || 0).toLocaleString();
+return;
+}
 const base = Number(box.getAttribute('data-base')) || 0;
 const diff = due - (Date.now() + lbPayCtx.offset);
 const over = diff <= 0;
@@ -6620,6 +6899,7 @@ const sel = scEl_('scSessionSel');
 try {
 const r = await scApi_('scanSessions', {});
 scSessions = r.sessions || [];
+scCacheSessions_(scSessions);
 const d = new Date();
 const nowMin = d.getHours() * 60 + d.getMinutes();
 const toMin = function (t) { const a = String(t || '0:0').split(':'); return (+a[0]) * 60 + (+a[1]); };
@@ -6633,9 +6913,21 @@ scRenderCounts_(pick ? pick.counts : { total: 0, present: 0, late: 0, unconfirme
 if (scPending_) scLookup_(scPending_);
 } catch (e) {
 if (/key/i.test(e.message)) return scForgetKey_('Wrong or missing staff key.');
-sel.innerHTML = '<option value="">Could not load sessions</option>';
+const cached = await scIdbGetAll_('sessions');
+if (cached.length) {
+scSessions = cached;
+scSession = cached[0].scheduleId;
+sel.innerHTML = cached.map(function (s) {
+const label = lbShortProgramName_(s.programName) + ' · ' + lbFormatTimeRange_(s.start, s.end) + ' · ' + s.venue;
+return '<option value="' + lbEscapeHtml_(s.scheduleId) + '"' + (s.scheduleId === scSession ? ' selected' : '') + '>' + lbEscapeHtml_(label) + ' (cached)</option>';
+}).join('');
+scRenderCounts_(cached[0].counts || { total: 0, present: 0, late: 0, unconfirmed: 0 });
+} else {
+sel.innerHTML = '<option value="">Could not load — connect once to cache today\'s schedule</option>';
 scShow_('err', 'Server error', e.message);
 }
+}
+scRenderSyncStatus_();
 }
 
 async function scRefreshCounts_() {
@@ -6661,20 +6953,82 @@ box.innerHTML = `
 <div class="sc-who-av"${photo ? ` style="background-image:url('${photo}')"` : ''}>${photo ? '' : lbEscapeHtml_(pfInitials_(p.fullName))}</div>
 <div><b>${lbEscapeHtml_(p.fullName || '')}</b><span>${lbEscapeHtml_(p.playerId || '')} · ${title}</span><span>${lbEscapeHtml_(left)}</span></div>
 </div>
+${r.offlineNote ? `<div style="margin-top:8px;padding:6px 10px;background:rgba(74,157,224,.16);border:1px solid rgba(74,157,224,.5);border-radius:10px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#4A9DE0;text-align:center">📶 ${lbEscapeHtml_(r.offlineNote)}</div>` : ''}
 ${r.warn ? `<div class="sc-warn">⚠️ ${lbEscapeHtml_(r.warn)}</div>` : ''}
 ${r.result === 'LOOKUP' ? '<button type="button" class="btn primary" style="width:100%;margin-top:12px" onclick="scRecordPending_()">Record attendance →</button>' : ''}`;
 if (cam) cam.className = 'sc-cam ' + kind;
 }
+
+/* === START: TEST / VERIFY QR — DIAGNOSTIC MODE (never touches attendance) === */
+const SC_ID_FORMAT_RE = /^(LVTFA-[A-Z0-9]{7}|LVT-?\d{1,5})$/i;
+
+function scDiagRow_(label, value, color) {
+return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12.5px"><span style="color:#a8a49a">' + label + '</span><span style="font-weight:750;text-align:right;color:' + (color || '#fff') + '">' + value + '</span></div>';
+}
+
+async function scRunDiagnostic_(code, manual) {
+const playerId = scLocalPlayerIdFromCode_(code);
+const formatOk = SC_ID_FORMAT_RE.test(playerId);
+const cachedPlayer = await scIdbGet_('players', playerId);
+const fresh = scFreshnessLabel_(await scGetMeta_('lastSynced'));
+
+let tokenLine = '—', tokenColor = '#a8a49a', serverPlayer = null;
+if (manual) {
+tokenLine = 'N/A (manual entry)';
+} else if (!navigator.onLine) {
+tokenLine = '⚠ Cannot verify — offline (requires server)';
+tokenColor = '#FF9F0A';
+} else {
+try {
+const r = await scApi_('scanPlayer', { code: String(code).trim(), manual: '0', lookup: '1' });
+serverPlayer = r.player || null;
+if (serverPlayer) scCachePlayer_(serverPlayer);
+tokenLine = '✓ Matches (server-verified)'; tokenColor = '#34C759';
+} catch (e) {
+const msg = String(e.message || '');
+if (/invalid or outdated/i.test(msg)) { tokenLine = '✕ Token mismatch'; tokenColor = '#FF453A'; }
+else if (/not found/i.test(msg)) { tokenLine = '✕ Player not found on server'; tokenColor = '#FF453A'; }
+else { tokenLine = '⚠ Could not verify (' + lbEscapeHtml_(msg.slice(0, 40)) + ')'; tokenColor = '#FF9F0A'; }
+}
+}
+
+const shownPlayer = serverPlayer || cachedPlayer;
+const box = scEl_('scResult');
+box.className = 'sc-result';
+box.innerHTML = `
+<div style="text-align:center;font-weight:850;font-size:15px;letter-spacing:.5px;color:#fff;margin-bottom:8px">✓ QR DETECTED</div>
+${shownPlayer ? '<div style="text-align:center;font-size:13px;color:#c8c4bb;margin-bottom:8px">' + lbEscapeHtml_(shownPlayer.fullName || '') + '</div>' : ''}
+<div style="text-align:left">
+${scDiagRow_('Player ID', lbEscapeHtml_(playerId || '—'))}
+${scDiagRow_('QR Format', formatOk ? '✓ Valid' : '✕ Unrecognized', formatOk ? '#34C759' : '#FF453A')}
+${scDiagRow_('Local Player', cachedPlayer ? '✓ Found' : '✕ Not in local cache', cachedPlayer ? '#34C759' : '#FF9F0A')}
+${scDiagRow_('QR Token', tokenLine, tokenColor)}
+${scDiagRow_('Decoder', lbEscapeHtml_(manual ? 'Manual entry' : scDecoderLabel_))}
+${scDiagRow_('Network', navigator.onLine ? '✓ Online' : '✕ Offline', navigator.onLine ? '#34C759' : '#FF453A')}
+${scDiagRow_('Cache Freshness', lbEscapeHtml_(fresh.label) + (fresh.stale ? ' ⚠' : ''), fresh.stale ? '#FF9F0A' : '#34C759')}
+${scDiagRow_('Attendance', 'NOT RECORDED', '#a8a49a')}
+</div>
+<button type="button" class="btn outline" style="width:100%;margin-top:12px" onclick="scEl_('scResult').className='sc-result';scEl_('scResult').innerHTML='<span>Tap the circle, then hold the player QR inside it.</span>'">Done</button>
+`;
+}
+/* === END: TEST / VERIFY QR — DIAGNOSTIC MODE === */
 
 /** Galing sa phone-camera scan: player card muna, tapos confirm. */
 async function scLookup_(code) {
 try {
 const r = await scApi_('scanPlayer', { code: code, manual: '0', lookup: '1' });
 scPending_ = code;
+if (r.player) scCachePlayer_(r.player);
 scShowPlayer_('', r);
 } catch (e) {
+const cachedPlayer = await scIdbGet_('players', scLocalPlayerIdFromCode_(code));
+if (cachedPlayer) {
+scPending_ = code;
+scShowPlayer_('', { result: 'LOOKUP', player: cachedPlayer, warn: 'Offline — showing cached info.' });
+} else {
 scPending_ = '';
 scShow_('err', 'Could not open player', e.message);
+}
 }
 }
 
@@ -7521,6 +7875,25 @@ e.stopPropagation();
 document.addEventListener(t, function(e) { e.preventDefault(); });
 });
 /* === END: NO ZOOM — LOGIC === */
+
+/* === START: GLOBAL HAPTIC TAP — DELEGATED, APPLIES ACROSS WHOLE APP === */
+(function () {
+if (!('vibrate' in navigator)) return; // desktop / unsupported — no-op, safe
+
+var SELECTOR = 'button, .btn, .lb-item, .lb-pkg, .lb-pill, .quick button, .program, .price, .sched-tab, .event-tags, .coach, .acc-head, .tutorial-role-card, .pay-copy, .pf-avatar, .pay-method, [onclick]';
+var lastTap = 0;
+
+document.addEventListener('pointerdown', function (e) {
+var target = e.target.closest(SELECTOR);
+if (!target) return;
+if (target.disabled) return;
+var now = Date.now();
+if (now - lastTap < 60) return; // avoid double-fire on nested tappable elements
+lastTap = now;
+try { navigator.vibrate(8); } catch (err) {}
+}, { passive:true });
+})();
+/* === END: GLOBAL HAPTIC TAP === */
 /* === START: SCAN MODAL — LOGIC (QR attendance) === */
 /* === START: SCAN API URL EDIT === */
 const SCAN_API_URL = LIVITY_API_URL; // legacy constant — scanner shares the Livity backend
@@ -7529,6 +7902,284 @@ const SCAN_KEY_STORE = 'livity_scan_key_v1'; // staff key — nasa device lang n
 const SC_RESULT_MS = 1700;
 let scStream = null, scScanning = false, scBusy = false, scLastCode = '', scLastAt = 0;
 let scSession = null, scSessions = [], scDetector = null, scFlashTimer = null;
+let scTestMode_ = false, scSessionBackup_ = null;
+
+function scSetMode_(mode) {
+const sel = scEl_('scSessionSel');
+if (mode === 'test') {
+scTestMode_ = true;
+scSessionBackup_ = scSession;
+scSession = null;
+if (sel) sel.disabled = true;
+} else {
+scTestMode_ = false;
+scSession = scSessionBackup_;
+if (sel) sel.disabled = false;
+scRefreshCounts_();
+}
+scRenderModeButtons_();
+scRenderModeBanner_();
+}
+
+function scRenderModeButtons_() {
+const a = scEl_('scModeAttBtn'), t = scEl_('scModeTestBtn');
+if (!a || !t) return;
+a.className = 'btn ' + (scTestMode_ ? 'outline' : 'primary');
+t.className = 'btn ' + (scTestMode_ ? 'primary' : 'outline');
+}
+
+/* === START: OFFLINE-FIRST SCANNER — INDEXEDDB (players/sessions cache + pending queue) === */
+const SCDB_NAME = 'ArtiPlayScannerDB';
+const SCDB_VERSION = 1;
+let scDbPromise_ = null;
+
+function scDb_() {
+if (scDbPromise_) return scDbPromise_;
+scDbPromise_ = new Promise(function (resolve) {
+if (!('indexedDB' in window)) return resolve(null); // ancient browser — queue degrades gracefully sa memory na lang
+const req = indexedDB.open(SCDB_NAME, SCDB_VERSION);
+req.onupgradeneeded = function (e) {
+const db = e.target.result;
+if (!db.objectStoreNames.contains('players')) db.createObjectStore('players', { keyPath: 'playerId' });
+if (!db.objectStoreNames.contains('sessions')) db.createObjectStore('sessions', { keyPath: 'scheduleId' });
+if (!db.objectStoreNames.contains('attendance')) {
+const st = db.createObjectStore('attendance', { keyPath: 'localId' });
+st.createIndex('syncStatus', 'syncStatus', { unique: false });
+}
+if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', { keyPath: 'key' });
+};
+req.onsuccess = function (e) { resolve(e.target.result); };
+req.onerror = function () { resolve(null); };
+});
+return scDbPromise_;
+}
+
+function scIdbOp_(storeName, mode, fn) {
+return scDb_().then(function (db) {
+if (!db) return null;
+return new Promise(function (resolve) {
+const store = db.transaction(storeName, mode).objectStore(storeName);
+fn(store, resolve);
+});
+});
+}
+function scIdbPut_(storeName, value) { return scIdbOp_(storeName, 'readwrite', function (s, done) { const r = s.put(value); r.onsuccess = function () { done(true); }; r.onerror = function () { done(false); }; }); }
+function scIdbGet_(storeName, key) { return scIdbOp_(storeName, 'readonly', function (s, done) { const r = s.get(key); r.onsuccess = function () { done(r.result || null); }; r.onerror = function () { done(null); }; }); }
+function scIdbGetAll_(storeName) { return scIdbOp_(storeName, 'readonly', function (s, done) { const r = s.getAll(); r.onsuccess = function () { done(r.result || []); }; r.onerror = function () { done([]); }; }); }
+
+async function scSetMeta_(key, value) { await scIdbPut_('meta', { key: key, value: value }); }
+async function scGetMeta_(key) { const r = await scIdbGet_('meta', key); return r ? r.value : null; }
+
+/** Player-ID extractor sa client — hindi umaasa sa backend regex, gumagana sa buong QR URL o manual ID. */
+function scLocalPlayerIdFromCode_(code) {
+const s = String(code || '').trim();
+const m = /[?&]lvt=([^&]+)/i.exec(s);
+if (m) { try { return decodeURIComponent(m[1]).toUpperCase(); } catch (e) { return m[1].toUpperCase(); } }
+return s.toUpperCase();
+}
+
+/** I-cache ang player object galing sa isang successful scanPlayer response, para reusable offline. */
+async function scCachePlayer_(p) {
+if (!p || !p.playerId) return;
+await scIdbPut_('players', {
+playerId: p.playerId, fullName: p.fullName, category: p.category, guardianName: p.guardianName,
+photoUrl: p.photoUrl || '', programs: p.programs || [], updatedAt: new Date().toISOString()
+});
+}
+
+/** I-cache ang today's session list, para gumana pa rin ang dropdown + counts kahit offline. */
+async function scCacheSessions_(sessions) {
+for (let i = 0; i < sessions.length; i++) await scIdbPut_('sessions', sessions[i]);
+await scSetMeta_('lastSynced', new Date().toISOString());
+}
+
+function scNewLocalId_() { return 'LOC' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* Fallback grace period kapag walang koneksyon para tanungin ang totoong LateGraceMinutes sa Config.
+ Ayusin ito para tumugma sa halaga mo sa Config sheet — ito lang ang gagamitin habang offline. */
+const SC_OFFLINE_GRACE_MIN = 10;
+
+/** Gamit ang cached na session (scSessions, pinuno ni scLoadSessions_/scCacheSessions_) para tantiyahin
+ kung Present o Late ang isang offline scan. Nire-reconcile pa rin ito ng backend sa totoong oras pag-sync. */
+function scComputeLocalStatus_(scheduleId) {
+const s = (scSessions || []).filter(function (x) { return x.scheduleId === scheduleId; })[0];
+if (!s || !s.start) return { status: 'Present', minutesLate: 0 };
+const now = new Date();
+const parts = String(s.start).split(':');
+const startDt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +parts[0] || 0, +parts[1] || 0, 0);
+const mins = Math.floor((now - startDt) / 60000);
+return mins > SC_OFFLINE_GRACE_MIN ? { status: 'Late', minutesLate: mins } : { status: 'Present', minutesLate: 0 };
+}
+
+async function scQueueAdd_(job) {
+await scIdbPut_('attendance', {
+localId: scNewLocalId_(), scheduleId: job.scheduleId, code: job.code, manual: job.manual,
+localStatus: job.localStatus || 'Present', localMinutesLate: job.localMinutesLate || 0,
+scannedAt: new Date().toISOString(), syncStatus: 'pending', retryCount: 0
+});
+scRenderSyncStatus_();
+return scPendingCount_();
+}
+
+async function scPendingCount_() {
+const all = await scIdbGetAll_('attendance');
+return all.filter(function (a) { return a.syncStatus === 'pending'; }).length;
+}
+
+let scQueueFlushing_ = false;
+async function scQueueFlush_() {
+if (scQueueFlushing_ || !navigator.onLine) return;
+scQueueFlushing_ = true;
+let accepted = 0, duplicate = 0, errored = 0;
+try {
+const all = await scIdbGetAll_('attendance');
+const pending = all.filter(function (a) { return a.syncStatus === 'pending'; });
+if (pending.length === 0) return;
+
+scShowSyncProgress_('SYNCING…', pending.length);
+
+for (let i = 0; i < pending.length; i++) {
+const job = pending[i];
+try {
+const r = await scApi_('scanPlayer', { scheduleId: job.scheduleId, code: job.code, manual: job.manual });
+const isDup = r.result === 'DUPLICATE';
+await scIdbPut_('attendance', Object.assign({}, job, { syncStatus: isDup ? 'duplicate' : 'synced' }));
+if (isDup) duplicate++; else accepted++;
+if (r.player) scCachePlayer_(r.player);
+if (r.counts) scRenderCounts_(r.counts);
+scShowSyncProgress_('SYNCING…', pending.length - (i + 1), accepted, duplicate);
+} catch (e) {
+job.retryCount = (job.retryCount || 0) + 1;
+const isPermanent = job.retryCount >= 20;
+await scIdbPut_('attendance', isPermanent ? Object.assign({}, job, { syncStatus: 'error' }) : job);
+if (isPermanent) errored++;
+break; // offline pa rin o server error — subukan ulit sa susunod na flush
+}
+}
+
+if (accepted + duplicate + errored > 0) {
+await scSetMeta_('lastSynced', new Date().toISOString());
+scShowSyncSummary_(accepted, duplicate, errored);
+}
+} finally {
+scQueueFlushing_ = false;
+setTimeout(scRenderSyncStatus_, (accepted + duplicate + errored > 0) ? 3500 : 0);
+}
+}
+
+function scShowSyncProgress_(label, remaining, accepted, duplicate) {
+const el = scEl_('scSyncStatus');
+if (!el) return;
+let line = '🟡 ' + label;
+if (accepted || duplicate) {
+line += ' · ✓ ' + (accepted || 0) + ' accepted';
+if (duplicate) line += ' · ↺ ' + duplicate + ' duplicate';
+}
+el.innerHTML = line;
+}
+
+function scShowSyncSummary_(accepted, duplicate, errored) {
+const el = scEl_('scSyncStatus');
+if (!el) return;
+const parts = [];
+if (accepted) parts.push('✓ ' + accepted + ' accepted');
+if (duplicate) parts.push('↺ ' + duplicate + ' duplicate');
+if (errored) parts.push('⚠ ' + errored + ' needs review');
+const allGood = !errored;
+el.innerHTML = (allGood ? '🟢 SYNC COMPLETE — ' : '🟠 SYNC FINISHED — ') + parts.join(' · ');
+}
+window.addEventListener('online', scQueueFlush_);
+document.addEventListener('DOMContentLoaded', function () { setTimeout(scQueueFlush_, 1500); setInterval(scQueueFlush_, 30000); });
+
+/** "Scanner Ready / Last synced / N pending sync" — no-op kung sarado ang scanner. */
+async function scRenderSyncStatus_() {
+const el = scEl_('scSyncStatus');
+if (!el) return;
+const pending = await scPendingCount_();
+const lastSynced = await scGetMeta_('lastSynced');
+const lastLabel = lastSynced ? new Date(lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+if (!navigator.onLine) {
+el.innerHTML = '🔴 OFFLINE MODE' + (pending > 0 ? ' · ' + pending + ' scan' + (pending === 1 ? '' : 's') + ' pending sync' : ' · local attendance is being saved');
+} else if (pending > 0) {
+el.innerHTML = '🟡 Syncing… ' + pending + ' pending';
+} else {
+el.innerHTML = '🟢 Scanner Ready · Last synced: ' + lastLabel;
+}
+scRenderCacheSummary_();
+}
+
+/** Instant paint mula sa IndexedDB — hindi naghihintay ng network, kaya agad may laman kahit offline. */
+/** Player cache is a working COPY, not permanent authority — this is what tells the admin how old it is.
+ A player removed/deactivated server-side after this timestamp will NOT be reflected here until next sync. */
+function scFreshnessLabel_(lastSyncedIso) {
+if (!lastSyncedIso) return { label: 'never synced', stale: true };
+const ageMin = (Date.now() - new Date(lastSyncedIso).getTime()) / 60000;
+if (ageMin < 60) return { label: 'synced ' + Math.max(1, Math.round(ageMin)) + ' min ago', stale: false };
+if (ageMin < 180) return { label: 'synced ' + Math.round(ageMin / 60) + 'h ago', stale: false };
+if (ageMin < 1440) return { label: 'synced ' + Math.round(ageMin / 60) + 'h ago', stale: true };
+return { label: 'synced ' + Math.round(ageMin / 1440) + 'd ago', stale: true };
+}
+
+async function scRenderCacheSummary_() {
+const el = scEl_('scCacheSummary');
+if (!el) return;
+const [players, sessions, attendance, lastSynced] = await Promise.all([
+scIdbGetAll_('players'), scIdbGetAll_('sessions'), scIdbGetAll_('attendance'), scGetMeta_('lastSynced')
+]);
+const pendingCount = attendance.filter(function (a) { return a.syncStatus === 'pending'; }).length;
+const fresh = scFreshnessLabel_(lastSynced);
+const parts = [
+players.length + ' Player' + (players.length === 1 ? '' : 's') + ' Cached',
+sessions.length + ' Session' + (sessions.length === 1 ? '' : 's') + ' Cached',
+attendance.length.toLocaleString() + ' Attendance Record' + (attendance.length === 1 ? '' : 's')
+];
+if (pendingCount > 0) parts.push(pendingCount + ' Pending Sync');
+const warnStyle = fresh.stale ? 'color:#FF9F0A;font-weight:800' : 'color:#a8a49a';
+el.innerHTML = lbEscapeHtml_(parts.join(' · ')) + ' <span style="' + warnStyle + '">· ' + lbEscapeHtml_(fresh.label) + (fresh.stale ? ' ⚠' : '') + '</span>';
+}
+window.addEventListener('online', scRenderSyncStatus_);
+window.addEventListener('offline', scRenderSyncStatus_);
+
+/* === START: CONNECTION QUALITY (Internet / Server / Response) === */
+let scConnTimer_ = null;
+
+async function scCheckConnection_() {
+const el = scEl_('scConnStatus');
+if (!el) { clearInterval(scConnTimer_); scConnTimer_ = null; return; }
+
+if (!navigator.onLine) {
+el.innerHTML = scConnRow_('Internet', '✗ Offline', '#FF453A') + scConnRow_('Server', '— Unreachable', '#a8a49a');
+return;
+}
+
+el.innerHTML = scConnRow_('Internet', '✓ Online', '#34C759') + scConnRow_('Server', 'Checking…', '#a8a49a');
+
+const start = Date.now();
+try {
+const res = await fetch(LIVITY_API_URL + '?action=scanPing', { cache: 'no-store' });
+const ms = Date.now() - start;
+if (!res.ok) throw new Error('bad status');
+await res.json();
+const quality = ms < 800 ? '#34C759' : (ms < 2500 ? '#FF9F0A' : '#FF453A');
+el.innerHTML = scConnRow_('Internet', '✓ Online', '#34C759') + scConnRow_('Server', '✓ Connected', '#34C759') + scConnRow_('Response', ms + ' ms', quality);
+} catch (e) {
+el.innerHTML = scConnRow_('Internet', '✓ Online', '#34C759') + scConnRow_('Server', '✗ Unreachable', '#FF453A');
+}
+}
+
+function scConnRow_(label, value, color) {
+return '<span style="flex:1;text-align:center"><b style="color:#fff;display:block;font-size:9px;letter-spacing:.8px;text-transform:uppercase;opacity:.6">' + label + '</b><span style="color:' + color + ';font-weight:800">' + value + '</span></span>';
+}
+
+function scStartConnMonitor_() {
+scCheckConnection_();
+if (scConnTimer_) clearInterval(scConnTimer_);
+scConnTimer_ = setInterval(scCheckConnection_, 15000);
+}
+window.addEventListener('online', scCheckConnection_);
+window.addEventListener('offline', scCheckConnection_);
+/* === END: CONNECTION QUALITY === */
+/* === END: OFFLINE-FIRST SCANNER — INDEXEDDB === */
 
 function scEl_(id) { return document.getElementById(id); }
 function scKey_() { try { return localStorage.getItem(SCAN_KEY_STORE) || ''; } catch (e) { return ''; } }
@@ -7555,6 +8206,7 @@ scRenderMain_();
 
 function closeScan_() {
 scStop_();
+if (scConnTimer_) { clearInterval(scConnTimer_); scConnTimer_ = null; }
 scEl_('scanModal').classList.remove('open');
 document.body.style.overflow = '';
 }
@@ -7582,8 +8234,17 @@ scRenderGate_(msg || '');
 
 function scRenderMain_() {
 scEl_('scanBody').innerHTML = `
+<div style="display:flex;gap:8px;margin:2px 0 12px">
+<button type="button" class="btn primary" id="scModeAttBtn" style="flex:1;padding:11px;font-size:12px" onclick="scSetMode_('attendance')">▶ Start Attendance</button>
+<button type="button" class="btn outline" id="scModeTestBtn" style="flex:1;padding:11px;font-size:12px" onclick="scSetMode_('test')">🔍 Test / Verify QR</button>
+</div>
 <div class="sc-label" style="margin-top:6px">Session</div>
 <select class="lb-input" id="scSessionSel" onchange="scPickSession_(this.value)"><option>Loading sessions…</option></select>
+<div id="scDecoderStatus" style="text-align:center;font-size:10.5px;color:#a8a49a;margin:0 0 6px">Detecting decoder…</div>
+<div id="scModeBanner" style="text-align:center;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:6px 10px;border-radius:10px;margin:2px 0 6px"></div>
+<div id="scConnStatus" style="font-size:11px;color:#c8c4bb;margin:2px 0 10px;padding:8px 10px;background:rgba(255,255,255,.06);border-radius:10px;display:flex;justify-content:space-between;gap:8px"></div>
+<div id="scSyncStatus" style="text-align:center;font-size:11px;font-weight:700;color:#a8a49a;margin:2px 0 4px">Loading…</div>
+<div id="scCacheSummary" style="text-align:center;font-size:10.5px;color:#a8a49a;margin:0 0 10px"></div>
 
 <div class="sc-cam" id="scCam">
 <video id="scVideo" playsinline muted></video>
@@ -7609,7 +8270,12 @@ TAP TO SCAN
 <button class="btn primary" onclick="scManualSubmit_()">Record</button>
 </div>
 <div style="text-align:center"><button class="sc-link" onclick="scForgetKey_('')">Change staff key</button></div>`;
+scRenderCacheSummary_();
+scUpdateDecoderLabel_();
+scRenderModeButtons_();
 scLoadSessions_();
+scRenderSyncStatus_();
+scStartConnMonitor_();
 }
 
 async function scLoadSessions_() {
@@ -7635,7 +8301,19 @@ scShow_('err', 'Server error', e.message);
 }
 }
 
-function scPickSession_(id) { scSession = id || null; scRefreshCounts_(); }
+function scPickSession_(id) { if (scTestMode_) return; scSession = id || null; scSessionBackup_ = scSession; scRefreshCounts_(); scRenderModeBanner_(); }
+
+function scRenderModeBanner_() {
+const el = scEl_('scModeBanner');
+if (!el) return;
+if (scSession) {
+el.style.background = 'rgba(52,199,89,.16)'; el.style.color = '#34C759';
+el.textContent = '✓ ATTENDANCE MODE — recording to session';
+} else {
+el.style.background = 'rgba(255,159,10,.16)'; el.style.color = '#FF9F0A';
+el.textContent = '⚠ TEST MODE — no session selected, not recording';
+}
+}
 
 async function scRefreshCounts_() {
 if (!scSession) return scRenderCounts_({ total: 0, present: 0, late: 0, unconfirmed: 0 });
@@ -7659,19 +8337,29 @@ if (cam) cam.className = 'sc-cam ' + kind;
 }
 
 /* ---- camera + QR decode ---- */
+let scDecoderLabel_ = 'Detecting…';
+
+function scUpdateDecoderLabel_() {
+if (scDetector) scDecoderLabel_ = 'Native BarcodeDetector';
+else if (window.jsQR) scDecoderLabel_ = 'jsQR fallback';
+else scDecoderLabel_ = 'Decoder unavailable';
+const el = scEl_('scDecoderStatus');
+if (el) el.textContent = scDecoderLabel_;
+}
+
 function scEnsureDecoder_() {
 if ('BarcodeDetector' in window && !scDetector) { try { scDetector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) {} }
 if (!scDetector && !window.jsQR && !document.getElementById('jsqrLib')) {
-const s = document.createElement('script');
-s.id = 'jsqrLib';
-s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-document.head.appendChild(s);
+const marker = document.createElement('meta');
+marker.id = 'jsqrLib';
+document.head.appendChild(marker);
+livityLoadScript_(['/vendor/jsqr.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'], scUpdateDecoderLabel_);
 }
+scUpdateDecoderLabel_();
 }
 
 async function scStart_() {
 if (scStream) return;
-if (!scSession) return scShow_('err', 'Pick a session first', '');
 if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 return scShow_('err', 'Camera not available', 'Use Enter Player ID below.');
 }
@@ -7710,7 +8398,7 @@ try {
 let text = '';
 if (scDetector) {
 const found = await scDetector.detect(v);
-if (found.length) text = found[0].rawValue;
+if (found.length) { text = found[0].rawValue; scDecoderLabel_ = 'Native BarcodeDetector'; }
 }
 if (!text && window.jsQR) {
 const c = document.createElement('canvas');
@@ -7720,7 +8408,7 @@ const x = c.getContext('2d', { willReadFrequently: true });
 x.drawImage(v, 0, 0, c.width, c.height);
 const im = x.getImageData(0, 0, c.width, c.height);
 const hit = jsQR(im.data, im.width, im.height, { inversionAttempts: 'attemptBoth' });
-if (hit && hit.data) text = hit.data;
+if (hit && hit.data) { text = hit.data; scDecoderLabel_ = 'jsQR fallback'; }
 }
 if (text) scHandle_(text, false);
 } catch (e) { /* skip frame */ }
@@ -7791,22 +8479,37 @@ const sel = scEl_('scSessionSel');
 try {
 const r = await scApi_('scanSessions', {});
 scSessions = r.sessions || [];
+scCacheSessions_(scSessions);
 const d = new Date();
 const nowMin = d.getHours() * 60 + d.getMinutes();
 const toMin = function (t) { const a = String(t || '0:0').split(':'); return (+a[0]) * 60 + (+a[1]); };
 const pick = scSessions.filter(function (s) { return nowMin <= toMin(s.end) + 30; })[0] || scSessions[scSessions.length - 1] || null;
-scSession = pick ? pick.scheduleId : null;
+if (scTestMode_) { scSessionBackup_ = pick ? pick.scheduleId : null; } else { scSession = pick ? pick.scheduleId : null; scSessionBackup_ = scSession; }
 sel.innerHTML = scSessions.length ? scSessions.map(function (s) {
 const label = lbShortProgramName_(s.programName) + ' · ' + lbFormatTimeRange_(s.start, s.end) + ' · ' + s.venue;
 return '<option value="' + lbEscapeHtml_(s.scheduleId) + '"' + (s.scheduleId === scSession ? ' selected' : '') + '>' + lbEscapeHtml_(label) + '</option>';
 }).join('') : '<option value="">No training scheduled today</option>';
 scRenderCounts_(pick ? pick.counts : { total: 0, present: 0, late: 0, unconfirmed: 0 });
+scRenderModeBanner_();
 if (scPending_) scLookup_(scPending_);
 } catch (e) {
 if (/key/i.test(e.message)) return scForgetKey_('Wrong or missing staff key.');
-sel.innerHTML = '<option value="">Could not load sessions</option>';
+const cached = await scIdbGetAll_('sessions');
+if (cached.length) {
+scSessions = cached;
+scSession = cached[0].scheduleId;
+sel.innerHTML = cached.map(function (s) {
+const label = lbShortProgramName_(s.programName) + ' · ' + lbFormatTimeRange_(s.start, s.end) + ' · ' + s.venue;
+return '<option value="' + lbEscapeHtml_(s.scheduleId) + '"' + (s.scheduleId === scSession ? ' selected' : '') + '>' + lbEscapeHtml_(label) + ' (cached)</option>';
+}).join('');
+scRenderCounts_(cached[0].counts || { total: 0, present: 0, late: 0, unconfirmed: 0 });
+} else {
+sel.innerHTML = '<option value="">Could not load — connect once to cache today\'s schedule</option>';
 scShow_('err', 'Server error', e.message);
 }
+}
+scRenderModeBanner_();
+scRenderSyncStatus_();
 }
 
 async function scRefreshCounts_() {
@@ -7823,17 +8526,39 @@ if (scBusy) return;
 const now = Date.now();
 if (!manual && code === scLastCode && now - scLastAt < 2500) return;
 scBusy = true; scLastCode = code; scLastAt = now;
-if (!scSession) { scBusy = false; return scShow_('err', 'Pick a session first', ''); }
+
+if (!scSession) {
+await scRunDiagnostic_(code, manual);
+if (navigator.vibrate) navigator.vibrate([8]);
+clearTimeout(scFlashTimer);
+scFlashTimer = setTimeout(function () { scBusy = false; const cam = scEl_('scCam'); if (cam) cam.className = 'sc-cam'; }, SC_RESULT_MS);
+return;
+}
 
 let kind = 'err';
 try {
 const r = await scApi_('scanPlayer', { scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0' });
 kind = { PRESENT: 'ok', LATE: 'late', DUPLICATE: 'dup' }[r.result] || 'err';
 scShowPlayer_(kind, r);
+if (r.player) scCachePlayer_(r.player);
 if (r.counts) scRenderCounts_(r.counts);
 } catch (e) {
 if (/key/i.test(e.message)) { scBusy = false; return scForgetKey_('Wrong or missing staff key.'); }
+const isNetworkFail = (e instanceof TypeError) || !navigator.onLine || /network|fetch|Failed to fetch|NetworkError/i.test(e.message || '');
+if (isNetworkFail) {
+const local = scComputeLocalStatus_(scSession);
+const pendingCount = await scQueueAdd_({ scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0', localStatus: local.status, localMinutesLate: local.minutesLate });
+const cachedPlayer = await scIdbGet_('players', scLocalPlayerIdFromCode_(code));
+kind = local.status === 'Late' ? 'late' : 'ok';
+const note = 'OFFLINE — SAVED LOCALLY · Pending sync: ' + pendingCount;
+if (cachedPlayer) {
+scShowPlayer_(kind, { result: local.status.toUpperCase(), minutesLate: local.minutesLate, player: cachedPlayer, offlineNote: note });
+} else {
+scShow_(kind, local.status === 'Late' ? 'LATE (offline estimate)' : 'PRESENT (offline)', note + ' — player not in local cache; identity will be confirmed on sync.');
+}
+} else {
 scShow_('err', 'Could not record', String(e.message || 'No connection').slice(0, 60));
+}
 }
 
 if (navigator.vibrate) navigator.vibrate(kind === 'err' ? [12, 8, 12] : [10, 6, 20]);
@@ -7936,6 +8661,30 @@ el.parentElement.classList.contains('open')
 : '＋';
 
 }
+
+/* === START: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
+(function () {
+var nav = null;
+
+function pinBottomNav() {
+if (!nav) nav = document.querySelector('.bottom');
+if (!nav || !window.visualViewport) return;
+var vv = window.visualViewport;
+var offset = window.innerHeight - (vv.height + vv.offsetTop);
+nav.style.transform = 'translate3d(-50%,' + (-offset) + 'px,0)';
+nav.style.webkitTransform = 'translate3d(-50%,' + (-offset) + 'px,0)';
+}
+
+if (window.visualViewport) {
+window.visualViewport.addEventListener('resize', pinBottomNav);
+window.visualViewport.addEventListener('scroll', pinBottomNav);
+}
+window.addEventListener('DOMContentLoaded', pinBottomNav);
+window.addEventListener('orientationchange', function () {
+setTimeout(pinBottomNav, 250);
+});
+})();
+/* === END: STABLE BOTTOM NAV — iOS VISUALVIEWPORT FIX === */
 
 </script>
 </body>
