@@ -3747,10 +3747,12 @@ document.body.classList.remove('scroll-locked');
 document.body.style.top = '';
 window.scrollTo(0, scrollLockY_);
 setAppIsolation_(false);
-// Waits for the viewport's own settle event instead of guessing a delay —
-// see settleBottomNav_ for why the old fixed-timeout approach could freeze
-// the nav at a wrong offset ("tabs stay lifted").
-if (window.settleBottomNav_) window.settleBottomNav_();
+// Mirror the ordinary tabs (show()): they never touch the nav's transform
+// at all and never have this problem. So on unlock, just hard-clear any
+// offset — no visualViewport recompute, no pinBottomNav() call. The nav is
+// position:fixed by default and needs no JS-computed offset outside of an
+// actual on-screen keyboard (handled separately by the resize listener).
+if (window.resetBottomNav_) window.resetBottomNav_();
 }
 }
 
