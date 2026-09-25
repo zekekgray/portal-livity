@@ -8793,8 +8793,10 @@ nav.style.transform = 'translate3d(-50%,' + (-offset) + 'px,0)';
 nav.style.webkitTransform = 'translate3d(-50%,' + (-offset) + 'px,0)';
 }
 if (window.visualViewport) {
+// resize only — a real keyboard show/hide. Scroll is intentionally NOT
+// watched here: the nav must stay isolated from finger-scroll/toolbar
+// show-hide and never move with it.
 window.visualViewport.addEventListener('resize', pinBottomNav);
-window.visualViewport.addEventListener('scroll', pinBottomNav);
 }
 window.addEventListener('DOMContentLoaded', pinBottomNav);
 window.addEventListener('orientationchange', function () {
@@ -8826,11 +8828,9 @@ if (!window.visualViewport) { pinBottomNav(); return; }
 function settle() {
 if (myGen !== settleGen) return; // superseded by a newer settle call
 window.visualViewport.removeEventListener('resize', settle);
-window.visualViewport.removeEventListener('scroll', settle);
 pinBottomNav();
 }
 window.visualViewport.addEventListener('resize', settle);
-window.visualViewport.addEventListener('scroll', settle);
 setTimeout(settle, 500);
 setTimeout(function () { if (myGen === settleGen) pinBottomNav(); }, 900);
 };
@@ -8894,4 +8894,3 @@ window.addEventListener('pageshow', safeReset);
 </script>
 </body>
 </html>
-
