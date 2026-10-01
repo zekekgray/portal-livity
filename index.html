@@ -2167,6 +2167,15 @@ flex-shrink:0;
 .livity-ball-modal.profile-mode .lb-close {
 display:none;
 }
+.lb-refresh {
+display:none;
+}
+.livity-ball-modal.profile-mode .lb-refresh {
+display:grid;
+}
+.lb-refresh.spin {
+animation:lbSpin .8s linear infinite;
+}
 .livity-ball-modal.profile-mode .lb-header h4 {
 font-size:16px;
 font-weight:800;
@@ -3490,7 +3499,7 @@ Show up, learn, compete, and grow.
 
 <div class="panel" style="margin-bottom:12px">
 <h3 style="margin:0 0 4px">Already training with us?</h3>
-<p style="color:var(--muted);font-size:12px;margin:0 0 12px">Access your player profile — top up sessions, check schedule, payments, or update info. No need to register again.</p>
+<p style="color:var(--muted);font-size:12px;margin:0 0 12px">Access your player profile — top up sessions, check schedule, payments, or update info. Already registered? Tap Continue Training. Adding a different child? Just keep filling in the form.</p>
 <button
 class="btn outline"
 style="width:100%;display:block;text-align:center;box-sizing:border-box"
@@ -3548,6 +3557,7 @@ Coach Sam — Advanced Assessment
 <div class="lb-header">
 <button class="lb-back" id="lbBackBtn" onclick="lbGoTo(lbProfileMode ? 'profile' : lbBackTarget)" style="display:none">←</button>
 <h4 id="lbTitle">Anytime Livity</h4>
+<button class="lb-back lb-refresh" id="lbRefreshBtn" onclick="appRefresh_(true)" aria-label="Refresh">↻</button>
 <button class="lb-close" onclick="closeLivityBall()">✕</button>
 </div>
 <div class="lb-body" id="lbBody"></div>
@@ -4272,7 +4282,7 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbwb8V5WhoRZXp8ARuEYHu4OGWmOHU8g-QGT_ShwsC9RxC7sX8vOvFTjpZPqZnXY0CyC2Q/exec';
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyDhR52LUAmDMyaONmywRd9elkKHEe6xYM5_Hwmn6qexXs2ISbwsrnioI-54MOZplOp5A/exec';
 
 const LIVITY_PAYMENT_INFO_FALLBACK = {
 gcash: { number:'09762675397', accountName:'Livity Training & Academy' },
@@ -4302,6 +4312,7 @@ const p = json.packages[key];
 lbPackages[key] = { label: LB_PACKAGE_DESC[key] + ' — ' + p.sessions + ' Sessions', price: p.price, sessions: p.sessions };
 });
 if (json.membershipFee) LB_MEMBERSHIP_FEE = json.membershipFee;
+lbPrivatePacks = json.privatePacks || {};
 } catch (e) {
 // keep hardcoded fallback values sa lbPackages — huwag baguhin
 }
@@ -4324,6 +4335,7 @@ mixedB:{ label:'Mixed B — 4 Private + 8 Academy', price:12000, sessions:12 },
 mixedC:{ label:'Mixed C — 8 Private + 4 Academy', price:14400, sessions:12 }
 };
 let LB_MEMBERSHIP_FEE = 4000;
+let lbPrivatePacks = {};
 const LB_ENROLL_STEPS = ['program','player','guardian','package','payment','consent','review'];
 /* === START: ADD CHILD — LINKED GUARDIAN SKIPS GUARDIAN STEP === */
 const LB_ENROLL_STEPS_LINKED = ['program','player','package','payment','consent','review'];
@@ -4630,7 +4642,7 @@ const opts = Object.entries(lbPackages).map(([key, p]) => `
 
 return `
 <h5 class="lb-step-title">Academy Package</h5>
-<p class="lb-text" style="font-size:11px;color:var(--muted)">Valid for 30 days from first training day.</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted)">Valid for 30 days from first training day. Mixed packages track Academy and Private sessions separately.</p>
 ${opts}
 <p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">+ ₱${LB_MEMBERSHIP_FEE.toLocaleString()} one-time Membership Fee (includes 2 jersey sets) — required for Academy, added automatically.</p>
 <div class="lb-err" id="lbErr"></div>
@@ -4688,6 +4700,23 @@ ${priceLine}
 }
 /* === END: LIVITY ENROLL — PROGRAM-AWARE PACKAGE STEP === */
 
+/* === START: ACADEMY PAYMENT BREAKDOWN === */
+function lbAcademyBreakdownHtml_(pkgKey, includeMembership) {
+  const pkg = lbPackages[pkgKey];
+  if (!pkg) return '';
+  const peso = function (n) { return '₱' + Number(n).toLocaleString(); };
+  const row = function (l, v, total) {
+    return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;' + (total ? 'font-weight:850;border-top:1px solid var(--line);margin-top:4px;padding-top:8px' : '') + '"><span>' + l + '</span><span>' + v + '</span></div>';
+  };
+  const fee = includeMembership ? LB_MEMBERSHIP_FEE : 0;
+  return '<div class="panel" style="padding:10px 14px;margin:8px 0">'
+    + row('1 · Membership (one-time)', includeMembership ? peso(fee) : '₱0 · already paid')
+    + row('2 · ' + pkg.label, peso(pkg.price))
+    + row('Total', peso(pkg.price + fee), true)
+    + '<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0 0">Sessions are credited once Livity confirms your payment. The membership itself does not use a session.</p></div>';
+}
+/* === END: ACADEMY PAYMENT BREAKDOWN === */
+
 function lbPaymentDetailsHtml_() {
 return lbMethodDetailsHtml_(lbForm.paymentMethod); // dynamic from GSheet — old code below unused
 const info = lbPaymentInfo || LIVITY_PAYMENT_INFO_FALLBACK;
@@ -4712,7 +4741,7 @@ return `
 <h5 class="lb-step-title">Payment Method</h5>
 <p class="lb-text">${totalLine}</p>
 <div class="lb-pills">${opts}</div>
-${lbPaymentDetailsHtml_()}
+${lbPaymentDetailsHtml_()}${lbForm.programId === 'PRG-ACAD' && lbForm.package ? lbAcademyBreakdownHtml_(lbForm.package, true) : ''}
 <p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">After you submit, you'll see the payment details and can send your amount and reference number right here.</p>
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
@@ -4927,7 +4956,7 @@ return (p && p.relationships || []).find(function (r) { return r.programId === p
 }
 
 function lbProgramStateInfo_(r) {
-if (r.programId === 'PRG-PRIV') return { text:'Rate confirmed by coach', badge:'' };
+if (r.programId === 'PRG-PRIV' && !(Number(r.total) > 0)) return { text:'Rate confirmed by coach', badge:'' };
 if (r.state === 'active') return { text: r.remaining + ' session' + (r.remaining === 1 ? '' : 's') + ' remaining', badge:'' };
 if (r.state === 'exhausted') return { text:'Your package has ended. Top up to continue training.', badge:'<span class="pay-badge pending">Package Ended</span>' };
 if (r.state === 'expired') {
@@ -5203,7 +5232,7 @@ const rem = Math.max(0, Number(r.remaining) || 0);
 const total = Number(r.total || r.totalSessions || r.sessions || r.sessionsTotal) || 0;
 const expiry = lbFormatExpiry_(r.expiryDate);
 const label = opts.label ? `<div style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:${muted};margin-bottom:4px">${opts.label}</div>` : '';
-const canTop = opts.cta && r.programId !== 'PRG-PRIV' && r.state !== 'pending_payment';
+const canTop = opts.cta && (r.programId !== 'PRG-PRIV' || Object.keys(lbPrivatePacks).length > 0) && r.state !== 'pending_payment';
 const cta = canTop ? `<button type="button" class="btn primary" style="width:100%;margin-top:12px;padding:12px;font-size:13px" onclick="lbTopup.activeProgramId='${r.programId}';lbBody().innerHTML=lbRenderTopupSummary_()">Top Up →</button>` : '';
 
 // ACTIVE — big number, progress, expiry, low-balance warning
@@ -5231,12 +5260,43 @@ const info = lbProgramStateInfo_(r);
 return `<div style="margin-top:12px">${label}${info.badge}<div style="font-size:15px;font-weight:750;color:${fg};margin-top:6px">${info.text}</div>${cta}</div>`;
 }
 
+function lbCounted_(r) { return r.programId !== 'PRG-PRIV' || Number(r.total) > 0; }
+
+/* === START: SEPARATE SESSIONS — ACADEMY vs PRIVATE === */
 function lbSessionsHubHtml_(rels) {
-const core = rels.filter(function (r) { return r.programId !== 'PRG-PRIV'; });
-if (core.length === 0) return `${lbSessionsHubHtml_(rels)}`;
-return core.map(function (r) {
-return lbSessionsBlock_(r, { dark:true, cta:true, label: core.length > 1 ? lbShortProgramName_(r.programName) : '' });
+  const order = { 'PRG-ACAD': 1, 'PRG-PRIV': 2, 'PRG-REG': 3, 'PRG-ADV': 4 };
+  const core = rels.filter(lbCounted_).sort(function (a, b) {
+    return (order[a.programId] || 9) - (order[b.programId] || 9);
+  });
+  const privNoPack = rels.some(function (r) { return r.programId === 'PRG-PRIV' && !lbCounted_(r); });
+  const privNote = privNoPack
+    ? `<div style="${core.length ? 'border-top:1px solid var(--line);margin-top:14px;padding-top:12px;' : 'margin-top:12px;'}font-size:13px;font-weight:700;color:var(--text)">Private Training<div style="font-size:12px;font-weight:600;color:var(--muted);margin-top:2px">Booked through Admin JA</div></div>`
+    : '';
+  if (!core.length) return (privNote || `<div style="margin-top:12px;font-size:14px;font-weight:700;color:var(--text)">No sessions yet</div>`) + ctxHelp_('sessions');
+
+  const blocks = core.map(function (r, i) {
+    const b = lbSessionsBlockCore_(r, { dark:false, cta:true, label: lbShortProgramName_(r.programName) });
+    return (i > 0 ? '<div style="border-top:1px solid var(--line);margin-top:14px"></div>' : '') + b;
+  }).join('');
+  return blocks + privNote + ctxHelp_('sessions');
+}
+/* === END: SEPARATE SESSIONS === */
+
+function lbSessionsHubHtmlOld_(rels) {
+const core = rels.filter(lbCounted_);
+if (core.length === 0) {
+return `<div style="margin-top:12px;font-size:14px;font-weight:700;color:var(--text)">Private sessions are booked through Admin JA</div>`;
+}
+const active = core.filter(function (r) { return r.state === 'active'; });
+const totalLeft = active.reduce(function (n, r) { return n + Math.max(0, Number(r.remaining) || 0); }, 0);
+const totalLine = (core.length > 1 && active.length)
+? `<div style="margin-top:12px;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)">${totalLeft} sessions left in total</div>`
+: '';
+const blocks = core.map(function (r, i) {
+const b = lbSessionsBlockCore_(r, { dark:false, cta:true, label: core.length > 1 ? lbShortProgramName_(r.programName) : '' });
+return (i > 0 ? '<div style="border-top:1px solid var(--line);margin-top:14px"></div>' : '') + b;
 }).join('');
+return totalLine + blocks + ctxHelp_('sessions');
 }
 /* === END: SESSIONS LEFT — HERO BLOCK === */
 
@@ -5410,7 +5470,7 @@ return `
 <h5 class="lb-step-title">${p.fullName}</h5>
 <p class="lb-text">${lbActiveProgramName_()}</p>
 ${lbSessionsBlock_(rel, { dark:false, cta:false })}
-<p class="lb-text" style="font-size:11px;color:var(--muted);margin:6px 0 10px">Choose a package to renew — no Membership Fee this time, it's already on file.</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin:6px 0 10px">${p.hasMembership === false ? '₱' + LB_MEMBERSHIP_FEE.toLocaleString() + ' one-time Membership Fee will be added first.' : 'Membership Fee: ₱0 — already paid.'} Choose a package to continue.</p>
 ${opts}
 <div class="lb-err" id="lbErr"></div>
 <button class="btn primary" style="width:100%" ${lbTopup.packageKey ? '' : 'disabled style="opacity:.5"'} onclick="lbBody().innerHTML=lbRenderTopupPayment_()">Continue →</button>
@@ -5434,9 +5494,22 @@ const p = lbTopup.selected;
 return `
 <button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderPlayerHub_()">← Back</button>
 <h5 class="lb-step-title">${p.fullName}</h5>
-<p class="lb-text">Private Training rates are confirmed directly by your coach.</p>
+${Number(lbCurrentRel_('PRG-PRIV').total) > 0 ? lbSessionsBlock_(lbCurrentRel_('PRG-PRIV'), { dark:false, cta:false }) : ''}
+${lbPrivatePackPickerHtml_()}
+<p class="lb-text" style="margin-top:10px">Private sessions are booked with your coach. Message Admin JA to pick a time.</p>
 <a href="https://wa.me/639762675397" target="_blank" rel="noopener" class="btn primary" style="width:100%;display:block;text-align:center;box-sizing:border-box;text-decoration:none">Message Admin JA →</a>
 `;
+}
+
+function lbPrivatePackPickerHtml_() {
+const keys = Object.keys(lbPrivatePacks || {});
+if (!keys.length) return '';
+const ok = !!(lbTopup.packageKey && lbPrivatePacks[lbTopup.packageKey]);
+const opts = keys.map(function (k) {
+const pk = lbPrivatePacks[k];
+return `<button type="button" class="lb-pkg ${lbTopup.packageKey === k ? 'sel' : ''}" onclick="lbTopup.packageKey='${k}';lbBody().innerHTML=lbRenderTopupPrivateUnavailable_()"><b>Private — ${pk.sessions} sessions</b><span>₱${pk.price.toLocaleString()}</span></button>`;
+}).join('');
+return `<p class="lb-text" style="font-size:11px;color:var(--muted);margin:10px 0 8px">Buy a Private pack online (valid ${lbPrivatePacks[keys[0]].validityDays || 30} days from your first session), then message Admin JA to book your times.</p>${opts}<button class="btn primary" style="width:100%;margin-bottom:10px${ok ? '' : ';opacity:.5'}" ${ok ? '' : 'disabled'} onclick="lbBody().innerHTML=lbRenderTopupPayment_()">Continue →</button>`;
 }
 
 function lbTopupPaymentDetailsHtml_() {
@@ -5454,7 +5527,8 @@ return '';
 function lbTopupAmount_() {
 const p = lbTopup.selected;
 const pid = lbTopup.activeProgramId;
-if (pid === 'PRG-ACAD' && lbTopup.packageKey) return lbPackages[lbTopup.packageKey].price;
+if (pid === 'PRG-ACAD' && lbPackages[lbTopup.packageKey]) return lbPackages[lbTopup.packageKey].price + (p && p.hasMembership === false ? LB_MEMBERSHIP_FEE : 0);
+if (pid === 'PRG-PRIV' && lbPrivatePacks[lbTopup.packageKey]) return lbPrivatePacks[lbTopup.packageKey].price;
 if (pid === 'PRG-ADV') return 1300;
 if (pid === 'PRG-REG') return LB_TOPUP_PRICE[p.category] || 0;
 return 0;
@@ -5471,7 +5545,7 @@ return `
 <h5 class="lb-step-title">Payment</h5>
 <p class="lb-text">Total amount due: <b>₱${amount.toLocaleString()}</b></p>
 <div class="lb-pills">${opts}</div>
-${lbTopupPaymentDetailsHtml_()}
+${lbTopupPaymentDetailsHtml_()}${lbTopup.activeProgramId === 'PRG-ACAD' && lbTopup.packageKey ? lbAcademyBreakdownHtml_(lbTopup.packageKey, lbTopup.selected.hasMembership === false) : ''}
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
 <button class="btn outline" onclick="lbBody().innerHTML=lbRenderTopupSummary_()">← Back</button>
@@ -5572,7 +5646,7 @@ return `
 <button class="back" style="margin-bottom:10px" onclick="lbBody().innerHTML=lbRenderAddProgramChoose_()">← Back</button>
 <h5 class="lb-step-title">Academy Package</h5>
 ${opts}
-<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">+ ₱${LB_MEMBERSHIP_FEE.toLocaleString()} one-time Membership Fee (includes 2 jersey sets).</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">${(lbTopup.selected && lbTopup.selected.hasMembership === false) ? '+ ₱' + LB_MEMBERSHIP_FEE.toLocaleString() + ' one-time Membership Fee (includes 2 jersey sets), paid first.' : 'Membership already paid — ₱0.'}</p>
 <div class="lb-err" id="lbErr"></div>
 <button class="btn primary" style="width:100%" ${lbAddProgram.packageKey ? '' : 'disabled style="opacity:.5"'} onclick="lbBody().innerHTML=lbRenderAddProgramPayment_()">Continue →</button>
 `;
@@ -5614,7 +5688,7 @@ ${priceLine}
 }
 
 function lbAddProgramAmount_() {
-if (lbAddProgram.programId === 'PRG-ACAD' && lbAddProgram.packageKey) return lbPackages[lbAddProgram.packageKey].price + LB_MEMBERSHIP_FEE;
+if (lbAddProgram.programId === 'PRG-ACAD' && lbAddProgram.packageKey) return lbPackages[lbAddProgram.packageKey].price + ((lbTopup.selected && lbTopup.selected.hasMembership === false) ? LB_MEMBERSHIP_FEE : 0);
 if (lbAddProgram.programId === 'PRG-ADV') return 1300;
 if (lbAddProgram.programId === 'PRG-REG' && lbAddProgram.category) return { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 }[lbAddProgram.category];
 return null;
@@ -5638,7 +5712,7 @@ return `
 <h5 class="lb-step-title">Payment</h5>
 <p class="lb-text">${totalLine}</p>
 <div class="lb-pills">${opts}</div>
-${lbAddProgramPaymentDetailsHtml_()}
+${lbAddProgramPaymentDetailsHtml_()}${lbAddProgram.programId === 'PRG-ACAD' && lbAddProgram.packageKey ? lbAcademyBreakdownHtml_(lbAddProgram.packageKey, !!(lbTopup.selected && lbTopup.selected.hasMembership === false)) : ''}
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
 <button class="btn outline" onclick="lbBody().innerHTML=lbRenderAddProgramPackage_()">← Back</button>
@@ -6261,7 +6335,7 @@ ${ctxHelp_('playerId')}${ctxHelp_('sessions')}
 <button class="lb-item" onclick="lbOpenAddChild_()">
 <span class="lb-ico">👤</span> Add Another Player
 </button>
-${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb-ico">⇄</span><span><b style="display:block;font-size:13px">Not you? Switch player</b><span style="font-size:11px;color:var(--muted)">Forget this device</span></span></button>
+${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb-ico">⇄</span><span><b style="display:block;font-size:13px">Log out</b><span style="font-size:11px;color:var(--muted)">Remove my player, photo & QR from this device</span></span></button>
 <p class="pf-remember">🔒 Remembered on this device only</p>` : ''}
 `;
 }
@@ -6480,10 +6554,13 @@ const sel = json.players.find(function (p) { return p.playerId === pid; }) || js
 try { localStorage.setItem(PF_SNAP_KEY, JSON.stringify({ pid: sel.playerId, players: json.players })); } catch (e) {}
 if (lbTopup.selected) { lbTopup.players = json.players; lbTopup.selected = sel; }
 pfReflect_();
-if (lbProfileMode && lbScreen === 'profile' && document.getElementById('pfFile')) {
-lbBody().innerHTML = lbRenderPlayerHub_();
+if (lbProfileMode && lbScreen === 'profile' && document.getElementById('pfFile') && !appTyping_()) {
+const b_ = lbBody(), y_ = b_.scrollTop;
+b_.innerHTML = lbRenderPlayerHub_();
+b_.scrollTop = y_;
 }
-} catch (e) { /* offline — cached lang */ }
+return true;
+} catch (e) { return false; /* offline — cached lang */ }
 }
 
 function lbRenderProfileEntry_() {
@@ -7049,7 +7126,9 @@ if (!box) return;
 const p = r.player || {};
 const prog = (p.programs || []).filter(function (x) { return x.programId === r.programId; })[0] || (p.programs || [])[0];
 const title = { PRESENT: 'PRESENT', LATE: 'LATE ' + (r.minutesLate || 0) + ' MIN', DUPLICATE: 'ALREADY CHECKED IN', LOOKUP: 'PLAYER' }[r.result] || '';
-const left = prog && prog.programId !== 'PRG-PRIV' && prog.state === 'active' ? prog.remaining + ' session' + (prog.remaining === 1 ? '' : 's') + ' left' : (prog ? lbShortProgramName_(prog.programName) : '');
+const left = (p.programs || []).filter(function (x) { return x.state === 'active' && (x.programId !== 'PRG-PRIV' || Number(x.total) > 0); })
+  .map(function (x) { return lbShortProgramName_(x.programName).replace(' Training', '') + ': ' + x.remaining + ' left'; }).join(' · ')
+  || (prog ? lbShortProgramName_(prog.programName) : '');
 const photo = String(p.photoUrl || '').replace(/'/g, '%27');
 box.className = 'sc-result ' + kind;
 box.innerHTML = `
@@ -8765,6 +8844,40 @@ el.innerHTML = ctxHelp_(el.getAttribute('data-ctx'));
 });
 /* === END: CONTEXTUAL HELP (ⓘ) === */
 
+/* === START: LOGOUT — FULL DEVICE WIPE (overrides pfSwitch_) === */
+function pfLogout_() {
+  try {
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.indexOf(PF_PHOTO_KEY) === 0 || k.indexOf(PF_QR_KEY) === 0) toRemove.push(k);
+    }
+    toRemove.forEach(function (k) { localStorage.removeItem(k); });
+    [PROFILE_KEY, PF_SNAP_KEY, KNOWN_KEY, LB_CHAT_CONTACT_KEY].forEach(function (k) { localStorage.removeItem(k); });
+  } catch (e) {}
+
+  lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
+  lbChatContact = null;
+  lbChatMessages = [];
+  lbPayments = { loading:true, balanceDue:0, payments:[] };
+
+  // reset bottom tab + home tile back to default
+  const btn = document.querySelector('.bottom button[data-v="player"], .bottom button[data-v="enroll"]');
+  if (btn) { btn.setAttribute('data-v', 'player'); btn.setAttribute('onclick', 'openProfile_()'); btn.innerHTML = '<b>' + pfIco_('user', 26) + '</b>Profile'; }
+  pfReflect_();
+
+  closeLivityBall();
+  show('home');
+  appToast_('Logged out');
+}
+
+function pfSwitch_() {
+  if (!confirm('Log out on this device?\n\nYour saved player, photo and QR will be removed from this phone.')) return;
+  pfLogout_();
+}
+/* === END: LOGOUT === */
+
 function acc(el) {
 
 el.parentElement.classList.toggle('open');
@@ -8892,6 +9005,95 @@ if (!document.hidden) setTimeout(safeReset, 150);
 window.addEventListener('pageshow', safeReset);
 })();
 /* === END: GLOBAL VIEWPORT-SHIFT GUARD === */
+/* === START: AUTO REFRESH — focus / interval / manual ↻ === */
+let appRefreshing_ = false, appLastRefresh_ = 0;
+const APP_REFRESH_MIN_MS = 15000;   // pinakamabilis na pagitan ng dalawang refresh
+const APP_REFRESH_TICK_MS = 45000;  // auto-refresh habang bukas ang app
+
+/** True kapag may tina-type sa loob ng modal — huwag i-re-render. */
+function appTyping_() {
+const a = document.activeElement;
+return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest && a.closest('#livityModal'));
+}
+
+function appToast_(t) {
+let el = document.getElementById('appToast');
+if (!el) {
+el = document.createElement('div');
+el.id = 'appToast';
+el.style.cssText = 'position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#171714;color:#fff;font-size:12px;font-weight:700;padding:9px 14px;border-radius:12px;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none';
+document.body.appendChild(el);
+}
+el.textContent = t;
+el.style.opacity = '1';
+clearTimeout(el._t);
+el._t = setTimeout(function () { el.style.opacity = '0'; }, 1600);
+}
+
+/** Silent — walang loading spinner, hindi kumukurap ang schedule. */
+async function appRefreshSchedule_() {
+try {
+const res = await fetch(LIVITY_API_URL + '?action=schedule');
+const json = await res.json();
+if (!json.success || !json.week) return;
+lbScheduleWeek = json.week;
+renderScheduleTabs();
+renderScheduleDay(lbScheduleActiveDay || lbScheduleWeek[0].day);
+renderScheduleByProgram_();
+renderNextSession_();
+} catch (e) { /* silent */ }
+}
+
+/** Kapag nasa Payments screen, i-update nang tahimik. */
+async function appRefreshPayments_() {
+if (!lbTopup.selected) return;
+try {
+const res = await fetch(LIVITY_API_URL + '?action=payments&playerId=' + encodeURIComponent(lbTopup.selected.playerId));
+const json = await res.json();
+if (!json.success) return;
+lbPayApply_(json);
+lbPayments = { loading:false, balanceDue: json.balanceDue, payments: json.payments };
+if (document.getElementById('lbTitle').textContent === 'Payments' && !appTyping_()) {
+const b = lbBody(), y = b.scrollTop;
+b.innerHTML = lbRenderPaymentsBody_();
+b.scrollTop = y;
+}
+} catch (e) { /* silent */ }
+}
+
+async function appRefresh_(manual) {
+const now = Date.now();
+if (appRefreshing_) return;
+if (!manual && now - appLastRefresh_ < APP_REFRESH_MIN_MS) return;
+appRefreshing_ = true;
+appLastRefresh_ = now;
+const btn = document.getElementById('lbRefreshBtn');
+if (manual && btn) btn.classList.add('spin');
+let ok = true;
+try {
+const modalOpen = document.getElementById('livityModal').classList.contains('open');
+const jobs = [appRefreshSchedule_()];
+if (pfSnapLoad_() || lbTopup.selected) jobs.push(pfRefresh_().then(function (r) { if (r === false) ok = false; }));
+if (modalOpen && lbTopup.selected && document.getElementById('lbTitle').textContent === 'Payments') jobs.push(appRefreshPayments_());
+if (document.getElementById('chatMessages') && lbChatContact) jobs.push(lbLoadChatMessages_());
+await Promise.all(jobs);
+if (manual) appToast_(ok ? 'Updated ✓' : 'No connection — showing saved data');
+} finally {
+appRefreshing_ = false;
+if (btn) btn.classList.remove('spin');
+}
+}
+
+document.addEventListener('visibilitychange', function () { if (!document.hidden) appRefresh_(false); });
+window.addEventListener('focus', function () { appRefresh_(false); });
+window.addEventListener('online', function () { appRefresh_(false); });
+setInterval(function () { if (!document.hidden && navigator.onLine) appRefresh_(false); }, APP_REFRESH_TICK_MS);
+
+// Chat: mas madalas habang bukas ang usapan kay Admin JA
+setInterval(function () {
+if (!document.hidden && navigator.onLine && document.getElementById('chatMessages') && lbChatContact) lbLoadChatMessages_();
+}, 15000);
+/* === END: AUTO REFRESH === */
 
 </script>
 </body>
