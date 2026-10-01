@@ -3499,7 +3499,7 @@ Show up, learn, compete, and grow.
 
 <div class="panel" style="margin-bottom:12px">
 <h3 style="margin:0 0 4px">Already training with us?</h3>
-<p style="color:var(--muted);font-size:12px;margin:0 0 12px">Access your player profile — top up sessions, check schedule, payments, or update info. Already registered? Tap Continue Training. Adding a different child? Just keep filling in the form.</p>
+<p style="color:var(--muted);font-size:12px;margin:0 0 12px">Access your player profile — top up sessions, check schedule, payments, or update info.</p>
 <button
 class="btn outline"
 style="width:100%;display:block;text-align:center;box-sizing:border-box"
@@ -3591,6 +3591,13 @@ Coach Sam — Advanced Assessment
 <button class="btn primary" onclick="closeMaintModal()">Got it</button>
 </div>
 <!-- === END: APP MAINTENANCE MODAL — MARKUP === -->
+
+<!-- === START: WHAT'S NEW MODAL — MARKUP === -->
+<div class="rate-backdrop" id="verBackdrop" onclick="closeVersionModal_()"></div>
+<div class="rate-modal" id="verModal" style="width:min(340px,88vw)">
+<div id="verModalBody"></div>
+</div>
+<!-- === END: WHAT'S NEW MODAL — MARKUP === -->
 
 <!-- === START: RATE US WIDGET — MARKUP === -->
 <div class="rate-backdrop" id="rateBackdrop" onclick="closeRateModal()"></div>
@@ -4282,7 +4289,7 @@ let lbBackTarget = 'menu';
 let lbEnrollStep = 0;
 
 /* === START: LIVITY ENROLL — API + PROGRAM-AWARE STATE === */
-const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbyDhR52LUAmDMyaONmywRd9elkKHEe6xYM5_Hwmn6qexXs2ISbwsrnioI-54MOZplOp5A/exec';
+const LIVITY_API_URL = 'https://script.google.com/macros/s/AKfycbw47vUpk4xO8sypOsMlNxTn-zTQpUWAIS0YXtW5Qb-xp2UpexOki6xW5uxeDzxTYtQOWw/exec';
 
 const LIVITY_PAYMENT_INFO_FALLBACK = {
 gcash: { number:'09762675397', accountName:'Livity Training & Academy' },
@@ -4606,7 +4613,7 @@ const firstName = json.players[0].guardianName ? json.players[0].guardianName.sp
 currentSlot.innerHTML = `
 <div class="welcome-back-card">
 <b>Welcome back${json.players[0].guardianName ? ', ' + firstName : ''}! 👋</b>
-<p>We found ${json.players.length > 1 ? 'players' : 'a player'} already registered under this number: <b>${names}</b>. No need to register again.</p>
+<p>We found ${json.players.length > 1 ? 'players' : 'a player'} already registered under this number: <b>${names}</b>. Already registered? Tap Continue Training. Adding a different child? Just keep filling in the form.</p>
 <button type="button" class="btn primary" onclick="lbResumeReturningGuardian_('${value.replace(/'/g, "\\'")}')">Continue Training →</button>
 </div>
 `;
@@ -5569,7 +5576,7 @@ category: lbTopup.selected.category,
 packageKey: lbTopup.packageKey || '',
 paymentMethod: lbTopup.paymentMethod
 });
-lbShowTopupSuccess_(result);
+if (lbTopup.activeProgramId === 'PRG-ACAD') lbTopup.selected.hasMembership = true; lbShowTopupSuccess_(result);
 } catch (e) {
 if (btn) { btn.disabled = false; btn.textContent = 'Confirm Payment →'; }
 if (err) err.textContent = "We couldn't process your payment (" + e.message + "). Please try again.";
@@ -5736,7 +5743,7 @@ category: lbAddProgram.category,
 packageKey: lbAddProgram.packageKey,
 paymentMethod: lbAddProgram.paymentMethod
 });
-lbShowAddProgramSuccess_(result);
+if (lbAddProgram.programId === 'PRG-ACAD') lbTopup.selected.hasMembership = true; lbShowAddProgramSuccess_(result);
 } catch (e) {
 if (btn) { btn.disabled = false; btn.textContent = 'Confirm →'; }
 if (err) err.textContent = "We couldn't add this program (" + e.message + "). Please try again.";
@@ -6850,7 +6857,10 @@ if (over && overMs - r.graceMinutes * 60000 > 0) pen = r.flat + (r.perDay > 0 ? 
 const peso = function (n) { return '₱' + Number(n).toLocaleString(); };
 
 box.className = 'pay-clock ' + (over ? 'over' : 'due');
-document.getElementById('payClockLabel').textContent = over ? 'OVERDUE FOR' : 'PAY WITHIN';
+const inGrace = over && overMs <= r.graceMinutes * 60000;
+document.getElementById('payClockLabel').textContent = inGrace ? 'GRACE PERIOD — PAY NOW' : (over ? 'OVERDUE FOR' : 'PAY WITHIN');
+const hd = document.getElementById('payHead');
+if (hd) hd.textContent = (over && !inGrace) ? '🔴 PAYMENT OVERDUE' : '⏳ PAYMENT DUE';
 document.getElementById('payClockTime').textContent = lbPayFmt_(Math.abs(diff));
 document.getElementById('payClockSub').innerHTML = 'Amount ' + peso(base)
 + (pen > 0 ? ' + Late penalty ' + peso(pen) : (r.flat > 0 && !over ? ' · ' + peso(r.flat) + ' penalty if late' : ''))
@@ -6867,7 +6877,7 @@ lbPayTick_();
 
 /* ---- panel ---- */
 function lbPayObj_(p, playerId, contact) {
-return { paymentId: p.paymentId, playerId: playerId, contact: contact, amount: p.amount, penalty: p.penalty, total: p.total, dueAt: p.dueAt, status: p.status, reference: p.reference || '', label: p.label };
+return { paymentId: p.paymentId, playerId: playerId, contact: contact, amount: p.amount, penalty: p.penalty, total: p.total, dueAt: p.dueAt, status: p.status, reference: p.reference || '', label: p.label, submittedAt: p.submittedAt || '' };
 }
 
 /** Unpaid muna (pinakamaagang due), kung wala — pinakabagong Submitted. */
@@ -6878,14 +6888,15 @@ if (unpaid.length) return unpaid[0];
 return list.filter(function (p) { return p.status === 'Submitted'; })[0] || null;
 }
 
-function lbPayPanelHtml_(pay) {
+function lbPayPanelHtml_(pay, compact) {
 lbPayCur = pay;
 const esc = lbEscapeHtml_;
 const attr = function (s) { return esc(s).replace(/"/g, '&quot;'); };
 if (pay.status === 'Paid') return '';
 
 if (pay.status === 'Submitted') {
-return `<div id="payPanel"><div class="pay-badge pending">🕓 Payment sent — verifying</div>${pay.reference ? `<p class="lb-text" style="margin:8px 0 0">Reference no. <b>${esc(pay.reference)}</b>. Livity will confirm it shortly.</p>` : ''}</div>`;
+const rcv = pay.submittedAt ? new Date(pay.submittedAt).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : '';
+return `<div id="payPanel"><div style="font-size:18px;font-weight:850;color:var(--navy)">🕓 Payment Submitted</div><p class="lb-text" style="margin:8px 0 0">Your payment details were received${rcv ? ' at <b>' + rcv + '</b>' : ''}${pay.reference ? ' (Ref. <b>' + esc(pay.reference) + '</b>)' : ''}.<br>Livity Admin will verify your payment. Your balance stays until it's verified.</p></div>`;
 }
 
 const methods = lbMethodsList_();
@@ -6896,13 +6907,15 @@ const opts = methods.map(function (m) { return `<option value="${attr(m.name)}">
 
 return `
 <div id="payPanel">
-<div class="session-detail-label" style="margin-top:0">Pay now</div>
+<div id="payHead" style="font-size:20px;font-weight:850;letter-spacing:.3px;margin:0 0 8px;color:var(--text)">⏳ PAYMENT DUE</div>
 <div class="pay-clock due" id="payClock" data-due="${attr(pay.dueAt)}" data-base="${Number(pay.amount) || 0}">
 <div class="pay-clock-label" id="payClockLabel"></div>
 <div class="pay-clock-time" id="payClockTime">--:--:--</div>
 <div class="pay-clock-sub" id="payClockSub"></div>
 </div>
-${list}
+${compact ? `<button type="button" class="btn primary" style="width:100%;margin:2px 0 8px" onclick="lbPayToggle_('list')">PAY NOW →</button><button type="button" class="btn outline" style="width:100%;margin:0 0 8px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="lbPayToggle_('form')">Already paid? Send Payment Details →</button>` : ''}
+<div id="payDetail" style="${compact && methods.length && !lbPayOpen_ ? 'display:none' : ''}">
+<div id="payList">${list}</div>
 <div class="session-detail-label">Already paid? Send your details</div>
 ${methods.length ? `<select class="lb-input" id="payMethodSel">${opts}</select>` : ''}
 <input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="${Number(pay.total) || Number(pay.amount) || ''}" oninput="this.dataset.touched='1'">
@@ -6910,7 +6923,21 @@ ${methods.length ? `<select class="lb-input" id="payMethodSel">${opts}</select>`
 <div class="lb-err" id="payErr"></div>
 <button type="button" class="btn primary" id="payBtn" style="width:100%" onclick="lbPaySubmit_()">Send Payment Details →</button>
 <p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0 0">The time you send this is recorded by Livity's server and can't be edited.</p>
+</div>
 </div>`;
+}
+
+let lbPayOpen_ = false;
+function lbPayToggle_(which) {
+  const d = document.getElementById('payDetail');
+  if (!d) return;
+  lbPayOpen_ = true;
+  d.style.display = 'block';
+  const t = document.getElementById(which === 'form' ? 'payRef' : 'payList');
+  if (t) {
+    t.scrollIntoView({ block:'center', behavior:'smooth' });
+    if (which === 'form') { try { t.focus({ preventScroll:true }); } catch (e) {} }
+  }
 }
 
 function lbPayCopy_(btn) {
@@ -6972,7 +6999,7 @@ lbPayApply_(json);
 const slot = document.getElementById('lbHubDue');
 if (!slot) return;
 const pick = lbPayPick_(json.payments || []);
-slot.innerHTML = pick ? '<div class="panel" style="margin:0 0 14px">' + lbPayPanelHtml_(lbPayObj_(pick, p.playerId, p.whatsapp)) + '</div>' : '';
+slot.innerHTML = pick ? '<div class="panel" style="margin:0 0 14px">' + lbPayPanelHtml_(lbPayObj_(pick, p.playerId, p.whatsapp), true) + '</div>' : '';
 lbPayClockStart_();
 } catch (e) { /* silent */ }
 }
@@ -6981,7 +7008,7 @@ const lbHubBase3_ = lbRenderPlayerHub_;
 lbRenderPlayerHub_ = function () {
 const h = lbHubBase3_();
 setTimeout(lbHubDueLoad_, 0);
-return '<div id="lbHubDue"></div>' + h;
+return h;
 };
 
 /* ---- submit + offline queue (fail-safe) ---- */
@@ -9005,6 +9032,77 @@ if (!document.hidden) setTimeout(safeReset, 150);
 window.addEventListener('pageshow', safeReset);
 })();
 /* === END: GLOBAL VIEWPORT-SHIFT GUARD === */
+/* === START: VERSION CONTROL — WHAT'S NEW (GSheet-driven) === */
+const VER_SEEN_KEY = 'livity_ver_seen_v1';
+const VER_CACHE_KEY = 'livity_ver_cache_v1';
+let lbVersion_ = null;
+
+function verChip_() {
+const host = document.querySelector('#home .content');
+if (!host || !lbVersion_) return;
+let chip = document.getElementById('verChip');
+if (!chip) {
+chip = document.createElement('p');
+chip.id = 'verChip';
+chip.setAttribute('onclick', 'verOpen_()');
+chip.style.cssText = 'text-align:center;font-size:11px;font-weight:700;color:var(--muted);margin:14px 0 0;cursor:pointer';
+host.appendChild(chip);
+}
+chip.textContent = 'v' + lbVersion_.version + (lbVersion_.build ? ' · Build ' + lbVersion_.build : '') + ' · What\'s New';
+}
+
+function verOpen_() {
+const v = lbVersion_;
+if (!v) return;
+const lines = String(v.whatsNew || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean)
+.map(function (l) { return '<p class="lb-text" style="margin:0 0 6px">' + lbEscapeHtml_(l) + '</p>'; }).join('');
+document.getElementById('verModalBody').innerHTML = `
+<div class="welcome-badge" style="margin-bottom:10px">What's New</div>
+<h4 style="margin:0 0 2px;font-size:18px;text-align:left">Version ${lbEscapeHtml_(v.version)}</h4>
+<p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
+<div style="text-align:left;margin-bottom:12px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
+<button class="btn primary" style="width:100%" onclick="closeVersionModal_()">Got it</button>
+`;
+document.getElementById('verModal').classList.add('open');
+document.getElementById('verBackdrop').classList.add('open');
+lockBodyScroll_();
+}
+
+function closeVersionModal_() {
+const m = document.getElementById('verModal');
+if (!m.classList.contains('open')) return;
+m.classList.remove('open');
+document.getElementById('verBackdrop').classList.remove('open');
+unlockBodyScroll_();
+if (lbVersion_) { try { localStorage.setItem(VER_SEEN_KEY, lbVersion_.version); } catch (e) {} }
+}
+
+async function loadVersion_() {
+let v = null;
+try {
+const res = await fetch(LIVITY_API_URL + '?action=version');
+const json = await res.json();
+if (json.success && json.current) {
+v = json.current;
+try { localStorage.setItem(VER_CACHE_KEY, JSON.stringify(v)); } catch (e) {}
+}
+} catch (e) {
+try { v = JSON.parse(localStorage.getItem(VER_CACHE_KEY) || 'null'); } catch (e2) {}
+}
+if (!v) return;
+lbVersion_ = v;
+verChip_();
+
+let seen = '', welcomeSeen = false;
+try { seen = localStorage.getItem(VER_SEEN_KEY) || ''; welcomeSeen = localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) {}
+if (seen === v.version) return;
+if (!welcomeSeen) { try { localStorage.setItem(VER_SEEN_KEY, v.version); } catch (e) {} return; } // bagong user: Welcome popup muna, huwag nang dagdagan
+setTimeout(verOpen_, 600);
+}
+
+document.addEventListener('DOMContentLoaded', loadVersion_);
+/* === END: VERSION CONTROL === */
+
 /* === START: AUTO REFRESH — focus / interval / manual ↻ === */
 let appRefreshing_ = false, appLastRefresh_ = 0;
 const APP_REFRESH_MIN_MS = 15000;   // pinakamabilis na pagitan ng dalawang refresh
