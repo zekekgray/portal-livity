@@ -3594,7 +3594,7 @@ Coach Sam — Advanced Assessment
 
 <!-- === START: WHAT'S NEW MODAL — MARKUP === -->
 <div class="rate-backdrop" id="verBackdrop" onclick="closeVersionModal_()"></div>
-<div class="rate-modal" id="verModal" style="width:min(340px,88vw)">
+<div class="rate-modal" id="verModal" style="width:min(340px,88vw);max-height:80vh;max-height:80dvh;display:flex;flex-direction:column;overflow:hidden">
 <div id="verModalBody"></div>
 </div>
 <!-- === END: WHAT'S NEW MODAL — MARKUP === -->
@@ -9056,12 +9056,14 @@ const v = lbVersion_;
 if (!v) return;
 const lines = String(v.whatsNew || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean)
 .map(function (l) { return '<p class="lb-text" style="margin:0 0 6px">' + lbEscapeHtml_(l) + '</p>'; }).join('');
-document.getElementById('verModalBody').innerHTML = `
-<div class="welcome-badge" style="margin-bottom:10px">What's New</div>
-<h4 style="margin:0 0 2px;font-size:18px;text-align:left">Version ${lbEscapeHtml_(v.version)}</h4>
-<p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
-<div style="text-align:left;margin-bottom:12px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
-<button class="btn primary" style="width:100%" onclick="closeVersionModal_()">Got it</button>
+const bodyEl_ = document.getElementById('verModalBody');
+bodyEl_.style.cssText = 'display:flex;flex-direction:column;min-height:0;flex:1';
+bodyEl_.innerHTML = `
+<div class="welcome-badge" style="margin-bottom:10px;align-self:flex-start;flex-shrink:0">What's New</div>
+<h4 style="margin:0 0 2px;font-size:18px;text-align:left;flex-shrink:0">Version ${lbEscapeHtml_(v.version)}</h4>
+<p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px;flex-shrink:0">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
+<div style="text-align:left;margin-bottom:12px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-right:4px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
+<button class="btn primary" style="width:100%;flex-shrink:0" onclick="closeVersionModal_()">Got it</button>
 `;
 document.getElementById('verModal').classList.add('open');
 document.getElementById('verBackdrop').classList.add('open');
