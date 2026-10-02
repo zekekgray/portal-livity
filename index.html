@@ -287,8 +287,8 @@ justify-content:center;
 align-items:center;
 }
 .hero-logo img {
-width:128px;
-height:128px;
+width:147px;
+height:147px;
 object-fit:contain;
 filter:drop-shadow(0 10px 24px rgba(0,0,0,.45));
 }
@@ -518,6 +518,33 @@ color:var(--text);
 padding:10px 0;
 }
 /* === END: RATE US WIDGET — STYLES === */
+
+/* === START: WHAT'S NEW MODAL — SCROLLABLE === */
+#verModal {
+max-height:80vh;
+max-height:80dvh;
+display:flex;
+flex-direction:column;
+padding:20px 20px 16px;
+}
+#verModalBody {
+display:flex;
+flex-direction:column;
+min-height:0;
+flex:1;
+}
+.ver-list {
+flex:1;
+min-height:0;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+overscroll-behavior:contain;
+max-height:46vh;
+max-height:46dvh;
+padding-right:4px;
+margin-bottom:12px;
+}
+/* === END: WHAT'S NEW MODAL — SCROLLABLE === */
 
 /* === START: APP TUTORIAL — STYLES (v3, full-screen carousel) === */
 .tutorial-fab {
@@ -2560,7 +2587,52 @@ box-shadow:0 0 0 2px #000;
 .bottom button.active .pf-mini {
 box-shadow:0 0 0 2px var(--royal);
 }
+/* === START: 6-TAB NAV (with Scan) === */
+.bottom { grid-template-columns:repeat(6,1fr); }
+/* === END: 6-TAB NAV === */
+
+/* === START: APPLE-STYLE TAB ICONS === */
+.bottom button svg {
+width:26px;
+height:26px;
+display:block;
+fill:none;
+stroke:currentColor;
+stroke-width:1.8;
+stroke-linecap:round;
+stroke-linejoin:round;
+transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.bottom button { color:#8e8e93; } /* inactive = iOS gray */
+.bottom button.active { color:var(--royal); }
+.bottom button.active svg { transform:scale(1.08); }
+.bottom button.active svg .fl { fill:currentColor; }
+.bottom button.active svg .cut { stroke:#e7f0ff; } /* kulay ng active pill */
+.bottom button[data-v="player"].active svg circle { fill:currentColor; }
+/* === END: APPLE-STYLE TAB ICONS === */
 /* === END: FLOATING PILL NAV === */
+
+/* === START: PROFILE AS PART OF THE APP — SEAMLESS === */
+/* nav nasa ibabaw ng profile sheet (z 61) pero sa ilalim ng mga popup (69+) */
+.bottom { z-index:65; }
+
+/* huwag itago ang nav kapag profile ang bukas */
+body.pf-open.app-isolated .bottom {
+visibility:visible;
+pointer-events:auto;
+}
+
+/* sheet ay hanggang sa ilalim, may pwesto para sa floating nav */
+.livity-ball-modal.profile-mode {
+padding-bottom:calc(92px + env(safe-area-inset-bottom,0px));
+}
+
+/* walang blur backdrop, para seamless ang itsura */
+body.pf-open .livity-ball-backdrop { display:none; }
+
+/* ball laging nasa ibabaw ng profile */
+body.pf-open .livity-ball { z-index:66; }
+/* === END: PROFILE AS PART OF THE APP === */
 </style>
 </head>
 
@@ -2575,7 +2647,6 @@ box-shadow:0 0 0 2px var(--royal);
 <div class="hero">
 
 <div class="top-actions">
-<button type="button" class="app-link-btn" onclick="openScan_()" aria-label="Scan player QR">▣ SCAN</button>
 <button class="rate-btn" onclick="openRateModal()">
 ★ Rate Us
 </button>
@@ -2587,7 +2658,7 @@ box-shadow:0 0 0 2px var(--royal);
 
 <!-- === START: HERO LOGO === -->
 <div class="hero-logo">
-<img src="/logo-256.png" alt="Livity logo" width="128" height="128">
+<img src="/logo-512.png" alt="Livity logo" width="147" height="147">
 </div>
 <!-- === END: HERO LOGO === -->
 
@@ -3605,7 +3676,7 @@ Coach Sam — Advanced Assessment
 
 <div class="livity-ball-modal" id="livityModal">
 <div class="lb-header">
-<button class="lb-back" id="lbBackBtn" onclick="lbGoTo(lbProfileMode ? 'profile' : lbBackTarget)" style="display:none">←</button>
+<button class="lb-back" id="lbBackBtn" onclick="lbHeaderBack_()" style="display:none">←</button>
 <h4 id="lbTitle">Anytime Livity</h4>
 <button class="lb-back lb-refresh" id="lbRefreshBtn" onclick="appRefresh_(true)" aria-label="Refresh">↻</button>
 <button class="lb-close" onclick="closeLivityBall()">✕</button>
@@ -3707,7 +3778,7 @@ class="active"
 data-v="home"
 onclick="show('home')"
 >
-<b>⌂</b>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fl" d="M3.5 10.8 12 3.5l8.5 7.3V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19z"/><path class="cut" d="M9.5 20.5v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5"/></svg></b>
 Home
 </button>
 
@@ -3716,7 +3787,7 @@ Home
 data-v="programs"
 onclick="show('programs')"
 >
-<b>◫</b>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="13" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="3.5" y="13" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="13" y="13" width="7.5" height="7.5" rx="2.2"/></svg></b>
 Programs
 </button>
 
@@ -3725,8 +3796,17 @@ Programs
 data-v="schedule"
 onclick="show('schedule')"
 >
-<b>◷</b>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path class="cut" d="M3.5 10h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></b>
 Schedule
+</button>
+
+
+<button
+data-v="scan"
+onclick="openScan_()"
+aria-label="Scan player QR"
+>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V6a2.5 2.5 0 0 1 2.5-2.5h2M16 3.5h2A2.5 2.5 0 0 1 20.5 6v2M20.5 16v2a2.5 2.5 0 0 1-2.5 2.5h-2M8 20.5H6A2.5 2.5 0 0 1 3.5 18v-2"/><rect x="8" y="8" width="8" height="8" rx="1.5"/></svg></b>
 </button>
 
 
@@ -3734,7 +3814,7 @@ Schedule
 data-v="more"
 onclick="show('more')"
 >
-<b>☷</b>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="fl" cx="12" cy="12" r="9"/><path class="cut" d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.6"/></svg></b>
 More
 </button>
 
@@ -3743,7 +3823,7 @@ More
 data-v="player"
 onclick="openProfile_()"
 >
-<b>👤</b>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></svg></b>
 Profile
 </button>
 
@@ -8533,7 +8613,7 @@ TAP TO SCAN
 
 <div class="sc-label">No QR? Enter Player ID</div>
 <div class="sc-manual">
-<input class="lb-input" id="scManual" placeholder="LVT-00001" autocapitalize="characters" autocomplete="off" onkeydown="if(event.key==='Enter')scManualSubmit_()">
+<input class="lb-input" id="scManual" placeholder="LVTFA-XXXXXXX" autocapitalize="characters" autocomplete="off" onkeydown="if(event.key==='Enter')scManualSubmit_()">
 <button class="btn primary" onclick="scManualSubmit_()">Record</button>
 </div>
 <div style="text-align:center"><button class="sc-link" onclick="scForgetKey_('')">Change staff key</button></div>`;
@@ -9110,8 +9190,8 @@ document.getElementById('verModalBody').innerHTML = `
 <div class="welcome-badge" style="margin-bottom:10px">What's New</div>
 <h4 style="margin:0 0 2px;font-size:18px;text-align:left">Version ${lbEscapeHtml_(v.version)}</h4>
 <p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
-<div style="text-align:left;margin-bottom:12px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
-<button class="btn primary" style="width:100%" onclick="closeVersionModal_()">Got it</button>
+<div class="ver-list" style="text-align:left">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
+<button class="btn primary" style="width:100%;flex-shrink:0" onclick="closeVersionModal_()">Got it</button>
 `;
 document.getElementById('verModal').classList.add('open');
 document.getElementById('verBackdrop').classList.add('open');
@@ -9243,7 +9323,76 @@ if (!document.hidden && navigator.onLine && document.getElementById('chatMessage
 }, 15000);
 /* === END: AUTO REFRESH === */
 
+/* === START: PROFILE = SAME ECOSYSTEM (tabs + ball + back) === */
+
+/** Itinatama ang active tab: Profile kapag bukas ang profile, kung hindi ay ang kasalukuyang view. */
+function navSyncActive_() {
+const m = document.getElementById('livityModal');
+const prof = !!(m && lbProfileMode && m.classList.contains('open') && m.classList.contains('profile-mode'));
+const cur = (document.querySelector('.view.active') || {}).id || 'home';
+const key = prof ? 'player' : cur;
+document.querySelectorAll('.bottom button').forEach(function (b) {
+b.classList.toggle('active', b.dataset.v === key);
+});
+}
+
+/** Back sa header: nasa hub = isara ang profile (balik sa tab na pinanggalingan); nasa sub-screen = balik sa hub. */
+function lbHeaderBack_() {
+const atRoot = !!(document.getElementById('pfFile') || document.getElementById('topupQuery'));
+if (lbProfileMode && lbScreen === 'profile' && atRoot) { closeLivityBall(); return; }
+lbGoTo(lbProfileMode ? 'profile' : lbBackTarget);
+}
+
+/* laging may back button sa profile mode */
+const lbGoToBase3_ = lbGoTo;
+lbGoTo = function (screen) {
+const r = lbGoToBase3_(screen);
+if (lbProfileMode) {
+const b = document.getElementById('lbBackBtn');
+if (b) b.style.display = 'grid';
+}
+return r;
+};
+
+/* open / close ng profile: i-sync ang nav at ang pf-open class */
+const openProfileBase_ = openProfile_;
+openProfile_ = function () {
+const m = document.getElementById('livityModal');
+if (lbProfileMode && m.classList.contains('open')) { lbGoTo('profile'); return; } // tap ulit sa Profile tab = balik sa hub
+openProfileBase_();
+document.body.classList.add('pf-open');
+navSyncActive_();
+};
+
+const closeLivityBallBase_ = closeLivityBall;
+closeLivityBall = function (skipUnlock) {
+closeLivityBallBase_(skipUnlock);
+document.body.classList.remove('pf-open');
+navSyncActive_();
+};
+
+/* kahit anong tab ang pindutin habang bukas ang profile: isasara ang profile at pupunta sa tab */
+const showBase_ = show;
+show = function (id) {
+if (lbProfileMode) closeLivityBall();
+showBase_(id);
+navSyncActive_();
+};
+
+/* tap sa ball habang nasa profile: bubukas ang Anytime Livity menu (hindi lang magsasara) */
+const toggleLivityBallBase_ = toggleLivityBall;
+toggleLivityBall = function () {
+const m = document.getElementById('livityModal');
+if (lbProfileMode && m.classList.contains('open')) {
+closeLivityBall();
+m.classList.remove('profile-mode');
+toggleLivityBallBase_();
+return;
+}
+toggleLivityBallBase_();
+};
+/* === END: PROFILE = SAME ECOSYSTEM === */
+
 </script>
 </body>
 </html>
-
