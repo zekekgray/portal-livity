@@ -2511,6 +2511,56 @@ box-shadow:0 20px 80px #0008;
 }
 
 }
+
+/* === START: FLOATING PILL NAV (override) === */
+.app { padding-bottom:104px; }
+
+.bottom {
+width:calc(100% - 24px);
+max-width:456px;
+height:64px;
+bottom:calc(10px + env(safe-area-inset-bottom,0px));
+padding:6px;
+gap:2px;
+border-radius:36px;
+background:#fff;
+backdrop-filter:none;
+-webkit-backdrop-filter:none;
+border:0;
+box-shadow:0 8px 28px rgba(0,0,0,.22), 0 1px 4px rgba(0,0,0,.12);
+}
+
+.bottom button {
+font-size:0; /* itago ang labels, icons lang */
+color:#000;
+border-radius:28px;
+gap:0;
+padding:0;
+transition:background .25s ease, color .25s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+
+.bottom button b {
+height:auto;
+font-size:26px;
+line-height:1;
+}
+.bottom button b svg { width:26px; height:26px; }
+
+.bottom button.active {
+background:#e7f0ff;
+color:var(--royal);
+}
+
+/* mini avatar ng Profile tab: dark ring sa puting pill */
+.bottom .pf-mini {
+width:30px;
+height:30px;
+box-shadow:0 0 0 2px #000;
+}
+.bottom button.active .pf-mini {
+box-shadow:0 0 0 2px var(--royal);
+}
+/* === END: FLOATING PILL NAV === */
 </style>
 </head>
 
@@ -3594,7 +3644,7 @@ Coach Sam — Advanced Assessment
 
 <!-- === START: WHAT'S NEW MODAL — MARKUP === -->
 <div class="rate-backdrop" id="verBackdrop" onclick="closeVersionModal_()"></div>
-<div class="rate-modal" id="verModal" style="width:min(340px,88vw);max-height:80vh;max-height:80dvh;display:flex;flex-direction:column;overflow:hidden">
+<div class="rate-modal" id="verModal" style="width:min(340px,88vw)">
 <div id="verModalBody"></div>
 </div>
 <!-- === END: WHAT'S NEW MODAL — MARKUP === -->
@@ -6027,7 +6077,7 @@ let left = e.clientX - lbOffsetX;
 let top = e.clientY - lbOffsetY;
 
 left = Math.max(6, Math.min(window.innerWidth - size - 6, left));
-top = Math.max(6, Math.min(window.innerHeight - size - 86, top));
+top = Math.max(6, Math.min(window.innerHeight - size - 106, top));
 
 ball.style.left = left + 'px';
 ball.style.top = top + 'px';
@@ -7876,7 +7926,7 @@ around: [
 { sel:'.bottom button[data-v="schedule"]', try:true, title:'Schedule', text:'All training days, times and venues in one place.' },
 TUT_BALL_STEP,
 { sel:'#livityModal', wait:450, before:tutEnsureBallOpen_, title:'Anytime Livity', text:'Your player, enrollment, top-ups, schedule and Admin JA are all one tap away.' },
-{ sel:'.bottom button[data-v="enroll"]', try:true, before:closeLivityBall, title:'Enroll', text:'New to Livity? Register your player here.' }
+{ sel:'.bottom button[data-v="player"]', try:true, before:closeLivityBall, title:'Profile', text:'Already registered? Your player profile, sessions and payments are here.' }
 ],
 register: [
 { sel:'#home .quick button[onclick*="\'enroll\'"]', try:true, wait:250, scroll:true, before:function () { show('home'); }, title:'Enroll', text:'Tap here to start.' },
@@ -9056,14 +9106,12 @@ const v = lbVersion_;
 if (!v) return;
 const lines = String(v.whatsNew || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean)
 .map(function (l) { return '<p class="lb-text" style="margin:0 0 6px">' + lbEscapeHtml_(l) + '</p>'; }).join('');
-const bodyEl_ = document.getElementById('verModalBody');
-bodyEl_.style.cssText = 'display:flex;flex-direction:column;min-height:0;flex:1';
-bodyEl_.innerHTML = `
-<div class="welcome-badge" style="margin-bottom:10px;align-self:flex-start;flex-shrink:0">What's New</div>
-<h4 style="margin:0 0 2px;font-size:18px;text-align:left;flex-shrink:0">Version ${lbEscapeHtml_(v.version)}</h4>
-<p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px;flex-shrink:0">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
-<div style="text-align:left;margin-bottom:12px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-right:4px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
-<button class="btn primary" style="width:100%;flex-shrink:0" onclick="closeVersionModal_()">Got it</button>
+document.getElementById('verModalBody').innerHTML = `
+<div class="welcome-badge" style="margin-bottom:10px">What's New</div>
+<h4 style="margin:0 0 2px;font-size:18px;text-align:left">Version ${lbEscapeHtml_(v.version)}</h4>
+<p class="lb-text" style="color:var(--muted);font-size:11px;margin:0 0 12px">${v.build ? 'Build ' + lbEscapeHtml_(v.build) : ''}</p>
+<div style="text-align:left;margin-bottom:12px">${lines || '<p class="lb-text">Performance and stability improvements.</p>'}</div>
+<button class="btn primary" style="width:100%" onclick="closeVersionModal_()">Got it</button>
 `;
 document.getElementById('verModal').classList.add('open');
 document.getElementById('verBackdrop').classList.add('open');
@@ -9198,3 +9246,4 @@ if (!document.hidden && navigator.onLine && document.getElementById('chatMessage
 </script>
 </body>
 </html>
+
