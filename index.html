@@ -2781,76 +2781,6 @@ body.pf-open .livity-ball { z-index:66; }
 #home.hd-new #homeEnrollBtn,
 #home.hd-new .cta{display:none}
 /* === END: HOME DASHBOARD — STYLES === */
-
-/* === START: TOP BAR + SIDEBAR — STYLES === */
-.app{padding-top:calc(56px + env(safe-area-inset-top,0px))}
-#more{scroll-margin-top:calc(64px + env(safe-area-inset-top,0px))}
-.mo-tabs{top:calc(56px + env(safe-area-inset-top,0px))}
-
-.topbar{
-position:fixed;top:0;left:50%;transform:translateX(-50%);
-width:100%;max-width:480px;z-index:30;
-height:calc(56px + env(safe-area-inset-top,0px));
-padding:env(safe-area-inset-top,0px) 10px 0;
-display:flex;align-items:center;gap:6px;
-background:rgba(23,23,20,.92);
--webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
-border-bottom:1px solid #ffffff14;
-}
-@media(min-width:600px){.topbar{top:20px;border-radius:28px 28px 0 0}}
-.tb-btn{
-width:40px;height:40px;border:0;border-radius:50%;background:none;color:#fff;
-display:grid;place-items:center;cursor:pointer;flex-shrink:0;
-}
-.tb-brand{
-border:0;background:none;color:#fff;font-weight:800;letter-spacing:3px;font-size:19px;
-padding:8px 6px;cursor:pointer;
-}
-.tb-av{margin-left:auto;border:1px solid rgba(255,222,0,.4);background:rgba(255,255,255,.1)}
-.tb-av .pf-mini{width:34px;height:34px;font-size:12px;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
-
-.sb-backdrop{
-position:fixed;inset:0;z-index:74;background:rgba(11,47,100,.45);
--webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
-opacity:0;pointer-events:none;transition:opacity .25s ease;
-}
-.sb-backdrop.open{opacity:1;pointer-events:auto}
-.sb-drawer{
-position:fixed;z-index:75;top:0;bottom:0;
-left:max(0px,calc(50% - 240px));width:min(300px,84vw);
-background:#fff;border-radius:0 26px 26px 0;box-shadow:0 0 60px rgba(0,0,0,.4);
-display:flex;flex-direction:column;overscroll-behavior:contain;
-transform:translateX(-105%);visibility:hidden;
-transition:transform .4s cubic-bezier(.34,1.2,.64,1), visibility 0s .4s;
-}
-.sb-drawer.open{transform:none;visibility:visible;transition:transform .4s cubic-bezier(.34,1.2,.64,1)}
-.sb-head{
-padding:calc(20px + env(safe-area-inset-top,0px)) 18px 18px;
-background:linear-gradient(160deg,#0B2F64 0%,#171714 80%);
-border-radius:0 26px 0 0;flex-shrink:0;
-}
-.sb-who{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:#fff;text-align:left;padding:0;cursor:pointer}
-.sb-who b{display:block;font-size:16px}
-.sb-who span span{font-size:11.5px;color:var(--gold-light)}
-.sb-who .pf-mini{width:48px;height:48px;font-size:16px}
-.sb-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 12px 14px}
-.sb-label{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:16px 12px 4px}
-.sb-item{
-display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;
-border-radius:14px;padding:12px;font:inherit;font-size:14px;font-weight:700;
-color:var(--text);text-align:left;cursor:pointer;
-}
-.sb-item.on{background:#e7f0ff;color:var(--royal)}
-.sb-item.sub{font-weight:650;font-size:13px;color:var(--muted);padding-top:10px;padding-bottom:10px}
-.sb-ico{width:24px;display:grid;place-items:center;flex-shrink:0}
-.sb-foot{flex-shrink:0;font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:12px 10px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-
-/* OPTIONAL — Home = command center: itago ang hero para sa returning users.
-   Burahin ang 3 linya sa ibaba kung gusto mong manatili ang hero. */
-#home:not(.hd-new) .hero{display:none}
-#home .hero .brand,#home .hero .top-actions{display:none}
-#home.hd-new .hero{min-height:540px}
-/* === END: TOP BAR + SIDEBAR — STYLES === */
 /* === END: MORE / LIVITY REDESIGN — STYLES === */
 </style>
 </head>
@@ -3964,21 +3894,6 @@ Coach Sam — Advanced Assessment
 <div class="scan-body" id="scanBody"></div>
 </div>
 <!-- === END: SCAN MODAL — MARKUP === -->
-
-<!-- === START: TOP BAR + SIDEBAR — MARKUP === -->
-<header class="topbar">
-<button type="button" class="tb-btn" onclick="sbOpen_()" aria-label="Open menu"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-<button type="button" class="tb-brand" onclick="show('home')">LIVITY</button>
-<button type="button" class="tb-btn tb-av" id="tbAvatar" onclick="openProfile_()" aria-label="Profile"></button>
-</header>
-
-<div class="sb-backdrop" id="sbBackdrop" onclick="sbClose_()"></div>
-<aside class="sb-drawer" id="sbDrawer" aria-label="Menu">
-<div class="sb-head" id="sbHead"></div>
-<div class="sb-body" id="sbBody"></div>
-<div class="sb-foot" id="sbFoot">Livity Training &amp; Academy</div>
-</aside>
-<!-- === END: TOP BAR + SIDEBAR — MARKUP === -->
 
 <!-- BOTTOM NAV -->
 
@@ -9946,138 +9861,9 @@ function hdRender_() {
   renderNextSession_ = function () { var r = b2.apply(this, arguments); hdRender_(); return r; };
   hdRender_();
 })();
-/* === START: TOP BAR + SIDEBAR — LOGIC === */
-PF_ICO.home = '<path d="M3.5 10.8 12 3.5l8.5 7.3V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19z"/>';
-PF_ICO.tag = '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
-PF_ICO.chat = '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>';
-PF_ICO.help = '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5M12 17v.01"/>';
-PF_ICO.star = '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>';
-PF_ICO.info = '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>';
-PF_ICO.share = '<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/>';
-
-var sbActs_ = [];
-var sbIsOpen_ = false;
-
-var SB_NAV_ = [
-  { k:'home',     ico:'home',  label:'Home',      go:function () { show('home'); } },
-  { k:'programs', ico:'grid',  label:'Programs',  go:function () { show('programs'); } },
-  { k:'pricing',  ico:'tag',   label:'Pricing',   go:function () { show('pricing'); } },
-  { k:'schedule', ico:'clock', label:'Schedule',  go:function () { show('schedule'); } },
-  { k:'enroll',   ico:'plus',  label:'Enroll',    go:function () { show('enroll'); } },
-  { k:'player',   ico:'user',  label:'My Player', go:function () { openProfile_(); } }
-];
-var SB_LIV_ = [['story','Our Story'],['values','Values'],['team','Team & Venues'],['voices','Voices'],['gallery','Gallery'],['rules','Policies']];
-var SB_HELP_ = [
-  { ico:'chat',  label:'Ask Admin', go:function () { moChat_(); } },
-  { ico:'help',  label:'Help & Tour', go:function () { openTutorial(); } },
-  { ico:'star',  label:'Rate Us', go:function () { openRateModal(); } },
-  { ico:'share', label:'Share App', go:function () { moShare_(); } },
-  { ico:'info',  label:"What's New", go:function () { if (lbVersion_) verOpen_(); else appToast_("You're on the latest version"); } }
-];
-
-function sbCur_() {
-  if (lbProfileMode) return 'player';
-  var v = (document.querySelector('.view.active') || {}).id || 'home';
-  return v === 'detail' ? 'programs' : v;
-}
-
-function sbDiscover_(k) {
-  show('home');
-  moSet_(k);
-  setTimeout(function () {
-    var m = document.getElementById('more');
-    if (m) m.scrollIntoView({ behavior:'smooth', block:'start' });
-  }, 80);
-}
-
-function sbRow_(ico, label, act, on, sub) {
-  sbActs_.push(act);
-  return '<button type="button" class="sb-item' + (on ? ' on' : '') + (sub ? ' sub' : '') + '" onclick="sbRun_(' + (sbActs_.length - 1) + ')">'
-    + '<span class="sb-ico">' + (ico ? pfIco_(ico, 20) : '') + '</span><span>' + label + '</span></button>';
-}
-
-function sbRender_() {
-  sbActs_ = [];
-  sbActs_.push(function () { openProfile_(); }); // index 0 = header tap
-  var p = null; try { p = pfSnapPlayer_(); } catch (e) {}
-  var cur = sbCur_();
-
-  var av = p ? pfMini_(p) : '<span class="pf-mini" style="background:#fff;color:#000">' + pfIco_('user', 22) + '</span>';
-  document.getElementById('sbHead').innerHTML =
-    '<button type="button" class="sb-who" onclick="sbRun_(0)">' + av
-    + '<span><b>' + (p ? lbEscapeHtml_(p.fullName) : 'Welcome') + '</b>'
-    + '<span>' + (p ? 'Player ID: ' + lbEscapeHtml_(p.playerId) : 'Find or register your player') + '</span></span></button>';
-
-  var h = '<div class="sb-label">Menu</div>';
-  SB_NAV_.forEach(function (n) { h += sbRow_(n.ico, n.label, n.go, cur === n.k, false); });
-  h += '<div class="sb-label">Discover Livity</div>';
-  SB_LIV_.forEach(function (x) { h += sbRow_('', x[1], function () { sbDiscover_(x[0]); }, false, true); });
-  h += '<div class="sb-label">Support</div>';
-  SB_HELP_.forEach(function (n) { h += sbRow_(n.ico, n.label, n.go, false, false); });
-  document.getElementById('sbBody').innerHTML = h;
-
-  document.getElementById('sbFoot').textContent = lbVersion_
-    ? 'Livity · v' + lbVersion_.version + (lbVersion_.build ? ' · Build ' + lbVersion_.build : '')
-    : 'Livity Training & Academy';
-}
-
-function sbOpen_() {
-  if (sbIsOpen_) return;
-  sbRender_();
-  hideLivityHint();
-  document.getElementById('sbBackdrop').classList.add('open');
-  document.getElementById('sbDrawer').classList.add('open');
-  document.getElementById('sbBody').scrollTop = 0;
-  sbIsOpen_ = true;
-  lockBodyScroll_();
-}
-
-function sbClose_() {
-  if (!sbIsOpen_) return;
-  sbIsOpen_ = false;
-  document.getElementById('sbBackdrop').classList.remove('open');
-  document.getElementById('sbDrawer').classList.remove('open');
-  unlockBodyScroll_();
-}
-
-/* isara muna ang sidebar (release ang scroll lock), saka patakbuhin ang action */
-function sbRun_(i) {
-  var a = sbActs_[i];
-  sbClose_();
-  if (a) a();
-}
-
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sbIsOpen_) sbClose_(); });
-
-/* swipe pakaliwa sa drawer = close */
-(function () {
-  var d = document.getElementById('sbDrawer'), x0 = 0, y0 = 0;
-  d.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
-  d.addEventListener('touchend', function (e) {
-    var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
-    if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.4) sbClose_();
-  }, { passive:true });
-})();
-
-/* top-bar avatar: sumusunod sa saved player (photo / initials) */
-function tbRender_() {
-  var b = document.getElementById('tbAvatar');
-  if (!b) return;
-  var p = null; try { p = pfSnapPlayer_(); } catch (e) {}
-  b.innerHTML = p ? pfMini_(p) : pfIco_('user', 20);
-  b.setAttribute('aria-label', p ? 'Profile: ' + p.fullName : 'Profile');
-}
-(function () {
-  var b3 = pfReflect_;
-  pfReflect_ = function () { var r = b3.apply(this, arguments); tbRender_(); return r; };
-  tbRender_();
-})();
-/* === END: TOP BAR + SIDEBAR — LOGIC === */
-
 /* === END: HOME DASHBOARD — LOGIC === */
 /* === END: MORE / LIVITY REDESIGN — LOGIC === */
 
 </script>
 </body>
 </html>
-
