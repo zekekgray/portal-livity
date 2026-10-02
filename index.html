@@ -214,7 +214,7 @@ font-size:20px;
 /* HERO */
 
 .hero {
-min-height:620px;
+min-height:520px; /* === HERO SHORTER EDIT === */
 padding:26px 22px 30px;
 display:flex;
 flex-direction:column;
@@ -2698,7 +2698,7 @@ body.pf-open .livity-ball { z-index:66; }
 /* === END: PROFILE AS PART OF THE APP === */
 
 /* === START: MORE / LIVITY REDESIGN — STYLES === */
-.mo-home{margin-top:26px}
+.mo-home{margin-top:0} /* === HOME GAP EDIT === */
 .mo-hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;margin:0 0 6px;color:#fff;background:linear-gradient(160deg,#0B2F64 0%,#171714 72%)}
 .mo-hero:after{content:"";position:absolute;width:240px;height:240px;right:-90px;top:-90px;border-radius:50%;background:radial-gradient(circle,#FFDE0040,transparent 65%)}
 .mo-id{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
@@ -6856,7 +6856,7 @@ function pfWhatsNew_() {
 function pfSupportHtml_() {
   var ver = lbVersion_ ? 'v' + lbEscapeHtml_(lbVersion_.version) : '';
   return '<div class="mo-sec" style="margin-top:18px">Support</div>'
-    + pfSupportRow_('chat',  'Ask Admin',    'Chat with Admin JA',      "lbGoTo('askadmin')")
+    + pfSupportRow_('chat',  'Ask Admin',    'Chat with Admin',      "lbGoTo('askadmin')")
     + pfSupportRow_('help',  'Help &amp; Tour', 'Guides and walkthroughs', "closeLivityBall();openTutorial()")
     + pfSupportRow_('star',  'Rate Us',      'Tell us how we\'re doing', "openRateModal()")
     + pfSupportRow_('share', 'Share App',    'Send Livity to a friend',  "moShare_()")
@@ -8065,7 +8065,7 @@ if (!skipUnlock) unlockBodyScroll_();
 const TUTORIAL_TASKS = [
 { key:'register', icon:'📝', label:'Register a player', title:'Register a player', sub:'New to Livity? Here\'s how to sign up.',
 steps:[
-"Private or Academy: tap Enroll on the Home screen, then choose Private Training Registration or Academy Enrollment.",
+"Private or Academy: tap the ☰ menu on Home, tap Enroll a New Player, then choose Private Training Registration or Academy Enrollment.",
 "Regular or Advanced: tap Programs, open the program, then tap Register Now.",
 "Choose \"No — Register a New Player\" and fill in the player and guardian details.",
 "Pick your package and payment method, agree to the consent, then submit. Your status stays Pending until Livity confirms payment."
@@ -8073,7 +8073,7 @@ steps:[
 
 { key:'find', icon:'🔎', label:'Find my player', title:'Find my player', sub:'Already registered? No need to sign up again.',
 steps:[
-"Tap the floating ⚽ ball, then My Player (or use the button below).",
+"Tap the Profile tab at the bottom (or use the button below).",
 "Enter the WhatsApp / mobile number used at registration, or the Player ID.",
 "If you have more than one child, tap the player you want.",
 "The Player ID is shown under the player's name — keep it handy for next time."
@@ -8281,8 +8281,10 @@ TUT_BALL_STEP,
 { sel:'.bottom button[data-v="player"]', try:true, before:closeLivityBall, title:'Profile', text:'Already registered? Your player profile, sessions and payments are here.' }
 ],
 register: [
-{ sel:'#homeEnrollBtn', try:true, wait:250, scroll:true, before:function () { show('home'); }, title:'Enroll', text:'Tap here to start.' },
-{ sel:'#enroll button[onclick*="PRG-PRIV"]', wait:400, scroll:true, title:'Private Training', text:'New to Livity? Register for Private Training here.' },
+/* === START: REGISTER TOUR — HAMBURGER === */
+{ sel:'.menu-btn', wait:250, before:function () { show('home'); }, title:'Menu', text:'Tap ☰, then "Enroll a New Player" to start.' },
+{ sel:'#enroll button[onclick*="PRG-PRIV"]', wait:400, scroll:true, before:function () { show('enroll'); }, title:'Private Training', text:'New to Livity? Register for Private Training here.' },
+/* === END: REGISTER TOUR — HAMBURGER === */
 { sel:'#enroll button[onclick*="PRG-ACAD"]', scroll:true, title:'Academy', text:'Joining the Academy? Enroll here. For Regular or Advanced: open Programs, choose the program, then tap Register Now.' }
 ],
 schedule: [
@@ -8291,9 +8293,10 @@ schedule: [
 { sel:'#schedTabs', title:'Pick a day', text:'Tap a day to see its sessions, then tap the small tag on a session for details.' }
 ],
 lookup: [
-TUT_BALL_STEP,
-{ sel:'#lbBody .lb-item[data-lb="player"]', try:true, wait:450, title:'My Player', text:'This opens your player lookup.' },
-{ sel:'#topupQuery', wait:200, title:'Find your player', text:'Enter the WhatsApp / mobile number used at registration (or the Player ID). Tap Done, then tap View My Player.' }
+/* === START: LOOKUP TOUR — PROFILE TAB === */
+{ sel:'.bottom button[data-v="player"]', try:true, title:'Profile', text:'Tap Profile to find your player.' },
+/* === END: LOOKUP TOUR — PROFILE TAB === */
+{ sel:'#topupQuery', wait:600, title:'Find your player', text:'Enter the WhatsApp / mobile number used at registration (or the Player ID). Tap Done, then tap View My Player.' }
 ],
 admin: [
 TUT_BALL_STEP,
@@ -8310,7 +8313,9 @@ show('home'); // end the tour back on Home, with the ball in view
 TUT_TOURS.first = [
 { sel:'.bottom button[data-v="programs"]', try:true, title:'Programs', text:'Regular, Private, Advanced and Academy. Find the one that fits your player.' },
 { sel:'.bottom button[data-v="schedule"]', try:true, title:'Schedule', text:'Every training day, time and venue in one place.' },
-{ sel:'#lbBody .lb-item[data-lb="player"]', try:true, wait:450, before:tutEnsureBallOpen_, title:'My Player', text:"Already registered? Your player's profile, sessions left and payments live here." },
+/* === START: FIRST TOUR — PROFILE TAB STEP === */
+{ sel:'.bottom button[data-v="player"]', wait:200, title:'Profile', text:"Already registered? Your player's profile, sessions left, payments and support are here." },
+/* === END: FIRST TOUR — PROFILE TAB STEP === */
 { sel:'#livityBall', wait:400, before:tutFirstBallStep_, title:'Anytime Livity', text:'This ⚽ follows you on every screen. Enroll, top up, check your player, or ask Admin JA.' }
 ];
 /* === END: FIRST-VISIT TOUR === */
@@ -9855,7 +9860,7 @@ document.addEventListener('touchstart', function (e) {
 if (e.touches.length !== 1) { ok = false; return; }
 var t = e.touches[0];
 x0 = t.clientX; y0 = t.clientY;
-ok = false; /* old swipe disabled — see SMART SWIPE block */
+
 }, { passive: true });
 
 document.addEventListener('touchend', function (e) {
@@ -10059,7 +10064,9 @@ moStats_();
 }
 (function () {
 var m = document.getElementById('more'), h = document.querySelector('#home .content');
-if (m && h) { m.className = 'mo-home'; h.appendChild(m); }
+/* === START: LIVITY TABS MOVED UP — right below the hero === */
+if (m && h) { m.className = 'mo-home'; h.insertBefore(m, h.firstChild); }
+/* === END: LIVITY TABS MOVED UP === */
 })();
 moRender_();
 
