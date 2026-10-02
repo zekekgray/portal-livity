@@ -2790,10 +2790,19 @@ body.pf-open .livity-ball { z-index:66; }
 .mo-det summary:after{content:"＋";color:var(--muted)}
 .mo-det[open] summary:after{content:"−"}
 .mo-det ul{margin:0;padding:0 16px 14px 32px;font-size:12.5px;line-height:1.65;color:#5e5a52}
+/* === START: SMART SWIPE — STYLES === */
+.app{overflow-x:clip}
+.view.sw-moving{will-change:transform,opacity}
+html.sw-drag,html.sw-drag body{-webkit-user-select:none;user-select:none}
+html.sw-busy .view.active{animation:none}
+/* === END: SMART SWIPE — STYLES === */
+
 /* === START: HOME DRAWER — STYLES === */
 .brand-row{position:relative;z-index:2;display:flex;align-items:center;gap:12px}
 .brand-row .brand{margin:0}
-.menu-btn{width:42px;height:42px;padding:0;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,222,0,.4);color:var(--gold-light);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+/* === START: HAMBURGER — ICON ONLY EDIT === */
+.menu-btn{width:36px;height:36px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--gold-light);display:grid;place-items:center;cursor:pointer;flex-shrink:0;margin-left:-6px}
+/* === END: HAMBURGER — ICON ONLY EDIT === */
 .menu-btn svg{width:22px;height:22px;display:block}
 .hd-drawer-backdrop{position:fixed;inset:0;z-index:71;background:rgba(11,47,100,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s ease}
 .hd-drawer-backdrop.open{opacity:1;pointer-events:auto}
@@ -2899,14 +2908,8 @@ Explore Programs →
 
 <div class="content">
 
-<button
-id="homeEnrollBtn"
-class="btn outline"
-style="width:100%;margin-bottom:14px"
-onclick="show('enroll')"
->
-↗ Enroll a New Player
-</button>
+<!-- === START: ENROLL BUTTON MOVED TO HAMBURGER DRAWER === -->
+<!-- === END: ENROLL BUTTON MOVED TO HAMBURGER DRAWER === -->
 
 <!-- === START: CTA MOVED TO HAMBURGER DRAWER === -->
 <!-- === END: CTA MOVED TO HAMBURGER DRAWER === -->
@@ -3932,6 +3935,12 @@ Coach Sam — Advanced Assessment
 <button type="button" class="tutorial-sheet-close" onclick="hdDrawerClose_()" aria-label="Close menu">✕</button>
 </div>
 <div id="homeDash"></div>
+
+<!-- === START: DRAWER ENROLL BUTTON === -->
+<button type="button" class="btn outline" style="width:100%;margin:14px 0 0" onclick="show('enroll')">
+↗ Enroll a New Player
+</button>
+<!-- === END: DRAWER ENROLL BUTTON === -->
 
 <!-- === START: DRAWER CTA === -->
 <div class="cta" style="margin-top:6px">
@@ -9656,6 +9665,171 @@ toggleLivityBallBase_();
 };
 /* === END: PROFILE = SAME ECOSYSTEM === */
 
+/* === START: SMART SWIPE — APPLE-STYLE (drag-follow, spring, haptics) === */
+const SW_CFG_ = {
+  slop: 10,         // layo ng galaw bago mag-decide kung horizontal o vertical
+  ratio: 1.8,       // |dx| dapat ≥ 1.8 × |dy| para tawaging horizontal swipe
+  edge: 24,         // px sa gilid na iniiwan sa iOS/Android back gesture
+  commitPct: 0.28,  // % ng lapad na kailangang hilahin para lumipat
+  flick: 0.5,       // px/ms — bilis na pwedeng mag-commit kahit maikli ang hila
+  flickMin: 44,     // pinakamaikling hila para tumalab ang flick
+  rubber: 0.55      // lambot ng hila kapag wala nang susunod na tab
+};
+
+function swSwitch_(id) { if (id === 'profile') openProfile_(); else show(id); }
+
+(function () {
+  var C = SW_CFG_;
+  var root = document.documentElement;
+  var reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var SKIP = 'input,textarea,select,video,.mo-snap,.mo-tabs,.sched-tabs,.chat-messages,#scanModal,.tut-card,.tutorial-sheet,#hdDrawer,[data-noswipe]';
+  var st = null;
+
+  function tick(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+  /* may horizontal scroller ba sa ilalim ng daliri? (carousel, tabs, table) — hayaan siya */
+  function hScroller(el) {
+    while (el && el !== document.body) {
+      if (el.nodeType === 1 && el.scrollWidth > el.clientWidth + 2) {
+        var ox = getComputedStyle(el).overflowX;
+        if (ox === 'auto' || ox === 'scroll') return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  function blocked() {
+    var m = document.getElementById('livityModal'), d = document.getElementById('hdDrawer'), s = document.getElementById('scanModal');
+    return (m && m.classList.contains('open')) || (s && s.classList.contains('open')) || (d && d.classList.contains('open'))
+      || document.body.classList.contains('scroll-locked') || root.classList.contains('sw-busy')
+      || (typeof tutTour !== 'undefined' && !!tutTour);
+  }
+
+  /* right = swipe pakanan (balik), left = swipe pakaliwa (susunod) */
+  function targets(cur) {
+    if (SW_PARENT_[cur]) return { right: SW_PARENT_[cur], left: null };
+    var i = SW_TABS_.indexOf(cur);
+    if (i < 0) return null;
+    return { right: i > 0 ? SW_TABS_[i - 1] : null, left: i < SW_TABS_.length - 1 ? SW_TABS_[i + 1] : null };
+  }
+
+  /* iOS-style rubber band: lumalambot habang hinihila */
+  function rubber(x, d) {
+    var s = x < 0 ? -1 : 1, a = Math.abs(x);
+    return s * (1 - 1 / (a * C.rubber / d + 1)) * d;
+  }
+
+  function settle(view, from, fromOp) {
+    if (reduce) { view.classList.remove('sw-moving'); return; }
+    var a = view.animate(
+      [{ transform: 'translate3d(' + from + 'px,0,0)', opacity: fromOp }, { transform: 'translate3d(0,0,0)', opacity: 1 }],
+      { duration: 460, easing: 'cubic-bezier(.34,1.56,.64,1)' }
+    );
+    a.onfinish = a.oncancel = function () { view.classList.remove('sw-moving'); };
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    st = null;
+    if (e.touches.length !== 1 || blocked()) return;
+    var t = e.touches[0], W = window.innerWidth;
+    if (t.clientX < C.edge || t.clientX > W - C.edge) return;
+    if (e.target.closest && e.target.closest(SKIP)) return;
+    if (hScroller(e.target)) return;
+    var view = document.querySelector('.view.active');
+    if (!view) return;
+    var map = targets(view.id);
+    if (!map) return;
+    st = { x0: t.clientX, y0: t.clientY, W: Math.min(W, 480), view: view, map: map, mode: '', base: 0, tx: 0, ok: false, past: false, buzz: false, pts: [{ x: t.clientX, t: e.timeStamp }] };
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function (e) {
+    if (!st) return;
+    if (e.touches.length !== 1) { finish(true); return; }
+    var t = e.touches[0], dx = t.clientX - st.x0, dy = t.clientY - st.y0;
+
+    if (!st.mode) {
+      /* tahimik muna: hindi gagalaw ang screen hangga't hindi malinaw ang intensyon */
+      if (Math.abs(dx) > 3 && Math.abs(dx) >= Math.abs(dy) * C.ratio && e.cancelable) e.preventDefault();
+      if (Math.hypot(dx, dy) < C.slop) return;
+      if (Math.abs(dx) >= Math.abs(dy) * C.ratio) {
+        st.mode = 'h';
+        st.base = dx; // simula ng hila = punto ng lock, kaya walang "talon"
+        root.classList.add('sw-drag');
+        st.view.classList.add('sw-moving');
+      } else { st = null; return; } // vertical scroll — wag nang pakialaman
+    }
+
+    if (e.cancelable) e.preventDefault();
+    var drag = dx - st.base;
+    var ok = !!st.map[drag < 0 ? 'left' : 'right'];
+    var tx = ok ? drag : rubber(drag, st.W * 0.3);
+    st.tx = tx; st.ok = ok;
+    st.view.style.transform = 'translate3d(' + tx + 'px,0,0)';
+    st.view.style.opacity = ok ? String(1 - Math.min(Math.abs(tx) / st.W, 1) * 0.4) : '';
+
+    st.pts.push({ x: t.clientX, t: e.timeStamp });
+    while (st.pts.length > 2 && e.timeStamp - st.pts[0].t > 100) st.pts.shift();
+
+    /* haptic tick pag lampas sa commit point, at pag tumama sa dulo */
+    var past = ok && Math.abs(tx) > st.W * C.commitPct;
+    if (past !== st.past) { st.past = past; if (past) tick(6); }
+    if (!ok && !st.buzz && Math.abs(drag) > 40) { st.buzz = true; tick(5); }
+  }, { passive: false });
+
+  function finish(cancelled) {
+    var s = st; st = null;
+    if (!s || s.mode !== 'h') return;
+    var view = s.view, W = s.W, tx = s.tx;
+    var op = view.style.opacity || '1';
+    var p0 = s.pts[0], p1 = s.pts[s.pts.length - 1];
+    var v = p1.t > p0.t ? (p1.x - p0.x) / (p1.t - p0.t) : 0;
+    var dir = tx < 0 ? 'left' : 'right';
+    var go = s.map[dir];
+    var flick = Math.abs(v) > C.flick && Math.abs(tx) > C.flickMin && ((v < 0) === (tx < 0));
+    var commit = !cancelled && s.ok && !!go && (Math.abs(tx) > W * C.commitPct || flick);
+
+    view.style.transform = '';
+    view.style.opacity = '';
+    root.classList.remove('sw-drag');
+
+    if (!commit) { settle(view, tx, op); return; }
+
+    tick(10);
+
+    /* Profile ay sheet: ibukas siya, tapos spring pabalik ang view sa ilalim */
+    if (go === 'profile') { swSwitch_(go); settle(view, tx, op); return; }
+
+    if (reduce) { swSwitch_(go); view.classList.remove('sw-moving'); return; }
+
+    var sign = dir === 'left' ? -1 : 1;
+    var dur = Math.max(120, Math.min(240, (W * 0.4 - Math.abs(tx)) / Math.max(Math.abs(v), 0.8)));
+    root.classList.add('sw-busy');
+
+    var out = view.animate(
+      [{ transform: 'translate3d(' + tx + 'px,0,0)', opacity: op }, { transform: 'translate3d(' + (sign * W * 0.4) + 'px,0,0)', opacity: 0 }],
+      { duration: dur, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }
+    );
+    out.onfinish = function () {
+      swSwitch_(go);
+      out.cancel();
+      view.classList.remove('sw-moving');
+      root.style.setProperty('--sw', '0px');
+      var nv = document.querySelector('.view.active');
+      if (!nv) { root.classList.remove('sw-busy'); return; }
+      var inn = nv.animate(
+        [{ transform: 'translate3d(' + (-sign * W * 0.16) + 'px,0,0)', opacity: 0 }, { transform: 'translate3d(0,0,0)', opacity: 1 }],
+        { duration: 440, easing: 'cubic-bezier(.22,1.3,.4,1)' }
+      );
+      inn.onfinish = inn.oncancel = function () { root.classList.remove('sw-busy'); };
+    };
+  }
+
+  document.addEventListener('touchend', function () { finish(false); }, { passive: true });
+  document.addEventListener('touchcancel', function () { finish(true); }, { passive: true });
+})();
+/* === END: SMART SWIPE === */
+
 /* === START: SWIPE NAV — TABS + SUB-SCREENS === */
 const SW_TABS_ = ['home','programs','schedule','profile'];
 const SW_PARENT_ = { detail:'programs', pricing:'programs', enroll:'home', more:'home' };
@@ -9681,7 +9855,7 @@ document.addEventListener('touchstart', function (e) {
 if (e.touches.length !== 1) { ok = false; return; }
 var t = e.touches[0];
 x0 = t.clientX; y0 = t.clientY;
-ok = !(e.target.closest && e.target.closest(SKIP));
+ok = false; /* old swipe disabled — see SMART SWIPE block */
 }, { passive: true });
 
 document.addEventListener('touchend', function (e) {
@@ -9773,10 +9947,11 @@ if (q) q.innerHTML = moQuizInner_();
 
 function moPanelStory_() {
 return '<div class="mo-quote"><small>OUR PHILOSOPHY</small><h3>Train Like a Pro.</h3><p>Every player deserves professional-level coaching, structure, and care, regardless of age or skill level.</p></div>'
-+ '<div class="mo-sec">Mission &amp; Vision <i>tap to flip</i></div><div class="mo-flips">'
-+ moFlip_('Mission', 'To empower individuals through Livity training programs, meaningful experiences, and collaborative partnerships that create lasting value for our community.')
-+ moFlip_('Vision', 'To be a leading football academy recognized for excellence, inclusivity, and positive impact, inspiring individuals to reach their full potential and contribute to a better future.')
-+ '</div><div class="mo-sec">Your pathway <i>tap a stage</i></div>'
+/* === START: MISSION IN STORY === */
++ '<div class="mo-sec">Our mission</div>'
++ '<div class="panel"><h3>Why we exist</h3><p style="margin:0">To empower individuals through Livity training programs, meaningful experiences, and collaborative partnerships that create lasting value for our community.</p></div>'
++ '<div class="mo-sec">Your pathway <i>tap a stage</i></div>'
+/* === END: MISSION IN STORY === */
 + '<div class="mo-path"><button type="button" onclick="detail(\'regular\')"><b>Regular</b><span>All levels</span></button><i>›</i><button type="button" onclick="detail(\'academy\')"><b>Academy</b><span>U5–U13</span></button><i>›</i><button type="button" onclick="detail(\'advanced\')"><b>Advanced</b><span>U11+</span></button></div>'
 + '<p class="mo-note">Private sessions fit around any stage. <a href="#" onclick="detail(\'private\');return false" style="color:var(--royal);font-weight:800;text-decoration:none">See Private →</a></p>'
 + '<div class="mo-sec">Find your fit</div><div class="mo-quiz"><h4>Which program is right for you?</h4><p>Two quick taps. No sign-up.</p><div id="moQuiz">' + moQuizInner_() + '</div></div>';
@@ -9791,7 +9966,11 @@ const v = [
 ['05','Discipline','Show up. Every time.','Consistency is what turns practice into progress.','#1C68D4'],
 ['06','Integrity','Do it right.','Honest feedback and fair policies, no shortcuts.','#ED1C24']
 ];
-return '<div class="mo-sec" style="margin-top:6px">What we stand for <i>tap a card</i></div><div class="mo-vals">'
+/* === START: VISION IN VALUES === */
+return '<div class="mo-sec" style="margin-top:6px">Our vision</div>'
++ '<div class="panel"><h3>Where our values lead</h3><p style="margin:0">To be a leading football academy recognized for excellence, inclusivity, and positive impact, inspiring individuals to reach their full potential and contribute to a better future.</p></div>'
++ '<div class="mo-sec">What we stand for <i>tap a card</i></div><div class="mo-vals">'
+/* === END: VISION IN VALUES === */
 + v.map(function (x) { return '<button type="button" class="mo-val" style="--c:' + x[4] + '" onclick="this.classList.toggle(\'on\')"><em>' + x[0] + '</em><b>' + x[1] + '</b><p>' + x[2] + '</p><p class="x">' + x[3] + '</p></button>'; }).join('') + '</div>';
 }
 
@@ -9801,7 +9980,11 @@ const mem = [
 ['C','Admin Chelsi','Academy','<button type="button" class="mo-chip" onclick="moChat_()">Ask in chat</button>'],
 ['S','Coach Sam','Advanced Performance Assessment','<button type="button" class="mo-chip" onclick="moChat_()">Ask in chat</button>']
 ];
-return '<div class="mo-sec" style="margin-top:6px">Meet the team</div>'
+/* === START: WHO WE ARE IN TEAM === */
+return '<div class="mo-sec" style="margin-top:6px">Who we are</div>'
++ '<div class="panel"><p style="margin:0">Livity Training and Football Academy is committed to creating meaningful opportunities for growth, engagement, and positive impact in our community, bringing people together and inspiring excellence among our athletes and coaches.</p></div>'
++ '<div class="mo-sec">Meet the team</div>'
+/* === END: WHO WE ARE IN TEAM === */
 + mem.map(function (m) { return '<div class="mo-mem"><div class="avatar">' + m[0] + '</div><div style="min-width:0"><b>' + m[1] + '</b><span>' + m[2] + '</span><div class="mo-btns">' + m[3] + '</div></div></div>'; }).join('')
 + '<div class="mo-sec">Where we train</div>'
 + moVenues_().map(function (x) { return '<div class="mo-ven"><div><b>' + lbEscapeHtml_(x.v) + '</b><span>' + x.days + '</span></div><a class="mo-chip" href="' + lbMapsLink_(x.v) + '" target="_blank" rel="noopener">Directions</a></div>'; }).join('');
@@ -9884,7 +10067,7 @@ moRender_();
 (function () {
 const el = document.getElementById('more');
 let x0 = 0, y0 = 0, skip = false;
-el.addEventListener('touchstart', function (e) { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; skip = !!e.target.closest('.mo-snap,.mo-tabs'); }, { passive:true });
+el.addEventListener('touchstart', function (e) { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; skip = true; /* tab-swipe handled by SMART SWIPE; chips are tap-only */ }, { passive:true });
 el.addEventListener('touchend', function (e) {
 if (skip) return;
 const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
