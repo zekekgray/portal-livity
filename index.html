@@ -2757,6 +2757,30 @@ body.pf-open .livity-ball { z-index:66; }
 .mo-det summary:after{content:"＋";color:var(--muted)}
 .mo-det[open] summary:after{content:"−"}
 .mo-det ul{margin:0;padding:0 16px 14px 32px;font-size:12.5px;line-height:1.65;color:#5e5a52}
+/* === START: HOME DASHBOARD — STYLES === */
+.hd-greet{margin:2px 2px 14px}
+.hd-greet h2{margin:0;font-family:Georgia,serif;font-size:26px;color:var(--text)}
+.hd-greet span{font-size:12px;color:var(--muted)}
+.hd-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:#fff;border:0;border-radius:18px;padding:15px 16px;margin-bottom:8px;text-align:left;box-shadow:0 2px 10px rgba(11,47,100,.06);color:var(--text);cursor:pointer}
+.hd-row b{display:block;font-size:14px}
+.hd-row span{font-size:12px;color:var(--muted)}
+.hd-row i{font-style:normal;color:#8d826e;font-size:22px}
+.hd-prog{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hd-stat{background:#fff;border-radius:16px;padding:14px 6px;text-align:center;box-shadow:0 2px 10px rgba(11,47,100,.06)}
+.hd-stat b{display:block;font-size:28px;font-weight:850;color:var(--navy);font-variant-numeric:tabular-nums}
+.hd-stat span{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.hd-disc{display:flex;gap:8px}
+.hd-disc button{flex:1;border:0;border-radius:14px;padding:13px 4px;background:#f5f2ea;font-size:12px;font-weight:800;color:var(--navy);cursor:pointer}
+.hd-new-wrap{text-align:center;padding:10px 4px 22px}
+.hd-new-wrap h2{margin:0 0 6px;font-family:Georgia,serif;font-size:30px;color:var(--text)}
+.hd-new-wrap p{margin:0 0 18px;font-size:14px;line-height:1.5;color:var(--muted)}
+.hd-or{display:flex;align-items:center;gap:10px;margin:16px 0 12px;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.hd-or:before,.hd-or:after{content:"";flex:1;height:1px;background:var(--line)}
+.hd-new-wrap .hd-q{font-size:13px;font-weight:700;color:var(--text);margin:0 0 10px}
+/* bagong user: itago ang duplicate na Enroll button at CTA card (nasa Welcome block na ang landas) */
+#home.hd-new #homeEnrollBtn,
+#home.hd-new .cta{display:none}
+/* === END: HOME DASHBOARD — STYLES === */
 /* === END: MORE / LIVITY REDESIGN — STYLES === */
 </style>
 </head>
@@ -9723,8 +9747,124 @@ const i = MO_TABS_.findIndex(function (a) { return a[0] === moTab_; }) + (dx < 0
 if (i >= 0 && i < MO_TABS_.length) moSet_(MO_TABS_[i][0]);
 }, { passive:true });
 })();
+/* === START: HOME DASHBOARD — LOGIC === */
+PF_ICO.grid = '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>';
+
+function hdPlayer_() { try { return pfSnapPlayer_(); } catch (e) { return null; } }
+
+function hdGreeting_(p) {
+  var h = new Date().getHours();
+  var g = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+  var n = (p && p.guardianName) ? String(p.guardianName).trim().split(/\s+/)[0] : '';
+  return g + (n ? ', ' + lbEscapeHtml_(n) : '');
+}
+
+function hdOpenPay_()      { openProfile_(); if (lbTopup.selected) lbOpenPayments_(); }
+function hdOpenSessions_() { openProfile_(); if (lbTopup.selected) lbOpenSessions_(); }
+function hdDiscover_(k) {
+  if (k === 'programs') { show('programs'); return; }
+  moSet_(k);
+  var m = document.getElementById('more');
+  if (m) m.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hdRender_() {
+  var el = document.getElementById('homeDash');
+  if (!el) return;
+  var p = hdPlayer_();
+
+  /* STATE: bagong user (walang saved player, walang enrollment sa device) vs. existing */
+  var known = !!p;
+  try { known = known || localStorage.getItem(KNOWN_KEY) === '1'; } catch (e) {}
+  var homeEl = document.getElementById('home');
+  if (homeEl) homeEl.classList.toggle('hd-new', !known);
+
+  if (!known) {
+    el.innerHTML = '<div class="hd-new-wrap">'
+      + '<h2>Welcome.</h2>'
+      + '<p>Start your player\'s<br>training journey.</p>'
+      + '<button type="button" class="btn primary" style="width:100%" onclick="show(\'programs\')">Find a Program →</button>'
+      + '<div class="hd-or">or</div>'
+      + '<div class="hd-q">Already enrolled?</div>'
+      + '<button type="button" class="btn" style="width:100%;background:var(--navy);color:#fff" onclick="openProfile_()">Find My Player →</button>'
+      + '</div>';
+    return;
+  }
+  var rels = (p && p.relationships && p.relationships.length) ? p.relationships : [];
+  var counted = rels.filter(lbCounted_);
+  var activeIds = rels.filter(function (r) { return r.state === 'active' && r.programId !== 'PRG-PRIV'; }).map(function (r) { return r.programId; });
+
+  /* NEXT SESSION — player-specific kung may active program, kung wala ay general */
+  var nextHtml;
+  if (!lbScheduleWeek) {
+    nextHtml = '<div class="panel next-session-card" style="margin:0 0 14px;cursor:default"><div class="next-session-label">Next session</div><div class="next-session-meta">Loading schedule…</div></div>';
+  } else {
+    var next = (activeIds.length && findNextSession_(activeIds)) || findNextSession_();
+    nextHtml = next
+      ? '<div class="panel next-session-card" style="margin:0 0 14px" onclick="show(\'schedule\')">'
+        + '<div class="next-session-label">Next session</div>'
+        + '<div class="next-session-title">' + lbEscapeHtml_(lbShortProgramName_(next.session.programName)) + '</div>'
+        + '<div class="next-session-meta">' + (next.isToday ? 'Today' : next.day) + ' · ' + lbFormatTimeRange_(next.session.startTime, next.session.endTime) + '</div>'
+        + '<div class="next-session-venue">' + lbEscapeHtml_(next.session.venue) + '</div>'
+        + '<div class="next-session-link">View schedule →</div></div>'
+      : '<div class="panel" style="margin:0 0 14px">' + lbEmptyState_('◷', 'No training scheduled', "We'll show your next session here.", '') + '</div>';
+  }
+
+  /* QUICK ACTIONS */
+  var quick = '<div class="mo-sec" style="margin-top:4px">Quick actions</div><div class="quick" style="margin-bottom:6px">'
+    + '<button type="button" onclick="show(\'schedule\')"><div class="icon">' + pfIco_('clock') + '</div><b>Schedule</b><span>Upcoming training</span></button>'
+    + '<button type="button" onclick="hdOpenPay_()"><div class="icon">' + pfIco_('card') + '</div><b>Payments</b><span>Balance & history</span></button>'
+    + '<button type="button" onclick="openProfile_()"><div class="icon">' + pfIco_('user') + '</div><b>My Player</b><span>Profile & QR</span></button>'
+    + '<button type="button" onclick="show(\'programs\')"><div class="icon">' + pfIco_('grid') + '</div><b>Programs</b><span>Find your fit</span></button>'
+    + '</div>';
+
+  /* MY TRAINING + YOUR PROGRESS — lalabas lang kapag may naka-save na player */
+  var mine = '', prog = '';
+  if (p && counted.length) {
+    mine = '<div class="mo-sec">My training</div>' + counted.map(function (r) {
+      return '<button type="button" class="hd-row" onclick="hdOpenSessions_()"><div><b>' + lbEscapeHtml_(lbShortProgramName_(r.programName)) + '</b><span>' + lbEscapeHtml_(lbProgramStateInfo_(r).text) + '</span></div><i>›</i></button>';
+    }).join('');
+
+    var left = 0, used = 0;
+    counted.forEach(function (r) {
+      var rem = Math.max(0, Number(r.remaining) || 0), tot = Number(r.total) || 0;
+      if (r.state === 'active') left += rem;
+      if (tot > 0) used += Math.max(0, tot - rem);
+    });
+    var rate = (p.attendanceRate != null && !isNaN(Number(p.attendanceRate))) ? Math.round(Number(p.attendanceRate)) + '%' : null;
+    prog = '<div class="mo-sec">Your progress</div><div class="hd-prog">'
+      + '<div class="hd-stat"><b>' + left + '</b><span>Sessions left</span></div>'
+      + '<div class="hd-stat"><b>' + (rate || used) + '</b><span>' + (rate ? 'Attendance' : 'Sessions used') + '</span></div></div>';
+  }
+
+  /* DISCOVER */
+  var disc = '<div class="mo-sec">Discover Livity</div><div class="hd-disc">'
+    + '<button type="button" onclick="hdDiscover_(\'programs\')">Programs</button>'
+    + '<button type="button" onclick="hdDiscover_(\'team\')">Coaches</button>'
+    + '<button type="button" onclick="hdDiscover_(\'story\')">Story</button></div>'
+    + '<div style="height:18px"></div>';
+
+  el.innerHTML = '<div class="hd-greet"><h2>' + hdGreeting_(p) + '</h2><span>Here\'s your training at a glance.</span></div>'
+    + nextHtml + quick + mine + prog + disc;
+}
+
+(function () {
+  var host = document.querySelector('#home .content');
+  if (host && !document.getElementById('homeDash')) {
+    var d = document.createElement('div');
+    d.id = 'homeDash';
+    host.insertBefore(d, host.firstChild);
+  }
+  var b1 = pfReflect_;
+  pfReflect_ = function () { var r = b1.apply(this, arguments); hdRender_(); return r; };
+  var b2 = renderNextSession_;
+  renderNextSession_ = function () { var r = b2.apply(this, arguments); hdRender_(); return r; };
+  hdRender_();
+})();
+/* === END: HOME DASHBOARD — LOGIC === */
 /* === END: MORE / LIVITY REDESIGN — LOGIC === */
 
 </script>
 </body>
 </html>
+
