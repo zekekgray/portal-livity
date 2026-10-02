@@ -2588,7 +2588,7 @@ box-shadow:0 0 0 2px #000;
 box-shadow:0 0 0 2px var(--royal);
 }
 /* === START: 6-TAB NAV (with Scan) === */
-.bottom { grid-template-columns:repeat(6,1fr); }
+.bottom { grid-template-columns:repeat(5,1fr); }
 /* === END: 6-TAB NAV === */
 
 /* === START: APPLE-STYLE TAB ICONS === */
@@ -2633,6 +2633,101 @@ body.pf-open .livity-ball-backdrop { display:none; }
 /* ball laging nasa ibabaw ng profile */
 body.pf-open .livity-ball { z-index:66; }
 /* === END: PROFILE AS PART OF THE APP === */
+
+/* === START: MORE / LIVITY REDESIGN — STYLES === */
+.mo-home{margin-top:26px}
+.mo-hero{position:relative;overflow:hidden;border-radius:24px;padding:18px;margin:0 0 6px;color:#fff;background:linear-gradient(160deg,#0B2F64 0%,#171714 72%)}
+.mo-hero:after{content:"";position:absolute;width:240px;height:240px;right:-90px;top:-90px;border-radius:50%;background:radial-gradient(circle,#FFDE0040,transparent 65%)}
+.mo-id{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.mo-id img{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.mo-id h2{margin:0;font-family:Georgia,serif;font-size:28px;letter-spacing:2px}
+.mo-id span{font-size:10.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-light)}
+.mo-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;position:relative;z-index:1}
+.mo-stats div{background:rgba(255,255,255,.08);border-radius:14px;padding:10px 4px;text-align:center}
+.mo-stats b{display:block;font-size:24px;font-weight:850;color:var(--gold);font-variant-numeric:tabular-nums}
+.mo-stats small{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#c8c4bb}
+.mo-acts{display:flex;gap:8px;margin-top:12px;position:relative;z-index:1}
+.mo-acts a,.mo-acts button{flex:1;text-align:center;text-decoration:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,222,0,.4);border-radius:14px;padding:10px 4px;font-size:12px;font-weight:800;color:var(--gold-light);cursor:pointer}
+
+.mo-tabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 2px;margin:0 -2px 8px;background:rgba(255,255,255,.93);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);scrollbar-width:none}
+.mo-tabs::-webkit-scrollbar{display:none}
+.mo-tabs button{flex:0 0 auto;border:0;border-radius:20px;padding:9px 16px;font-size:12px;font-weight:800;background:#f5f2ea;color:var(--muted)}
+.mo-tabs button.on{background:var(--navy);color:#fff}
+.mo-in{animation:moIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes moIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.mo-sec{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px}
+.mo-sec i{font-style:normal;font-weight:600;letter-spacing:0;text-transform:none}
+.mo-quote{border-radius:22px;padding:22px 20px;background:#171714;color:#fff}
+.mo-quote small{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--gold-light)}
+.mo-quote h3{font-family:Georgia,serif;font-size:34px;line-height:1.05;margin:8px 0}
+.mo-quote p{margin:0;color:#ddd8ce;font-size:13px;line-height:1.55}
+
+.mo-flips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mo-flip{perspective:800px;border:0;background:none;padding:0;height:210px;text-align:left}
+.mo-flip .fi{position:relative;display:block;width:100%;height:100%;transition:transform .6s cubic-bezier(.34,1.2,.64,1);transform-style:preserve-3d}
+.mo-flip.on .fi{transform:rotateY(180deg)}
+.mo-face{position:absolute;inset:0;border-radius:20px;padding:16px;display:flex;flex-direction:column;justify-content:center;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.mo-front{background:linear-gradient(150deg,var(--royal),var(--navy));color:#fff}
+.mo-front b{font-family:Georgia,serif;font-size:22px}
+.mo-front em{font-style:normal;font-size:11px;margin-top:6px;color:var(--gold-light);font-weight:700}
+.mo-back{background:#fff;border:1px solid var(--line);transform:rotateY(180deg);font-size:12px;line-height:1.5;color:var(--text);overflow:auto;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+
+.mo-path{display:flex;align-items:center;gap:6px}
+.mo-path button{flex:1;border:0;background:#fff;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.mo-path b{display:block;font-size:13px;color:var(--text)}
+.mo-path span{font-size:10.5px;color:var(--muted)}
+.mo-path i{color:#8d826e;font-style:normal;font-size:18px}
+.mo-note{font-size:11.5px;color:var(--muted);margin:8px 2px 0}
+
+.mo-quiz{background:#fff8dd;border:1px solid #ffe38a;border-radius:22px;padding:16px}
+.mo-quiz h4{margin:0 0 2px;font-size:16px;color:var(--text)}
+.mo-quiz p{margin:0;font-size:12px;color:var(--muted)}
+.mo-q{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.mo-res{margin-top:14px;background:#171714;color:#fff;border-radius:16px;padding:14px;animation:moIn .35s}
+.mo-res b{font-family:Georgia,serif;font-size:19px;display:block}
+.mo-res p{color:#ddd8ce;margin:6px 0 12px;font-size:12.5px;line-height:1.5}
+.mo-res .btn{width:100%;padding:12px;font-size:13px}
+
+.mo-vals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mo-val{text-align:left;border:0;border-radius:20px;padding:14px;background:#fff;box-shadow:0 2px 10px rgba(11,47,100,.08);border-top:4px solid var(--c);min-height:120px}
+.mo-val em{font-style:normal;font-size:11px;font-weight:800;color:var(--c)}
+.mo-val b{display:block;font-size:15px;margin:2px 0 4px;color:var(--text)}
+.mo-val p{margin:0;font-size:12px;line-height:1.45;color:var(--muted)}
+.mo-val .x{display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);color:var(--text)}
+.mo-val.on{background:#fffbea}
+.mo-val.on .x{display:block}
+
+.mo-mem{display:flex;gap:12px;align-items:center;background:#fff;border-radius:20px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.mo-mem .avatar{width:52px;height:52px;flex-shrink:0;background:var(--navy);color:#fff;font-size:18px}
+.mo-mem b{display:block;font-size:15px;color:var(--text)}
+.mo-mem span{font-size:11.5px;color:var(--muted)}
+.mo-btns{margin-top:8px;display:flex;gap:6px}
+.mo-chip{border:1px solid #ffe38a;border-radius:12px;padding:7px 12px;font-size:11px;font-weight:800;background:#fff8dd;color:var(--navy);text-decoration:none}
+.mo-ven{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border-radius:18px;padding:14px;margin-bottom:8px;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.mo-ven b{display:block;font-size:14px;color:var(--text)}
+.mo-ven span{font-size:11.5px;color:var(--muted)}
+
+.mo-snap{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px;padding:2px 18px 10px;scrollbar-width:none}
+.mo-snap::-webkit-scrollbar{display:none}
+.mo-voice{flex:0 0 84%;scroll-snap-align:center;background:#fff;border-radius:22px;padding:18px;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.mo-vh{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.mo-vh b{display:block;font-size:13px;color:var(--text)}
+.mo-vh .proof-badge{margin:2px 0 0}
+.mo-voice p{margin:0;font-family:Georgia,serif;font-size:15px;line-height:1.5;color:var(--text);font-style:italic}
+.mo-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:2px}
+
+.mo-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mo-fact{background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.mo-fact b{display:block;font-size:20px;color:var(--navy)}
+.mo-fact span{font-size:11px;color:var(--muted)}
+.mo-det{background:#fff;border-radius:18px;margin-bottom:8px;box-shadow:0 2px 10px rgba(11,47,100,.08);overflow:hidden}
+.mo-det summary{list-style:none;padding:15px 16px;font-weight:750;font-size:14px;display:flex;justify-content:space-between;cursor:pointer;color:var(--text)}
+.mo-det summary::-webkit-details-marker{display:none}
+.mo-det summary:after{content:"＋";color:var(--muted)}
+.mo-det[open] summary:after{content:"−"}
+.mo-det ul{margin:0;padding:0 16px 14px 32px;font-size:12.5px;line-height:1.65;color:#5e5a52}
+/* === END: MORE / LIVITY REDESIGN — STYLES === */
 </style>
 </head>
 
@@ -2703,37 +2798,14 @@ aria-label="How to use the app"
 
 <div class="content">
 
-<div class="section-title">
-<h2>Start Here</h2>
-</div>
-
-<div class="quick">
-
-<button onclick="show('programs')">
-<div class="icon ball-touch">⚽</div>
-<b>Programs</b>
-<span>Find the right fit</span>
+<button
+id="homeEnrollBtn"
+class="btn outline"
+style="width:100%;margin-bottom:14px"
+onclick="show('enroll')"
+>
+↗ Enroll a New Player
 </button>
-
-<button onclick="show('schedule')">
-<div class="icon">◷</div>
-<b>Schedule</b>
-<span>See training times</span>
-</button>
-
-<button onclick="show('enroll')">
-<div class="icon">↗</div>
-<b>Enroll</b>
-<span>Get started today</span>
-</button>
-
-<button style="grid-column:1/-1" onclick="openProfile_()">
-<div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-<b>My Player</b>
-<span>Profile, sessions & payments</span>
-</button>
-
-</div>
 
 <div class="cta">
 
@@ -3793,15 +3865,6 @@ Programs
 
 
 <button
-data-v="schedule"
-onclick="show('schedule')"
->
-<b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path class="cut" d="M3.5 10h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></b>
-Schedule
-</button>
-
-
-<button
 data-v="scan"
 onclick="openScan_()"
 aria-label="Scan player QR"
@@ -3811,11 +3874,11 @@ aria-label="Scan player QR"
 
 
 <button
-data-v="more"
-onclick="show('more')"
+data-v="schedule"
+onclick="show('schedule')"
 >
-<b><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="fl" cx="12" cy="12" r="9"/><path class="cut" d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.6"/></svg></b>
-More
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path class="cut" d="M3.5 10h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></b>
+Schedule
 </button>
 
 
@@ -7734,7 +7797,7 @@ steps:[
 { icon:'◷', title:'Check the Schedule', text:'Tap "Schedule" to see the time and venue for every session this week.' },
 { icon:'◫', title:'Know Each Program', text:'Tap "Programs" for the details of Regular, Private, Advanced, and Academy Training.' },
 { icon:'☷', title:'Reach Admin JA', text:'Use "Ask Admin JA" for quick updates on schedules or a player.' },
-{ icon:'ℹ️', title:'Full Academy Details', text:'Tap "More" at the bottom for the academy\'s mission, values, and policies.' }
+{ icon:'ℹ️', title:'Full Academy Details', text:'Scroll down on the Home screen for the academy\'s mission, values, team, and policies.' }
 ]
 },
 admin: {
@@ -8009,7 +8072,7 @@ TUT_BALL_STEP,
 { sel:'.bottom button[data-v="player"]', try:true, before:closeLivityBall, title:'Profile', text:'Already registered? Your player profile, sessions and payments are here.' }
 ],
 register: [
-{ sel:'#home .quick button[onclick*="\'enroll\'"]', try:true, wait:250, scroll:true, before:function () { show('home'); }, title:'Enroll', text:'Tap here to start.' },
+{ sel:'#homeEnrollBtn', try:true, wait:250, scroll:true, before:function () { show('home'); }, title:'Enroll', text:'Tap here to start.' },
 { sel:'#enroll button[onclick*="PRG-PRIV"]', wait:400, scroll:true, title:'Private Training', text:'New to Livity? Register for Private Training here.' },
 { sel:'#enroll button[onclick*="PRG-ACAD"]', scroll:true, title:'Academy', text:'Joining the Academy? Enroll here. For Regular or Advanced: open Programs, choose the program, then tap Register Now.' }
 ],
@@ -9392,6 +9455,183 @@ return;
 toggleLivityBallBase_();
 };
 /* === END: PROFILE = SAME ECOSYSTEM === */
+
+/* === START: MORE / LIVITY REDESIGN — LOGIC === */
+const MO_TABS_ = [['story','Story'],['values','Values'],['team','Team'],['voices','Voices'],['gallery','Gallery'],['rules','Policies']];
+let moTab_ = 'story', moQ_ = { age:'', goal:'' }, moGalLoaded_ = false;
+
+/* ---- hero stats (live mula sa Schedule sheet) ---- */
+function moCount_(el, n) {
+const from = Number(el.textContent) || 0; let i = 0;
+if (from === n) { el.textContent = n; return; }
+const t = setInterval(function () { i++; el.textContent = Math.round(from + (n - from) * i / 14); if (i >= 14) { clearInterval(t); el.textContent = n; } }, 35);
+}
+function moVenues_() {
+const w = lbScheduleWeek || LIVITY_SCHEDULE_FALLBACK, m = {};
+w.forEach(function (d) { (d.sessions || []).forEach(function (s) { (m[s.venue] = m[s.venue] || []).push(d.day.slice(0, 3)); }); });
+return Object.keys(m).map(function (v) { return { v: v, days: m[v].filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' · ') }; });
+}
+function moStats_() {
+const w = lbScheduleWeek || LIVITY_SCHEDULE_FALLBACK;
+const set = function (id, n) { const e = document.getElementById(id); if (e && e.textContent !== String(n)) moCount_(e, n); };
+set('moStProg', 4); set('moStDays', w.filter(function (d) { return d.active; }).length); set('moStVen', moVenues_().length);
+}
+const moRNS_ = renderNextSession_;
+renderNextSession_ = function () { moRNS_.apply(this, arguments); moStats_(); };
+
+function moShare_() {
+const d = { title:'Livity Training & Academy', text:'Train like a pro with Livity.', url: location.origin + '/' };
+if (navigator.share) navigator.share(d).catch(function () {});
+else if (navigator.clipboard) navigator.clipboard.writeText(d.url).then(function () { appToast_('Link copied ✓'); });
+else appToast_(d.url);
+}
+function moChat_() { toggleLivityBall(); lbGoTo('askadmin'); }
+
+/* ---- panels ---- */
+function moFlip_(t, txt) {
+return '<button type="button" class="mo-flip" onclick="this.classList.toggle(\'on\')"><span class="fi"><span class="mo-face mo-front"><b>' + t + '</b><em>Tap to read</em></span><span class="mo-face mo-back">' + txt + '</span></span></button>';
+}
+
+const MO_AGES_ = [['u8','Ages 4–8'],['u13','Ages 9–13'],['u14','14+']];
+const MO_GOALS_ = [['learn','Learn the basics'],['team','Play as a team'],['solo','1-on-1 focus'],['level','Level up']];
+
+function moRec_() {
+const a = moQ_.age, g = moQ_.goal;
+if (!a || !g) return null;
+if (g === 'solo') return { k:'private', why:'Personalized coaching built around one player.' };
+if (g === 'team') return a === 'u14' ? { k:'regular', why:'Academy is for U5–U13, so Regular group sessions are the best fit.' } : { k:'academy', why:'A structured team pathway with fixed weekly sessions.' };
+if (g === 'level') return a === 'u8' ? { k:'regular', why:'Build a strong foundation first. Advanced starts at U11+.' } : { k:'advanced', why:'Higher intensity training. Assessment required (U11+).' };
+return { k:'regular', why:'Group sessions by skill level. Beginners are welcome.' };
+}
+
+function moQuizInner_() {
+const pills = function (list, f) { return '<div class="lb-pills">' + list.map(function (o) { return '<button type="button" class="lb-pill ' + (moQ_[f] === o[0] ? 'sel' : '') + '" onclick="moPick_(\'' + f + '\',\'' + o[0] + '\')">' + o[1] + '</button>'; }).join('') + '</div>'; };
+const r = moRec_();
+return '<div class="mo-q" style="margin-top:12px">Player age</div>' + pills(MO_AGES_, 'age')
++ '<div class="mo-q">Main goal</div>' + pills(MO_GOALS_, 'goal')
++ (r ? '<div class="mo-res"><small style="font-size:10px;font-weight:800;letter-spacing:1.4px;color:var(--gold-light)">BEST FIT</small><b>' + data[r.k].title + '</b><p>' + r.why + '</p><button type="button" class="btn primary" onclick="detail(\'' + r.k + '\')">See this program →</button></div>' : '');
+}
+function moPick_(f, v) {
+moQ_[f] = moQ_[f] === v ? '' : v;
+const q = document.getElementById('moQuiz');
+if (q) q.innerHTML = moQuizInner_();
+}
+
+function moPanelStory_() {
+return '<div class="mo-quote"><small>OUR PHILOSOPHY</small><h3>Train Like a Pro.</h3><p>Every player deserves professional-level coaching, structure, and care, regardless of age or skill level.</p></div>'
++ '<div class="mo-sec">Mission &amp; Vision <i>tap to flip</i></div><div class="mo-flips">'
++ moFlip_('Mission', 'To empower individuals through Livity training programs, meaningful experiences, and collaborative partnerships that create lasting value for our community.')
++ moFlip_('Vision', 'To be a leading football academy recognized for excellence, inclusivity, and positive impact, inspiring individuals to reach their full potential and contribute to a better future.')
++ '</div><div class="mo-sec">Your pathway <i>tap a stage</i></div>'
++ '<div class="mo-path"><button type="button" onclick="detail(\'regular\')"><b>Regular</b><span>All levels</span></button><i>›</i><button type="button" onclick="detail(\'academy\')"><b>Academy</b><span>U5–U13</span></button><i>›</i><button type="button" onclick="detail(\'advanced\')"><b>Advanced</b><span>U11+</span></button></div>'
++ '<p class="mo-note">Private sessions fit around any stage. <a href="#" onclick="detail(\'private\');return false" style="color:var(--royal);font-weight:800;text-decoration:none">See Private →</a></p>'
++ '<div class="mo-sec">Find your fit</div><div class="mo-quiz"><h4>Which program is right for you?</h4><p>Two quick taps. No sign-up.</p><div id="moQuiz">' + moQuizInner_() + '</div></div>';
+}
+
+function moPanelValues_() {
+const v = [
+['01','Excellence','Train like a pro.','Professional-level coaching and structure at every age.','#1C68D4'],
+['02','Inclusivity','Every player belongs.','Beginners and non-beginners train side by side.','#ED1C24'],
+['03','Development','Growth over wins.','Players are grouped by skill level, with guided repetition.','#c77700'],
+['04','Community','Stronger together.','Parents, players and coaches building the Academy as one.','#0B2F64'],
+['05','Discipline','Show up. Every time.','Consistency is what turns practice into progress.','#1C68D4'],
+['06','Integrity','Do it right.','Honest feedback and fair policies, no shortcuts.','#ED1C24']
+];
+return '<div class="mo-sec" style="margin-top:6px">What we stand for <i>tap a card</i></div><div class="mo-vals">'
++ v.map(function (x) { return '<button type="button" class="mo-val" style="--c:' + x[4] + '" onclick="this.classList.toggle(\'on\')"><em>' + x[0] + '</em><b>' + x[1] + '</b><p>' + x[2] + '</p><p class="x">' + x[3] + '</p></button>'; }).join('') + '</div>';
+}
+
+function moPanelTeam_() {
+const mem = [
+['J','Admin JA','Private Training Session / Training','<a class="mo-chip" href="https://wa.me/639762675397" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="mo-chip" onclick="moChat_()">Chat</button>'],
+['C','Admin Chelsi','Academy','<button type="button" class="mo-chip" onclick="moChat_()">Ask in chat</button>'],
+['S','Coach Sam','Advanced Performance Assessment','<button type="button" class="mo-chip" onclick="moChat_()">Ask in chat</button>']
+];
+return '<div class="mo-sec" style="margin-top:6px">Meet the team</div>'
++ mem.map(function (m) { return '<div class="mo-mem"><div class="avatar">' + m[0] + '</div><div style="min-width:0"><b>' + m[1] + '</b><span>' + m[2] + '</span><div class="mo-btns">' + m[3] + '</div></div></div>'; }).join('')
++ '<div class="mo-sec">Where we train</div>'
++ moVenues_().map(function (x) { return '<div class="mo-ven"><div><b>' + lbEscapeHtml_(x.v) + '</b><span>' + x.days + '</span></div><a class="mo-chip" href="' + lbMapsLink_(x.v) + '" target="_blank" rel="noopener">Directions</a></div>'; }).join('');
+}
+
+function moPanelVoices_() {
+const t = [
+['M','Miguel Santos','Academy · 2 years','Livity turned my son from a shy kid into a confident team player. The coaches actually remember his name.'],
+['A','Ana Reyes','Advanced Performance','The assessment-based training pushed me to a level I didn\'t think I could reach in a year.'],
+['K','Kian Dela Cruz','Regular · U11','Best Saturday mornings of the week. My footwork improved so much in just one package.'],
+['P','Patricia Lim','Private Training','Flexible scheduling that actually works around our family\'s crazy week. Highly recommend.']
+];
+return '<div class="mo-sec" style="margin-top:6px">Trained with Livity <i>swipe →</i></div><div class="mo-snap">'
++ t.map(function (x) { return '<div class="mo-voice"><div class="mo-vh"><div class="proof-avatar">' + x[0] + '</div><div><b>' + x[1] + '</b><span class="proof-badge">' + x[2] + '</span></div></div><p>“' + x[3] + '”</p></div>'; }).join('') + '</div>'
++ '<button type="button" class="btn primary" style="width:100%;margin-top:6px" onclick="show(\'programs\')">Start your story →</button>';
+}
+
+function moPanelGallery_() {
+return '<div class="mo-sec" style="margin-top:6px">Academy Gallery <i>tap to open</i></div><div id="galleryGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>';
+}
+
+function moPanelRules_() {
+return '<div class="mo-sec" style="margin-top:6px">Quick facts</div><div class="mo-facts">'
++ '<div class="mo-fact"><b>12 hrs</b><span>to pay after session</span></div><div class="mo-fact"><b>₱100</b><span>flat late penalty</span></div>'
++ '<div class="mo-fact"><b>2 / month</b><span>free walk-ins</span></div><div class="mo-fact"><b>45 min</b><span>weather cancel window</span></div></div>'
++ '<details class="mo-det"><summary>Attendance &amp; Registration</summary><ul><li>Academy players are automatically expected to attend.</li><li>Notify by 2:00 PM Thursday or 10:00 PM Friday for Saturday.</li><li>Registration is required at least 2 hours before sessions.</li><li>Maximum 2 walk-ins per calendar month; the 3rd onward is charged at 1.5×.</li></ul></details>'
++ '<details class="mo-det"><summary>Payment</summary><ul><li>Payment must be completed within 12 hours after the session ends.</li><li>Still unpaid by 5:00 PM the following day: flat ₱100 overdue penalty.</li></ul></details>'
++ '<details class="mo-det"><summary>Packages &amp; Cancellations</summary><ul><li>Packages are non-transferable and non-refundable.</li><li>Weather cancellation within the first 45 minutes: session is not deducted.</li><li>If training runs more than 45 minutes, it counts as completed.</li></ul></details>'
++ '<p class="mo-note" style="text-align:center;margin-top:12px">Questions? <a href="#" onclick="moChat_();return false" style="color:var(--royal);font-weight:800;text-decoration:none">Ask Admin JA →</a></p>';
+}
+
+/* ---- shell ---- */
+function moDraw_() {
+const b = document.getElementById('moBody');
+if (!b) return;
+b.innerHTML = ({ story:moPanelStory_, values:moPanelValues_, team:moPanelTeam_, voices:moPanelVoices_, gallery:moPanelGallery_, rules:moPanelRules_ })[moTab_]();
+b.classList.remove('mo-in'); void b.offsetWidth; b.classList.add('mo-in');
+document.querySelectorAll('#moTabs button').forEach(function (x) { x.classList.toggle('on', x.dataset.k === moTab_); });
+const on = document.querySelector('#moTabs button.on');
+const bar_ = document.getElementById('moTabs');
+if (on && bar_) bar_.scrollTo({ left: on.offsetLeft - (bar_.clientWidth - on.offsetWidth) / 2, behavior:'smooth' });
+if (moTab_ === 'gallery') {
+if (moGalLoaded_) renderGallery_();
+else {
+const g = document.getElementById('galleryGrid');
+if (g) { g.style.display = 'block'; g.innerHTML = lbLoadingHtml_('Loading photos…'); }
+loadGallery_().then(function () { moGalLoaded_ = lbGalleryItems.length > 0; });
+}
+}
+}
+function moSet_(k) { moTab_ = k; moDraw_(); }
+
+function moRender_() {
+const el = document.getElementById('more');
+if (!el) return;
+el.innerHTML = ''
++ '<div class="mo-hero"><div class="mo-id"><img src="/logo-256.png" alt="Livity logo" width="76" height="76"><div><h2>LIVITY</h2><span>Training &amp; Football Academy</span></div></div>'
++ '<div class="mo-stats"><div><b id="moStProg">0</b><small>Programs</small></div><div><b id="moStDays">0</b><small>Days / week</small></div><div><b id="moStVen">0</b><small>Venues</small></div></div>'
++ '<div class="mo-acts"><button type="button" onclick="moShare_()">Share</button><a href="https://wa.me/639762675397" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:livityacademy22@gmail.com">Email</a></div></div>'
++ '<div class="mo-tabs" id="moTabs">' + MO_TABS_.map(function (t) { return '<button type="button" data-k="' + t[0] + '" onclick="moSet_(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>'
++ '<div id="moBody"></div>';
+moDraw_();
+moStats_();
+}
+(function () {
+var m = document.getElementById('more'), h = document.querySelector('#home .content');
+if (m && h) { m.className = 'mo-home'; h.appendChild(m); }
+})();
+moRender_();
+
+/* swipe kaliwa/kanan para lumipat ng tab (hindi apektado ang testimonial scroller) */
+(function () {
+const el = document.getElementById('more');
+let x0 = 0, y0 = 0, skip = false;
+el.addEventListener('touchstart', function (e) { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; skip = !!e.target.closest('.mo-snap,.mo-tabs'); }, { passive:true });
+el.addEventListener('touchend', function (e) {
+if (skip) return;
+const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+const i = MO_TABS_.findIndex(function (a) { return a[0] === moTab_; }) + (dx < 0 ? 1 : -1);
+if (i >= 0 && i < MO_TABS_.length) moSet_(MO_TABS_[i][0]);
+}, { passive:true });
+})();
+/* === END: MORE / LIVITY REDESIGN — LOGIC === */
 
 </script>
 </body>
