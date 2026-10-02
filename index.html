@@ -1739,6 +1739,21 @@ display:none;
 display:block;
 }
 
+/* === START: NO BACK BUTTONS — SWIPE NAV EDIT === */
+.view .back,
+.livity-ball-modal .back,
+#lbBackBtn {
+display:none !important;
+}
+.view.active {
+animation:swIn .28s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes swIn {
+from { opacity:.4; transform:translateX(var(--sw,0px)); }
+to   { opacity:1; transform:none; }
+}
+/* === END: NO BACK BUTTONS — SWIPE NAV EDIT === */
+
 /* === START: BACK BUTTON — FIX UNDEFINED --ink VAR === */
 .back {
 background:none;
@@ -2200,6 +2215,21 @@ display:none;
 .livity-ball-modal.profile-mode .lb-refresh {
 display:grid;
 }
+/* === START: REFRESH ICON ONLY EDIT === */
+.lb-back.lb-refresh {
+background:none;
+border-radius:0;
+width:36px;
+height:36px;
+padding:0;
+color:var(--text);
+}
+.lb-back.lb-refresh svg {
+width:26px;
+height:26px;
+display:block;
+}
+/* === END: REFRESH ICON ONLY EDIT === */
 .lb-refresh.spin {
 animation:lbSpin .8s linear infinite;
 }
@@ -2753,7 +2783,7 @@ body.pf-open .livity-ball { z-index:66; }
 
 <!-- === START: HERO LOGO === -->
 <div class="hero-logo">
-<img src="/logo-512.png" alt="Livity logo" width="147" height="147">
+<img id="heroLogoImg" src="/logo-512.png" alt="Livity logo" width="147" height="147">
 </div>
 <!-- === END: HERO LOGO === -->
 
@@ -2949,7 +2979,7 @@ U5 · U7 · U9 · U11 · U13 · Team pathway
 
 <div class="notice" onclick="toggleLivityBall();lbGoTo('askadmin')" style="cursor:pointer">
 Not sure which is right for your child?
-<b>Ask Admin JA →</b>
+<b>Ask Admin →</b>
 </div>
 
 </section>
@@ -3750,7 +3780,7 @@ Coach Sam — Advanced Assessment
 <div class="lb-header">
 <button class="lb-back" id="lbBackBtn" onclick="lbHeaderBack_()" style="display:none">←</button>
 <h4 id="lbTitle">Anytime Livity</h4>
-<button class="lb-back lb-refresh" id="lbRefreshBtn" onclick="appRefresh_(true)" aria-label="Refresh">↻</button>
+<button class="lb-back lb-refresh" id="lbRefreshBtn" onclick="appRefresh_(true)" aria-label="Refresh"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
 <button class="lb-close" onclick="closeLivityBall()">✕</button>
 </div>
 <div class="lb-body" id="lbBody"></div>
@@ -4618,7 +4648,7 @@ body.innerHTML = lbRenderEnrollStep();
 title.textContent = lbForm._linkedGuardian ? 'Add a Player' : (lbForm.programId ? (lbProgramLabel_(lbForm.programId) + ' — Enroll') : 'Enroll');
 back.style.display = 'grid';
 } else if (screen === 'askadmin') {lbBackTarget = 'menu';
-title.textContent = 'Ask Admin JA';
+title.textContent = 'Ask Admin';
 back.style.display = 'grid';
 lbOpenAskAdmin_();
 } else if (screen === 'topupFind') {
@@ -4657,7 +4687,7 @@ return `<p class="lb-sub">What would you like to do?</p>`
 + lbMenuItem_('enroll', '↗', 'Enroll', 'Register a new player', "lbGateThenEnroll_('')")
 + lbMenuItem_('topup', '₱', 'Top Up', 'Add training sessions', "lbGoTo('topupFind')")
 + lbMenuItem_('schedule', '◷', 'My Schedule', 'See upcoming training', "closeLivityBall();show('schedule')")
-+ lbMenuItem_('askadmin', '💬', 'Ask Admin JA', 'Get help', "lbGoTo('askadmin')")
++ lbMenuItem_('askadmin', '💬', 'Ask Admin', 'Get help', "lbGoTo('askadmin')")
 + lbMenuItem_('help', '?', 'How to use Livity', 'Guides & walkthroughs', "closeLivityBall();openTutorial()", 'margin-top:6px');
 }
 /* === END: ANYTIME LIVITY — ASSISTANT MENU === */
@@ -6003,7 +6033,7 @@ lbLoadChatMessages_();
 function lbRenderChatIdentify_() {
 lbBody().innerHTML = `
 <h5 class="lb-step-title">Before we connect you</h5>
-<p class="lb-text">Ilagay lang ang pangalan at WhatsApp number para malaman ni Admin JA kung sino ang nagtatanong.</p>
+<p class="lb-text">Ilagay lang ang pangalan at WhatsApp number para malaman ng Admin kung sino ang nagtatanong.</p>
 <input class="lb-input" id="chatName" placeholder="Your Name (Guardian)">
 <input class="lb-input" id="chatWhatsapp" placeholder="WhatsApp Number">
 <div class="lb-err" id="lbErr"></div>
@@ -6028,9 +6058,9 @@ lbLoadChatMessages_();
 function lbRenderChatScreen_() {
 lbBody().innerHTML = `
 <div class="chat-header">
-<div class="chat-avatar">J</div>
+<div class="chat-avatar">A</div>
 <div>
-<b>Admin JA</b>
+<b>Academy Admin</b>
 <span>Academy Support</span>
 </div>
 </div>
@@ -6381,7 +6411,7 @@ if (!horizontal) { dragging = false; m.style.transition = ''; return; }
 }
 if (!horizontal) return;
 dx = ddx;
-m.style.transform = 'translateX(calc(-50% + ' + dx + 'px))';
+m.style.transform = 'translateX(calc(-50% + ' + Math.max(0, dx) + 'px))';
 }
 
 function pfSwipeUp_() {
@@ -6391,7 +6421,7 @@ var m = m_();
 if (m) {
 m.style.transition = '';
 m.style.transform = '';
-if (horizontal && Math.abs(dx) > THRESHOLD) closeLivityBall();
+if (horizontal && dx > THRESHOLD) swipeProfileBack_();
 }
 horizontal = false; decided = false; dx = 0;
 }
@@ -7788,7 +7818,7 @@ steps:[
 { icon:'⚽', title:'Manage an Existing Player', text:'Tap the floating ball → "My Player" → enter your WhatsApp number to see your child\'s full profile.' },
 { icon:'₱', title:'Payments & Balance', text:'Inside the player profile, check "Payments & Balance" for what\'s due and when.' },
 { icon:'◷', title:'Weekly Schedule', text:'Tap "Schedule" in the bottom menu to see the whole week at a glance.' },
-{ icon:'☷', title:'Talk to Admin JA', text:'Tap the ball → "Ask Admin JA" to chat directly with our staff.' }
+{ icon:'☷', title:'Talk to Admin', text:'Tap the ball → "Ask Admin" to chat directly with our staff.' }
 ]
 },
 coach: {
@@ -7796,7 +7826,7 @@ icon:'🥅', label:'Coach', color:'#0B2F64', caption:'Sessions, programs & suppo
 steps:[
 { icon:'◷', title:'Check the Schedule', text:'Tap "Schedule" to see the time and venue for every session this week.' },
 { icon:'◫', title:'Know Each Program', text:'Tap "Programs" for the details of Regular, Private, Advanced, and Academy Training.' },
-{ icon:'☷', title:'Reach Admin JA', text:'Use "Ask Admin JA" for quick updates on schedules or a player.' },
+{ icon:'☷', title:'Reach Admin', text:'Use "Ask Admin" for quick updates on schedules or a player.' },
 { icon:'ℹ️', title:'Full Academy Details', text:'Scroll down on the Home screen for the academy\'s mission, values, team, and policies.' }
 ]
 },
@@ -7806,7 +7836,7 @@ steps:[
 { icon:'◷', title:'Manage the Schedule', text:'The Schedule tab pulls straight from the Google Sheet — edits there show up in the app right away.' },
 { icon:'₱', title:'Verify Payments', text:'Payments stay "Pending" until verified via "Livity Admin → Verify a Payment" in the Sheet menu.' },
 { icon:'👤', title:'Players Added Automatically', text:'Anyone who enrolls or adds a child in the app is added to the Players sheet automatically.' },
-{ icon:'☷', title:'Reply to Messages', text:'Questions from "Ask Admin JA" land in the Messages sheet and your email.' }
+{ icon:'☷', title:'Reply to Messages', text:'Questions from "Ask Admin" land in the Messages sheet and your email.' }
 ]
 }
 };
@@ -7901,13 +7931,13 @@ steps:[
 "See Balance Due at the top, then each payment marked Paid, Pending, or Overdue."
 ], cta:'Find My Player →', action:"tutOpenLb_('topupFind')" },
 
-{ key:'admin', icon:'☷', label:'Ask Admin JA', title:'Ask Admin JA', sub:'Chat with the team directly.',
+{ key:'admin', icon:'☷', label:'Ask Admin', title:'Ask Admin', sub:'Chat with the team directly.',
 steps:[
-"Tap the floating ⚽ ball, then Ask Admin JA (or use the button below).",
+"Tap the floating ⚽ ball, then Ask Admin (or use the button below).",
 "First time only: enter your name and WhatsApp number.",
 "Type your question or tap a quick prompt.",
 "Prefer WhatsApp? Use the direct link at the bottom of the chat."
-], cta:'Ask Admin JA →', action:"tutOpenLb_('askadmin')" },
+], cta:'Ask Admin →', action:"tutOpenLb_('askadmin')" },
 
 { key:'journey', icon:'🧭', label:'What happens at training?', title:'Your Livity Journey', sub:'', steps:[], cta:'', action:'' },
 { key:'app', icon:'📱', label:'Understand the app', title:'Understand the app', sub:'', steps:[], cta:'', action:'' }
@@ -8088,7 +8118,7 @@ TUT_BALL_STEP,
 ],
 admin: [
 TUT_BALL_STEP,
-{ sel:'#lbBody .lb-item[onclick*="askadmin"]', try:true, wait:450, title:'Ask Admin JA', text:"Tap here to chat with the team. First time only, you'll enter your name and WhatsApp number." }
+{ sel:'#lbBody .lb-item[onclick*="askadmin"]', try:true, wait:450, title:'Ask Admin', text:"Tap here to chat with the team. First time only, you'll enter your name and WhatsApp number." }
 ]
 };
 
@@ -9456,7 +9486,61 @@ toggleLivityBallBase_();
 };
 /* === END: PROFILE = SAME ECOSYSTEM === */
 
-/* === START: MORE / LIVITY REDESIGN — LOGIC === */
+/* === START: SWIPE NAV — TABS + SUB-SCREENS === */
+const SW_TABS_ = ['home','programs','schedule','profile'];
+const SW_PARENT_ = { detail:'programs', pricing:'programs', enroll:'home', more:'home' };
+
+function swipeProfileBack_() {
+// nasa hub/find screen = balik sa Schedule tab; nasa sub-screen = balik sa hub
+const atRoot = !!(document.getElementById('pfFile') || document.getElementById('topupQuery'));
+if (atRoot) { document.documentElement.style.setProperty('--sw', '-28px'); show('schedule'); }
+else lbGoTo('profile');
+}
+
+function swipeGo_(id, dir) {
+document.documentElement.style.setProperty('--sw', (dir < 0 ? 28 : -28) + 'px');
+if (id === 'profile') openProfile_();
+else show(id);
+}
+
+(function () {
+var x0 = 0, y0 = 0, ok = false;
+var SKIP = 'input,textarea,select,video,.mo-snap,.mo-tabs,.sched-tabs,.chat-messages,#scanModal,.tut-card,.tutorial-sheet';
+
+document.addEventListener('touchstart', function (e) {
+if (e.touches.length !== 1) { ok = false; return; }
+var t = e.touches[0];
+x0 = t.clientX; y0 = t.clientY;
+ok = !(e.target.closest && e.target.closest(SKIP));
+}, { passive: true });
+
+document.addEventListener('touchend', function (e) {
+if (!ok) return;
+ok = false;
+if (typeof tutTour !== 'undefined' && tutTour) return;
+var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+
+var modal = document.getElementById('livityModal');
+if (modal && modal.classList.contains('open')) {
+if (lbProfileMode) return; // hawak ng profile swipe sa taas
+if (dx > 0) {
+if (lbScreen === 'enroll' && lbEnrollStep > 0) lbPrevEnroll();
+else if (lbScreen !== 'menu') lbGoTo(lbBackTarget);
+}
+return;
+}
+if (document.body.classList.contains('scroll-locked')) return; // may ibang popup
+
+var cur = (document.querySelector('.view.active') || {}).id || 'home';
+if (SW_PARENT_[cur]) { if (dx > 0) swipeGo_(SW_PARENT_[cur], 1); return; }
+
+var n = SW_TABS_.indexOf(cur) + (dx < 0 ? 1 : -1);
+if (n < 0 || n >= SW_TABS_.length) return;
+swipeGo_(SW_TABS_[n], dx < 0 ? -1 : 1);
+}, { passive: true });
+})();
+/* === END: SWIPE NAV — TABS + SUB-SCREENS === */
 const MO_TABS_ = [['story','Story'],['values','Values'],['team','Team'],['voices','Voices'],['gallery','Gallery'],['rules','Policies']];
 let moTab_ = 'story', moQ_ = { age:'', goal:'' }, moGalLoaded_ = false;
 
@@ -9576,7 +9660,7 @@ return '<div class="mo-sec" style="margin-top:6px">Quick facts</div><div class="
 + '<details class="mo-det"><summary>Attendance &amp; Registration</summary><ul><li>Academy players are automatically expected to attend.</li><li>Notify by 2:00 PM Thursday or 10:00 PM Friday for Saturday.</li><li>Registration is required at least 2 hours before sessions.</li><li>Maximum 2 walk-ins per calendar month; the 3rd onward is charged at 1.5×.</li></ul></details>'
 + '<details class="mo-det"><summary>Payment</summary><ul><li>Payment must be completed within 12 hours after the session ends.</li><li>Still unpaid by 5:00 PM the following day: flat ₱100 overdue penalty.</li></ul></details>'
 + '<details class="mo-det"><summary>Packages &amp; Cancellations</summary><ul><li>Packages are non-transferable and non-refundable.</li><li>Weather cancellation within the first 45 minutes: session is not deducted.</li><li>If training runs more than 45 minutes, it counts as completed.</li></ul></details>'
-+ '<p class="mo-note" style="text-align:center;margin-top:12px">Questions? <a href="#" onclick="moChat_();return false" style="color:var(--royal);font-weight:800;text-decoration:none">Ask Admin JA →</a></p>';
++ '<p class="mo-note" style="text-align:center;margin-top:12px">Questions? <a href="#" onclick="moChat_();return false" style="color:var(--royal);font-weight:800;text-decoration:none">Ask Admin →</a></p>';
 }
 
 /* ---- shell ---- */
@@ -9600,11 +9684,19 @@ loadGallery_().then(function () { moGalLoaded_ = lbGalleryItems.length > 0; });
 }
 function moSet_(k) { moTab_ = k; moDraw_(); }
 
+/* === START: LOGO MIRROR EDIT === */
+// Isang source lang: ang hero logo (#heroLogoImg). Palitan lang doon, susunod na ang card.
+function moLogoSrc_() {
+var h = document.getElementById('heroLogoImg');
+return (h && h.getAttribute('src')) || '/logo-512.png';
+}
+/* === END: LOGO MIRROR EDIT === */
+
 function moRender_() {
 const el = document.getElementById('more');
 if (!el) return;
 el.innerHTML = ''
-+ '<div class="mo-hero"><div class="mo-id"><img src="/logo-256.png" alt="Livity logo" width="76" height="76"><div><h2>LIVITY</h2><span>Training &amp; Football Academy</span></div></div>'
++ '<div class="mo-hero"><div class="mo-id"><img src="' + moLogoSrc_() + '" alt="Livity logo" width="76" height="76"><div><h2>LIVITY</h2><span>Training &amp; Football Academy</span></div></div>'
 + '<div class="mo-stats"><div><b id="moStProg">0</b><small>Programs</small></div><div><b id="moStDays">0</b><small>Days / week</small></div><div><b id="moStVen">0</b><small>Venues</small></div></div>'
 + '<div class="mo-acts"><button type="button" onclick="moShare_()">Share</button><a href="https://wa.me/639762675397" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:livityacademy22@gmail.com">Email</a></div></div>'
 + '<div class="mo-tabs" id="moTabs">' + MO_TABS_.map(function (t) { return '<button type="button" data-k="' + t[0] + '" onclick="moSet_(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>'
