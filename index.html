@@ -517,6 +517,39 @@ font-size:13px;
 color:var(--text);
 padding:10px 0;
 }
+/* === START: RATE US — APPLE-STYLE REDESIGN === */
+#rateBackdrop{background:rgba(0,0,0,.32);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3)}
+#rateModal{width:min(320px,84vw);padding:26px 18px 12px;border-radius:32px;background:rgba(255,255,255,.86);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);box-shadow:0 40px 90px rgba(0,0,0,.32),0 0 0 .5px rgba(0,0,0,.06)}
+.ra-icon{width:68px;height:68px;margin:0 auto 14px;border-radius:16px;background:#171714;display:grid;place-items:center;box-shadow:0 8px 20px rgba(0,0,0,.25),inset 0 0 0 .5px rgba(255,255,255,.12)}
+.ra-icon img{width:46px;height:46px;object-fit:contain}
+.ra-title{font-size:20px;font-weight:700;letter-spacing:-.4px;text-align:center;color:#1c1c1e;margin:0 0 4px}
+.ra-sub{font-size:13.5px;line-height:1.4;text-align:center;color:#8e8e93;margin:0 0 18px}
+.ra-faces{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ra-face{border:0;border-radius:20px;background:rgba(118,118,128,.12);padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;color:#1c1c1e;transition:background .25s ease,box-shadow .25s ease,transform .38s cubic-bezier(.34,1.56,.64,1)}
+.ra-face span{font-size:36px;line-height:1;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.ra-face b{font-size:12px;font-weight:600;color:#6e6e73}
+.ra-face.sel span{transform:scale(1.18)}
+.ra-face.good.sel{background:#e3f8e9;box-shadow:inset 0 0 0 2px #34C759}
+.ra-face.good.sel b{color:#1f7a3a}
+.ra-face.bad.sel{background:#ffe9e7;box-shadow:inset 0 0 0 2px #FF453A}
+.ra-face.bad.sel b{color:#c4261d}
+.ra-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.32,.72,0,1)}
+.ra-more.show{grid-template-rows:1fr}
+.ra-more>div{overflow:hidden;min-height:0;padding:0 2px 2px}
+.ra-text{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;background:rgba(118,118,128,.12);padding:12px 14px;font:inherit;font-size:16px;color:#1c1c1e;resize:none;min-height:76px;outline:none}
+.ra-text:focus{box-shadow:0 0 0 2px rgba(28,104,212,.45)}
+.ra-actions{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.ra-send{width:100%;border:0;border-radius:14px;padding:15px;font-size:16px;font-weight:600;background:var(--royal);color:#fff;cursor:pointer;transition:opacity .2s ease,transform .38s cubic-bezier(.34,1.56,.64,1)}
+.ra-send:disabled{opacity:.35;cursor:default;pointer-events:none}
+.ra-later{border:0;background:none;padding:13px;font-size:16px;font-weight:500;color:var(--royal);cursor:pointer}
+.ra-done{text-align:center;padding:6px 0 6px}
+.ra-check{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;background:#34C759;display:grid;place-items:center;animation:raPop .5s cubic-bezier(.34,1.56,.64,1)}
+.ra-check svg{width:34px;height:34px;display:block}
+.ra-check path{stroke-dasharray:24;stroke-dashoffset:24;animation:raDraw .4s .25s ease forwards}
+@keyframes raPop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes raDraw{to{stroke-dashoffset:0}}
+/* === END: RATE US — APPLE-STYLE REDESIGN === */
+
 /* === END: RATE US WIDGET — STYLES === */
 
 /* === START: WHAT'S NEW MODAL — SCROLLABLE === */
@@ -2757,6 +2790,19 @@ body.pf-open .livity-ball { z-index:66; }
 .mo-det summary:after{content:"＋";color:var(--muted)}
 .mo-det[open] summary:after{content:"−"}
 .mo-det ul{margin:0;padding:0 16px 14px 32px;font-size:12.5px;line-height:1.65;color:#5e5a52}
+/* === START: HOME DRAWER — STYLES === */
+.brand-row{position:relative;z-index:2;display:flex;align-items:center;gap:12px}
+.brand-row .brand{margin:0}
+.menu-btn{width:42px;height:42px;padding:0;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,222,0,.4);color:var(--gold-light);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.menu-btn svg{width:22px;height:22px;display:block}
+.hd-drawer-backdrop{position:fixed;inset:0;z-index:71;background:rgba(11,47,100,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s ease}
+.hd-drawer-backdrop.open{opacity:1;pointer-events:auto}
+.hd-drawer{position:fixed;z-index:72;top:0;bottom:0;left:max(0px,calc(50% - 240px));width:min(340px,88vw);background:#f7f5ef;color:var(--text);border-radius:0 24px 24px 0;box-shadow:0 0 60px rgba(0,0,0,.4);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;transform:translateX(-105%);visibility:hidden;transition:transform .38s cubic-bezier(.34,1.2,.64,1),visibility 0s .38s}
+.hd-drawer.open{transform:none;visibility:visible;transition:transform .38s cubic-bezier(.34,1.2,.64,1)}
+.hd-drawer-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px}
+.hd-drawer-head b{font-size:13px;font-weight:800;letter-spacing:3px;color:var(--navy)}
+/* === END: HOME DRAWER — STYLES === */
+
 /* === START: HOME DASHBOARD — STYLES === */
 .hd-greet{margin:2px 2px 14px}
 .hd-greet h2{margin:0;font-family:Georgia,serif;font-size:26px;color:var(--text)}
@@ -2778,8 +2824,8 @@ body.pf-open .livity-ball { z-index:66; }
 .hd-or:before,.hd-or:after{content:"";flex:1;height:1px;background:var(--line)}
 .hd-new-wrap .hd-q{font-size:13px;font-weight:700;color:var(--text);margin:0 0 10px}
 /* bagong user: itago ang duplicate na Enroll button at CTA card (nasa Welcome block na ang landas) */
-#home.hd-new #homeEnrollBtn,
-#home.hd-new .cta{display:none}
+/* === START: HD-NEW HIDE RULE REMOVED (welcome block is now inside the drawer) === */
+/* === END: HD-NEW HIDE RULE REMOVED === */
 /* === END: HOME DASHBOARD — STYLES === */
 /* === END: MORE / LIVITY REDESIGN — STYLES === */
 </style>
@@ -2801,9 +2847,16 @@ body.pf-open .livity-ball { z-index:66; }
 </button>
 </div>
 
+<!-- === START: HAMBURGER + BRAND ROW === -->
+<div class="brand-row">
+<button type="button" class="menu-btn" onclick="hdDrawerOpen_()" aria-label="Open menu" aria-controls="hdDrawer">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+</button>
 <div class="brand">
 <span style="color:#ffffff">LIVITY</span>
 </div>
+</div>
+<!-- === END: HAMBURGER + BRAND ROW === -->
 
 <!-- === START: HERO LOGO === -->
 <div class="hero-logo">
@@ -2827,6 +2880,7 @@ Build skilled players, confident individuals,
 and a stronger community.
 </p>
 
+<!-- === START: HELP FAB REMOVED (moved to Profile > Support) === -->
 <div style="display:flex;align-items:center;gap:10px">
 
 <button
@@ -2836,15 +2890,8 @@ onclick="show('programs')"
 Explore Programs →
 </button>
 
-<button
-class="tutorial-fab"
-onclick="openTutorial()"
-aria-label="How to use the app"
->
-?
-</button>
-
 </div>
+<!-- === END: HELP FAB REMOVED === -->
 
 </div>
 
@@ -2861,26 +2908,8 @@ onclick="show('enroll')"
 ↗ Enroll a New Player
 </button>
 
-<div class="cta">
-
-<h2>
-Develop. Compete. Belong.
-</h2>
-
-<p>
-Explore the Livity pathway and find
-the training environment that matches
-your player's needs and goals.
-</p>
-
-<button
-class="btn primary"
-onclick="show('programs')"
->
-Find Your Program →
-</button>
-
-</div>
+<!-- === START: CTA MOVED TO HAMBURGER DRAWER === -->
+<!-- === END: CTA MOVED TO HAMBURGER DRAWER === -->
 
 </div>
 
@@ -3895,6 +3924,29 @@ Coach Sam — Advanced Assessment
 </div>
 <!-- === END: SCAN MODAL — MARKUP === -->
 
+<!-- === START: HOME DRAWER — MARKUP === -->
+<div class="hd-drawer-backdrop" id="hdBackdrop" onclick="hdDrawerClose_()"></div>
+<aside class="hd-drawer" id="hdDrawer" aria-label="Menu" aria-hidden="true">
+<div class="hd-drawer-head">
+<b>LIVITY</b>
+<button type="button" class="tutorial-sheet-close" onclick="hdDrawerClose_()" aria-label="Close menu">✕</button>
+</div>
+<div id="homeDash"></div>
+
+<!-- === START: DRAWER CTA === -->
+<div class="cta" style="margin-top:6px">
+<h2>Develop. Compete. Belong.</h2>
+<p>
+Explore the Livity pathway and find
+the training environment that matches
+your player's needs and goals.
+</p>
+<button class="btn primary" onclick="show('programs')">Find Your Program →</button>
+</div>
+<!-- === END: DRAWER CTA === -->
+</aside>
+<!-- === END: HOME DRAWER — MARKUP === -->
+
 <!-- BOTTOM NAV -->
 
 <nav class="bottom">
@@ -4706,13 +4758,12 @@ return `<button class="lb-item" data-lb="${key}" onclick="${action}"${extraStyle
 }
 
 function lbScreenMenu() {
+/* === START: BALL MENU TRIMMED — My Player / Schedule / Help moved to Profile & tabs === */
 return `<p class="lb-sub">What would you like to do?</p>`
-+ lbMenuItem_('player', '👤', 'My Player', 'Check profile & sessions', "lbGoTo('topupFind')")
-+ lbMenuItem_('enroll', '↗', 'Enroll', 'Register a new player', "lbGateThenEnroll_('')")
-+ lbMenuItem_('topup', '₱', 'Top Up', 'Add training sessions', "lbGoTo('topupFind')")
-+ lbMenuItem_('schedule', '◷', 'My Schedule', 'See upcoming training', "closeLivityBall();show('schedule')")
-+ lbMenuItem_('askadmin', '💬', 'Ask Admin', 'Get help', "lbGoTo('askadmin')")
-+ lbMenuItem_('help', '?', 'How to use Livity', 'Guides & walkthroughs', "closeLivityBall();openTutorial()", 'margin-top:6px');
++ lbMenuItem_('enroll', pfIco_('edit', 20), 'Enroll', 'Register a new player', "lbGateThenEnroll_('')")
++ lbMenuItem_('topup', pfIco_('card', 20), 'Top Up', 'Add training sessions', "lbGoTo('topupFind')")
++ lbMenuItem_('askadmin', pfIco_('chat', 20), 'Ask Admin', 'Get help', "lbGoTo('askadmin')");
+/* === END: BALL MENU TRIMMED === */
 }
 /* === END: ANYTIME LIVITY — ASSISTANT MENU === */
 
@@ -5351,7 +5402,11 @@ const balanceHtml = lbPayments.balanceDue > 0
 : `<div class="panel" style="margin:0 0 14px;text-align:center"><p class="lb-text" style="margin:0;color:var(--muted)">No balance due — you're all caught up.</p></div>`;
 
 if (lbPayments.payments.length === 0) {
-return back + `<h5 class="lb-step-title">Payments</h5>` + (lbPayments.balanceDue > 0 ? balanceHtml : '') + `<div class="panel">${lbEmptyState_('🧾', 'No payment history yet', 'Your payments will appear here after you enroll or top up.', '')}</div>`;
+/* === START: PAYMENTS — REMOVE DUPLICATE TITLE (EMPTY) === */
+return back + (lbPayments.balanceDue > 0 ? balanceHtml : '') +
+/* === END: PAYMENTS — REMOVE DUPLICATE TITLE (EMPTY) === */ /* === START: PAYMENTS EMPTY — NO ICON EDIT === */
+`<div class="panel">${lbEmptyState_('', 'No payment history yet', 'Your payments will appear here after you enroll or top up.', '')}</div>`
+/* === END: PAYMENTS EMPTY — NO ICON EDIT === */;
 }
 
 const rows = lbPayments.payments.map(function (p) {
@@ -5366,7 +5421,9 @@ return `
 `;
 }).join('');
 
-return back + `<h5 class="lb-step-title">Payments</h5>` + lbPaymentHeroHtml_() + lbPayDuePanelsHtml_() + (lbPayments.payments.some(function (p) { return p.status === 'Submitted'; }) ? ctxHelp_('payment') : '') + balanceHtml + `<div class="panel" style="padding:0 16px">${rows}</div>`;
+/* === START: PAYMENTS — REMOVE DUPLICATE TITLE === */
+return back + lbPaymentHeroHtml_() +
+/* === END: PAYMENTS — REMOVE DUPLICATE TITLE === */ lbPayDuePanelsHtml_() + (lbPayments.payments.some(function (p) { return p.status === 'Submitted'; }) ? ctxHelp_('payment') : '') + balanceHtml + `<div class="panel" style="padding:0 16px">${rows}</div>`;
 }
 /* === END: PAYMENTS & BALANCE — SCREEN === */
 
@@ -5445,7 +5502,7 @@ return `
 <h5 class="lb-step-title">Your Players</h5>
 ${opts}
 <button class="lb-item" onclick="lbOpenAddChild_()">
-<span class="lb-ico">＋</span> Add Player
+<span class="lb-ico">${pfIco_('plus', 20)}</span> Add Player
 </button>
 `;
 }
@@ -6101,7 +6158,7 @@ ${lbLoadingHtml_('Loading conversation…')}
 <button class="chat-send-btn" onclick="lbSendChatMessage_()">Send</button>
 </div>
 <p class="lb-text" style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">
-Prefer WhatsApp? <a href="https://wa.me/639762675397" target="_blank" rel="noopener" style="color:var(--royal);font-weight:700;text-decoration:none">Message Admin JA directly →</a>
+Prefer WhatsApp? <a href="https://wa.me/639762675397" target="_blank" rel="noopener" style="color:var(--royal);font-weight:700;text-decoration:none">Message Admin directly →</a>
 </p>
 `;
 }
@@ -6121,7 +6178,7 @@ function lbRenderChatMessages_() {
 const box = document.getElementById('chatMessages');
 if (!box) return;
 if (lbChatMessages.length === 0) {
-box.innerHTML = `<div class="chat-empty"><b style="display:block;font-size:13px;color:var(--text);margin-bottom:4px">No messages yet.</b>Ask Admin JA anything about training, payment, or schedule.</div>`;
+box.innerHTML = `<div class="chat-empty"><b style="display:block;font-size:13px;color:var(--text);margin-bottom:4px">No messages yet.</b>Ask Admin anything about training, payment, or schedule.</div>`;
 return;
 }
 box.innerHTML = lbChatMessages.map(function (m) {
@@ -6731,7 +6788,72 @@ const r = await doFetch('savePhoto', { playerId: p.playerId, contact: p.whatsapp
 p.photoUrl = r.photoUrl;
 } catch (e) { /* nasa device pa rin ang photo kahit mag-fail */ }
 }
+/* === START: ICON CONSISTENCY — EXTRA ICONS + HELPERS === */
+PF_ICO.search  = '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>';
+PF_ICO.edit    = '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>';
+PF_ICO.compass = '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>';
+PF_ICO.phone   = '<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/>';
+PF_ICO.ball    = '<circle cx="12" cy="12" r="9"/><path d="M12 8l3.5 2.5-1.3 4H9.8l-1.3-4z"/><path d="M12 3v5M15.5 10.5L20 9M14.2 14.5l2.8 3.5M9.8 14.5L7 18M8.5 10.5L4 9"/>';
+PF_ICO.target  = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>';
+PF_ICO.bolt    = '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>';
+PF_ICO.users   = '<path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>';
+PF_ICO.chat    = PF_ICO.chat  || '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>';
+PF_ICO.spark   = PF_ICO.spark || '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15v4M17 17h4"/>';
+
+/** Empty-state icon: tinatanggap ang lumang glyph at ginagawang SVG; walang icon = walang blank na espasyo. */
+const EMPTY_ICON_MAP_ = { '◷':'clock', '🔎':'search', '🧾':'card' };
+function lbEmptyIcon_(icon) {
+  if (!icon) return '';
+  var name = EMPTY_ICON_MAP_[icon] || (PF_ICO[icon] ? icon : '');
+  var inner = name ? pfIco_(name, 32) : icon;
+  return '<div aria-hidden="true" style="font-size:30px;margin-bottom:8px;color:var(--muted);display:grid;place-items:center">' + inner + '</div>';
+}
+
+/** Help sheet: icon bawat task key. */
+const TUT_ICON_MAP_ = { register:'edit', find:'search', schedule:'clock', remaining:'ticket', topup:'card', payments:'card', admin:'chat', journey:'compass', app:'phone' };
+function tutIco_(t, size) { return pfIco_(TUT_ICON_MAP_[t.key] || 'help', size || 20); }
+
+/** Programs tab: palitan ang mga glyph (⚽ ◎ ϟ ♙) ng SVG, ayon sa pagkakasunod ng cards. */
+(function () {
+  var names = ['ball', 'target', 'bolt', 'users'];
+  document.querySelectorAll('#programs .program .ico').forEach(function (el, i) {
+    if (names[i]) el.innerHTML = pfIco_(names[i], 22);
+  });
+})();
+/* === END: ICON CONSISTENCY — EXTRA ICONS + HELPERS === */
+
 /* === END: PROFILE PHOTO + MONO ICONS — LOGIC === */
+
+/* === START: PROFILE SUPPORT SECTION — HELPERS === */
+PF_ICO.chat  = '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>';
+PF_ICO.help  = '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17v.01"/>';
+PF_ICO.star  = '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>';
+PF_ICO.share = '<path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>';
+PF_ICO.spark = '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15v4M17 17h4"/>';
+
+function pfSupportRow_(ico, title, sub, action) {
+  return '<button type="button" class="lb-pkg" onclick="' + action + '">'
+    + '<b style="display:flex;align-items:center;gap:10px">' + pfIco_(ico, 20)
+    + '<span><span style="display:block;font-size:13px">' + title + '</span>'
+    + (sub ? '<span style="display:block;font-size:11px;font-weight:600;color:var(--muted)">' + sub + '</span>' : '')
+    + '</span></b><span>›</span></button>';
+}
+
+function pfWhatsNew_() {
+  if (lbVersion_) verOpen_();
+  else appToast_('Nothing new to show yet');
+}
+
+function pfSupportHtml_() {
+  var ver = lbVersion_ ? 'v' + lbEscapeHtml_(lbVersion_.version) : '';
+  return '<div class="mo-sec" style="margin-top:18px">Support</div>'
+    + pfSupportRow_('chat',  'Ask Admin',    'Chat with Admin JA',      "lbGoTo('askadmin')")
+    + pfSupportRow_('help',  'Help &amp; Tour', 'Guides and walkthroughs', "closeLivityBall();openTutorial()")
+    + pfSupportRow_('star',  'Rate Us',      'Tell us how we\'re doing', "openRateModal()")
+    + pfSupportRow_('share', 'Share App',    'Send Livity to a friend',  "moShare_()")
+    + pfSupportRow_('spark', 'What\'s New',  ver,                        "pfWhatsNew_()");
+}
+/* === END: PROFILE SUPPORT SECTION — HELPERS === */
 
 /* === START: PROFILE LIGHT CARD + PERSIST + REFLECT — LOGIC === */
 const PF_SNAP_KEY = 'livity_pfsnap_v1'; // { pid, players[] } — buong player snapshot, sa device lang
@@ -6897,13 +7019,14 @@ ${nextHtml}
 <span class="lb-ico">${pfIco_('plus', 20)}</span> Add Another Program
 </button>
 <button type="button" class="lb-pkg" disabled style="opacity:.55;cursor:default;pointer-events:none">
-<b>🧠&nbsp; Bytesense Score</b>
+<b style="display:flex;align-items:center;gap:10px">${pfIco_('spark', 20)} Bytesense Score</b>
 <span class="pay-badge pending" style="margin:0">Coming Soon</span>
 </button>
 <button class="lb-item" onclick="lbOpenAddChild_()">
 <span class="lb-ico">${pfIco_('user', 20)}</span> Add Another Player
 </button>
 ${multi ? `<button class="lb-item" onclick="lbBody().innerHTML=lbRenderTopupPlayerList_()"><span class="lb-ico">${pfIco_('swap', 20)}</span> Other players</button>` : ''}
+${/* === START: SUPPORT SECTION CALL === */ pfSupportHtml_() /* === END: SUPPORT SECTION CALL === */}
 ${lbProfileMode ? `<button class="lb-item" onclick="pfSwitch_()"><span class="lb-ico">${pfIco_('swap', 20)}</span><span><b style="display:block;font-size:13px">Not you? Switch player</b><span style="font-size:11px;color:var(--muted)">Forget this device</span></span></button>` : ''}
 `;
 }
@@ -7797,30 +7920,53 @@ document.getElementById('rateBackdrop').classList.remove('open');
 unlockBodyScroll_();
 }
 
+/* === START: RATE US — APPLE-STYLE FORM === */
 function rateModalForm() {
 return `
-<h4>How was your experience?</h4>
-<div class="rate-faces">
-<button class="rate-face ${rateSelected === 'good' ? 'sel-good' : ''}" onclick="pickRate('good')">🙂</button>
-<button class="rate-face ${rateSelected === 'bad' ? 'sel-bad' : ''}" onclick="pickRate('bad')">🙁</button>
+<div class="ra-icon"><img src="${moLogoSrc_()}" alt="" width="46" height="46"></div>
+<div class="ra-title">Enjoying Livity?</div>
+<div class="ra-sub">Tap a face to tell us how your experience has been.</div>
+<div class="ra-faces">
+<button type="button" class="ra-face good ${rateSelected === 'good' ? 'sel' : ''}" data-r="good" onclick="pickRate('good')"><span>🙂</span><b>Loving it</b></button>
+<button type="button" class="ra-face bad ${rateSelected === 'bad' ? 'sel' : ''}" data-r="bad" onclick="pickRate('bad')"><span>🙁</span><b>Needs work</b></button>
 </div>
-<textarea class="rate-textarea ${rateSelected ? 'show' : ''}" id="rateDetails" placeholder="Please provide details (optional)"></textarea>
-<button class="btn primary" onclick="submitRate()" ${rateSelected ? '' : 'disabled style="opacity:.5;cursor:not-allowed"'}>Submit Feedback →</button>
+<div class="ra-more ${rateSelected ? 'show' : ''}" id="raMore"><div><textarea class="ra-text" id="rateDetails" rows="3" placeholder="Tell us more (optional)"></textarea></div></div>
+<div class="ra-actions">
+<button type="button" class="ra-send" id="raSend" onclick="submitRate()" ${rateSelected ? '' : 'disabled'}>Send Feedback</button>
+<button type="button" class="ra-later" onclick="closeRateModal()">Not now</button>
+</div>
 `;
 }
+/* === END: RATE US — APPLE-STYLE FORM === */
 
+/* === START: RATE US — PICK (IN-PLACE, NO RE-RENDER) === */
 function pickRate(type) {
 rateSelected = type;
-document.getElementById('rateModalBody').innerHTML = rateModalForm();
+document.querySelectorAll('#rateModalBody .ra-face').forEach(function (b) {
+b.classList.toggle('sel', b.dataset.r === type);
+});
+var more = document.getElementById('raMore');
+if (more) more.classList.add('show');
+var ta = document.getElementById('rateDetails');
+if (ta) ta.placeholder = type === 'good' ? 'What do you love about Livity? (optional)' : 'What can we improve? (optional)';
+var send = document.getElementById('raSend');
+if (send) send.disabled = false;
 }
+/* === END: RATE US — PICK === */
 
+/* === START: RATE US — APPLE-STYLE SUCCESS === */
 function submitRate() {
 if (!rateSelected) return;
 document.getElementById('rateModalBody').innerHTML = `
-<p class="rate-thanks">Thank you for your feedback! 💛</p>
-<button class="btn primary" onclick="closeRateModal()">Close</button>
+<div class="ra-done">
+<div class="ra-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+<div class="ra-title">Thank you!</div>
+<div class="ra-sub" style="margin-bottom:16px">Your feedback helps us make Livity better.</div>
+<button type="button" class="ra-send" onclick="closeRateModal()">Done</button>
+</div>
 `;
 }
+/* === END: RATE US — APPLE-STYLE SUCCESS === */
 /* === END: RATE US WIDGET — LOGIC === */
 
 /* === START: APP TUTORIAL — HOW TO USE (ROLE-BASED) v2 === */
@@ -7980,7 +8126,7 @@ function renderTutorialHome_() {
 document.getElementById('tutorialSheetTitle').textContent = 'How can we help?';
 
 const rows = TUTORIAL_TASKS.map(function (t) {
-return `<button type="button" class="lb-pkg" onclick="renderTutorialTask_('${t.key}')"><b>${t.icon}&nbsp; ${t.label}</b><span>›</span></button>`;
+return `<button type="button" class="lb-pkg" onclick="renderTutorialTask_('${t.key}')"><b style="display:flex;align-items:center;gap:10px">${tutIco_(t)} ${t.label}</b><span>›</span></button>`;
 }).join('');
 
 document.getElementById('tutorialBody').innerHTML = `
@@ -8047,7 +8193,7 @@ return `<div class="panel" style="margin-bottom:8px;padding:14px;display:flex;ga
 document.getElementById('tutorialBody').innerHTML = `
 <button class="back" onclick="renderTutorialHome_()">← Back</button>
 <div class="tutorial-intro">
-<div class="tutorial-intro-ico">${t.icon}</div>
+<div class="tutorial-intro-ico" style="color:var(--navy)">${tutIco_(t, 28)}</div>
 <h4>${t.title}</h4>
 <p>${t.sub}</p>
 </div>
@@ -9059,7 +9205,7 @@ return `<div role="status" aria-live="polite" style="text-align:center;padding:2
 /* === START: EMPTY STATES === */
 function lbEmptyState_(icon, title, text, ctaHtml) {
 return `<div style="text-align:center;padding:18px 8px">
-<div aria-hidden="true" style="font-size:30px;margin-bottom:8px">${icon}</div>
+${lbEmptyIcon_(icon)}
 <div style="font-size:12px;font-weight:850;letter-spacing:1.2px;text-transform:uppercase;color:var(--text)">${title}</div>
 ${text ? `<p class="lb-text" style="margin:6px auto 0;max-width:260px">${text}</p>` : ''}
 ${ctaHtml ? `<div style="margin-top:14px">${ctaHtml}</div>` : ''}
@@ -9747,6 +9893,39 @@ const i = MO_TABS_.findIndex(function (a) { return a[0] === moTab_; }) + (dx < 0
 if (i >= 0 && i < MO_TABS_.length) moSet_(MO_TABS_[i][0]);
 }, { passive:true });
 })();
+/* === START: HOME DRAWER — LOGIC === */
+function hdDrawerOpen_() {
+  hdRender_();
+  document.getElementById('hdDrawer').classList.add('open');
+  document.getElementById('hdDrawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('hdBackdrop').classList.add('open');
+}
+
+function hdDrawerClose_() {
+  var d = document.getElementById('hdDrawer');
+  if (!d) return;
+  d.classList.remove('open');
+  d.setAttribute('aria-hidden', 'true');
+  document.getElementById('hdBackdrop').classList.remove('open');
+}
+
+(function () {
+  var d = document.getElementById('hdDrawer'), b = document.getElementById('hdBackdrop');
+  if (!d || !b) return;
+  // kahit anong button/card na pinindot sa loob = isasara ang drawer (pagkatapos tumakbo ang sariling action nito)
+  d.addEventListener('click', function (e) {
+    if (e.target.closest('[onclick]')) hdDrawerClose_();
+  });
+  // hindi dapat mag-trigger ng tab-swipe habang bukas ang drawer
+  [d, b].forEach(function (el) {
+    ['touchstart', 'touchend'].forEach(function (t) {
+      el.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true });
+    });
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hdDrawerClose_(); });
+})();
+/* === END: HOME DRAWER — LOGIC === */
+
 /* === START: HOME DASHBOARD — LOGIC === */
 PF_ICO.grid = '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>';
 
@@ -9755,7 +9934,9 @@ function hdPlayer_() { try { return pfSnapPlayer_(); } catch (e) { return null; 
 function hdGreeting_(p) {
   var h = new Date().getHours();
   var g = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
-  var n = (p && p.guardianName) ? String(p.guardianName).trim().split(/\s+/)[0] : '';
+  /* === START: GREETING NAME EDIT — same as Profile tab (player fullName) === */
+var n = (p && p.fullName) ? String(p.fullName).trim().split(/\s+/)[0] : '';
+/* === END: GREETING NAME EDIT === */
   return g + (n ? ', ' + lbEscapeHtml_(n) : '');
 }
 
