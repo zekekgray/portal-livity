@@ -4127,7 +4127,7 @@ const CONFIG = (function () {
 
   /* Isang URL kada environment. TODO: maglagay ng hiwalay na TEST deployment/Sheet sa staging at development. */
   var API_URLS = {
-    production:  'https://script.google.com/macros/s/AKfycbz_A56UhJySn5L8tMUEF6ZIKBuAp2v4McLkjqLfZWKXdOwQxPAEq5NZi9TQyS0TfavuMg/exec',
+    production:  'https://script.google.com/macros/s/AKfycbz2gi1CXnf8yMhxQ0I7TGVRWS7NJATdpQK-YHsm_z0Afo7ZCKUjYM-zHkjI9ykJ08_40w/exec',
     staging:     '',
     development: ''
   };
@@ -6713,6 +6713,44 @@ function lbFindLockedHtml_(ms) {
 }
 /* === END: FIND PLAYER — INPUT CHECK, THROTTLE, STATE HTML === */
 
+/** GET na may timeout at controlled retry. Hindi nag-re-retry kapag offline. */
+async function lbFetchJson_(url, o) {
+  o = o || {};
+  const timeoutMs = o.timeoutMs || 9000;                 // bawat attempt, hindi total
+  const retries = o.retries == null ? 2 : o.retries;     // 2 retries = 3 attempts
+  const waits = o.waits || [400, 900];                   // pagitan ng attempts
+  let lastErr = null;
+  for (let a = 0; a <= retries; a++) {
+    const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs) : null;
+    let temporary = true;
+    try {
+      const res = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
+      if (!res.ok) throw new Error('Server responded with status ' + res.status);
+      const json = await res.json();
+      // Sagot ng server na "hindi" (hal. Missing query) = hindi pansamantala, huwag nang ulitin.
+      // Walang success field (hal. status ok) o success:true = ibalik.
+      if (json && json.success === false && !/busy|try again|timeout|temporar/i.test(String(json.error || ''))) return json;
+      if (json && json.success === false) throw new Error(json.error);
+      return json;
+    } catch (e) {
+      if (e && e.name === 'AbortError') lastErr = new Error('Server is taking too long. Please try again.');
+      else if (e instanceof SyntaxError) lastErr = new Error('Server returned an unexpected response.');
+      else lastErr = e;
+      if (!navigator.onLine) break;                       // offline: walang saysay ang retry
+      const m = String((lastErr && lastErr.message) || '');
+      const code = (/status (\d+)/.exec(m) || [])[1];
+      if (code && Number(code) < 500 && Number(code) !== 429 && Number(code) !== 408) temporary = false;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    if (!temporary || a >= retries) break;
+    const base = waits[Math.min(a, waits.length - 1)];
+    await new Promise(function (r) { setTimeout(r, base + Math.round(Math.random() * 120)); });
+  }
+  throw lastErr || new Error('Could not reach the server.');
+}
+
 async function lbSubmitTopupFind_() {
 const input = document.getElementById('topupQuery');
 const query = input ? input.value.trim() : '';
@@ -6733,8 +6771,22 @@ if (prevEmpty_) prevEmpty_.innerHTML = lbLoadingHtml_('Finding your player…');
 if (err) err.textContent = '';
 
 try {
-const res = await fetch(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(query));
-const json = await res.json();
+const slowT_ = setTimeout(function () {
+const s_ = document.getElementById('lbFindEmpty');
+if (s_ && s_.querySelector('.lb-spinner')) s_.innerHTML = lbLoadingHtml_('Still looking…', 'The server is a bit slow. Hang tight.');
+}, 5000);
+const fullP_ = function () { return lbFetchJson_(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(query), { timeoutMs: 10000 }); }; // lazy: hindi na sabay sa lite
+let lite_ = null;
+try { lite_ = await lbFetchJson_(LIVITY_API_URL + '?action=findPlayerLite&query=' + encodeURIComponent(query), { timeoutMs: 8000 }); }
+catch (e) { lite_ = null; }
+clearTimeout(slowT_);
+let json;
+if (lite_ && lite_.success && lite_.players && lite_.players.length === 1) {
+lbFindProgressive_(lite_.players[0], fullP_); // ipakita agad, punuin habang naglo-load
+return;
+}
+if (lite_ && lite_.success && (lite_.needsPlayerId || (lite_.players && lite_.players.length === 0))) json = lite_;
+else json = await fullP_(); // lite pumalya: isang full request lang
 if (!json.success) throw new Error(json.error || 'Search failed.');
 if (json.needsPlayerId) {
 const npSlot_ = document.getElementById('lbFindEmpty');
@@ -6991,7 +7043,7 @@ function lbSessionsHubHtml_(rels) {
   if (!core.length) return (privNote || EMPTY.html('sessions')) + ctxHelp_('sessions');
 
   const blocks = core.map(function (r, i) {
-    const b = lbSessionsBlockCore_(r, { dark:false, cta:true, label: lbShortProgramName_(r.programName) });
+    const b = lbSessionsBlockCore_(r, { dark:false, cta:true, label: core.length > 1 ? lbShortProgramName_(r.programName) : '' });
     return (i > 0 ? '<div style="border-top:1px solid var(--line);margin-top:14px"></div>' : '') + b;
   }).join('');
   return blocks + privNote + ctxHelp_('sessions');
@@ -7777,7 +7829,7 @@ lbChatBadge_();
 
 window.addEventListener('online', function () { lbChatFlush_(); if (document.getElementById('chatMessages')) lbLoadChatMessages_(); });
 window.addEventListener('offline', lbChatPaint_);
-setInterval(lbChatPoll_, 60000);
+setInterval(function () { lbChatPoll_(); }, 60000);
 document.addEventListener('visibilitychange', function () { if (!document.hidden) lbChatPoll_(); });
 document.addEventListener('DOMContentLoaded', function () { setTimeout(lbChatPoll_, 2500); setTimeout(lbChatFlush_, 3000); });
 /* === END: ASK ADMIN — CONVERSATION LIFECYCLE === */
@@ -8632,8 +8684,7 @@ const saved = pfLoad_() || {};
 const q = (snap && snap.pid) || saved.q;
 if (!q) return;
 try {
-const res = await fetch(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(q));
-const json = await res.json();
+const json = await lbFetchJson_(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(q), { timeoutMs: 10000, retries: 1 });
 if (!json.success || !json.players || !json.players.length) return;
 const pid = (lbTopup.selected && lbTopup.selected.playerId) || (snap && snap.pid) || saved.pid;
 const sel = json.players.find(function (p) { return p.playerId === pid; }) || json.players[0];
@@ -8745,6 +8796,22 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
 pfReflect_();
 pfRefresh_();
 });
+/* === START: PROFILE REFRESH — SINGLE-FLIGHT + QUIET "UPDATING" === */
+const pfRefreshRaw_ = pfRefresh_;
+let pfRefreshP_ = null;
+pfRefresh_ = function () {
+  if (pfRefreshP_) return pfRefreshP_;               // may tumatakbo na, sumabay na lang
+  const btn = document.getElementById('lbRefreshBtn');
+  const own = !!(btn && !btn.classList.contains('spin'));
+  if (own) btn.classList.add('spin');                // ↻ umiikot = "Updating…" (tahimik)
+  pfRefreshP_ = pfRefreshRaw_().finally(function () {
+    pfRefreshP_ = null;
+    const b = document.getElementById('lbRefreshBtn');
+    if (own && b) b.classList.remove('spin');
+  });
+  return pfRefreshP_;
+};
+/* === END: PROFILE REFRESH === */
 /* === END: PROFILE LIGHT CARD + PERSIST + REFLECT — LOGIC === */
 /* === START: QR PASS + LIVE SCAN — LOGIC === */
 const PF_QR_BASE = CONFIG.branding.portalUrl;
@@ -9406,6 +9473,197 @@ lbRenderPlayerHub_ = function () {
   return h.replace('<div class="mo-sec" style="margin-top:4px">Training</div>', prog + '<div class="mo-sec">Training</div>');
 };
 /* === END: YOUR PROGRESS — NASA PROFILE NA === */
+
+/* === START: FIND PLAYER — PROGRESSIVE LOAD (identity muna, details kasunod) === */
+function lbHubRepaint_() {
+  if (!document.getElementById('lbHubDue') || appTyping_()) return false;
+  const b = lbBody(), y = b.scrollTop;
+  b.innerHTML = lbRenderPlayerHub_();
+  b.scrollTop = y;
+  return true;
+}
+
+/** Identity lang ang meron pa: ipakita agad ang hub, tapos hintayin ang full data sa likod. */
+async function lbFindProgressive_(p, fullP) {
+  if (!document.getElementById('lbFindEmpty')) return; // umalis na sa screen
+  lbFindFailClear_();
+  navMarkKnown_();
+  p.relationships = []; p.packages = []; p._lite = true;
+  lbTopup.players = [p]; lbTopup.selected = p; lbTopup.query = p.playerId;
+  pfSave_({ q: p.playerId, pid: p.playerId });
+  lbBody().innerHTML = lbRenderPlayerHub_();
+  document.getElementById('lbTitle').textContent = p.fullName;
+  lbBody().scrollTop = 0;
+
+  const btn = document.getElementById('lbRefreshBtn');
+  if (btn) btn.classList.add('spin'); // ↻ umiikot = tahimik na "Updating…"
+  try {
+    appRefreshSchedule_();                        // priority 2
+    const json = await SEQ.add('fullLogin', 3, fullP); // priority 3: programs + QR (payments = priority 4, kusa nang sumusunod)
+    if (!json || !json.success || !json.players || !json.players.length) throw new Error((json && json.error) || 'Could not load details.');
+    const full = json.players.filter(function (x) { return x.playerId === p.playerId; })[0] || json.players[0];
+    if (lbTopup.selected === p) { lbTopup.players = json.players; lbTopup.selected = full; }
+    try { localStorage.setItem(PF_SNAP_KEY, JSON.stringify({ pid: full.playerId, players: json.players })); } catch (e) {}
+    pfReflect_();
+    lbHubRepaint_();
+  } catch (e) {
+    p._liteFail = true;
+    lbHubRepaint_();
+    TOAST.warn("Couldn't load all details", { action: { label: 'Retry', fn: lbFindFull_ } });
+  } finally {
+    const b2 = document.getElementById('lbRefreshBtn');
+    if (b2) b2.classList.remove('spin');
+  }
+}
+
+async function lbFindFull_() {
+  const p = lbTopup.selected;
+  if (!p) return;
+  p._liteFail = false;
+  lbHubRepaint_();
+  await pfRefresh_();
+  if (lbTopup.selected && lbTopup.selected._lite) { lbTopup.selected._liteFail = true; }
+  lbHubRepaint_();
+}
+
+/* Habang lite pa: loading placeholder (hindi "No sessions yet" / "NOT YET ACTIVE") */
+const lbSessionsHubBase_ = lbSessionsHubHtml_;
+lbSessionsHubHtml_ = function (rels) {
+  const p = lbTopup && lbTopup.selected;
+  if (p && p._lite) {
+    return p._liteFail
+      ? ERR.html({ what: "We couldn't load sessions.", retry: 'lbFindFull_()', compact: true, admin: false })
+      : lbLoadingHtml_('Loading sessions…');
+  }
+  return lbSessionsHubBase_(rels);
+};
+
+const lbAcctStateBase_ = lbAcctState_;
+lbAcctState_ = function (p) {
+  if (p && p._lite) return { cls: 'pending', label: p._liteFail ? 'DETAILS UNAVAILABLE' : 'LOADING…', msg: '' };
+  return lbAcctStateBase_(p);
+};
+/* === END: FIND PLAYER — PROGRESSIVE LOAD === */
+
+/* === START: PROFILE — SECTION ORGANIZATION (headings lang, walang tinanggal) === */
+const lbHubBase8_ = lbRenderPlayerHub_;
+lbRenderPlayerHub_ = function () {
+  return lbHubBase8_()
+    .replace('<button type="button" class="lb-pkg" onclick="pfShowQr_()">', '<div class="mo-sec">Manage</div><button type="button" class="lb-pkg" onclick="pfShowQr_()">')
+    .replace('<button class="lb-item" onclick="pfSwitch_()">', '<div class="mo-sec" style="margin-top:18px">Account</div><button class="lb-item" onclick="pfSwitch_()">');
+};
+/* === END: PROFILE — SECTION ORGANIZATION === */
+
+/* === START: STALE-CACHE-FIRST — WELCOME BACK + QUIET UPDATE === */
+let lbWelcome_ = '', lbSyncNote_ = '', lbSyncTimer_ = null;
+
+function lbSyncNoteSet_(t) {
+  lbSyncNote_ = t;
+  const el = document.getElementById('pfSyncNote');
+  if (el) el.textContent = t;
+  clearTimeout(lbSyncTimer_);
+  if (t === 'Updated just now') lbSyncTimer_ = setTimeout(function () { lbSyncNoteSet_(''); }, 3000);
+}
+
+/* Greeting sa ibabaw ng hub, galing sa cache. Laging nandiyan habang bukas ang profile, kaya hindi tumatalon ang layout kapag nag-repaint. */
+const lbHubBase9_ = lbRenderPlayerHub_;
+lbRenderPlayerHub_ = function () {
+  const h = lbHubBase9_();
+  if (!lbWelcome_) return h;
+  const g = '<div style="margin:0 2px 12px"><div style="font-size:17px;font-weight:850;color:var(--text)">Welcome back, ' + lbEscapeHtml_(lbWelcome_) + ' 👋</div>'
+    + '<div id="pfSyncNote" role="status" aria-live="polite" style="font-size:11px;font-weight:700;color:var(--muted);min-height:15px;margin-top:2px">' + lbEscapeHtml_(lbSyncNote_) + '</div></div>';
+  return h.replace('<div id="lbHubDue"></div>', g + '<div id="lbHubDue"></div>');
+};
+
+/* Pagbukas ng profile: kung may cache, ipakita agad + i-refresh ang schedule sa likod. */
+const lbRenderProfileEntryBase_ = lbRenderProfileEntry_;
+lbRenderProfileEntry_ = function () {
+  const sp = pfSnapPlayer_();
+  lbWelcome_ = sp ? String(sp.fullName || '').trim().split(/\s+/)[0] : '';
+  lbSyncNote_ = sp ? 'Updating…' : '';
+  lbRenderProfileEntryBase_.apply(this, arguments);
+  if (sp) appRefreshSchedule_(); // tahimik; walang error kapag pumalya
+};
+
+/* Status ng background refresh: tahimik. Kapag pumalya, "Showing saved info" lang. Hindi nalo-logout. */
+const pfRefreshBase2_ = pfRefresh_;
+pfRefresh_ = async function () {
+  if (lbWelcome_) lbSyncNoteSet_('Updating…');
+  const r = await pfRefreshBase2_.apply(this, arguments);
+  if (lbWelcome_) lbSyncNoteSet_(r === true ? 'Updated just now' : (r === false ? 'Showing saved info' : ''));
+  return r;
+};
+
+/* Isinara ang profile: linisin ang greeting state. */
+const closeLivityBallBase3_ = closeLivityBall;
+closeLivityBall = function () {
+  lbWelcome_ = ''; lbSyncNote_ = ''; clearTimeout(lbSyncTimer_);
+  return closeLivityBallBase3_.apply(this, arguments);
+};
+/* === END: STALE-CACHE-FIRST === */
+
+/* === START: REQUEST SEQUENCING — ISA-ISA, MAY PRIORITY === */
+const SEQ = (function () {
+  var q = [], running = false, keys = {}, n = 0;
+
+  function pump() {
+    if (running || !q.length) return;
+    q.sort(function (a, b) { return a.p - b.p || a.n - b.n; });
+    var t = q.shift(), freed = false, cap;
+    running = true;
+    function free() {
+      if (freed) return;
+      freed = true; clearTimeout(cap); running = false;
+      if (t.key && keys[t.key] === t) delete keys[t.key];
+      pump();
+    }
+    cap = setTimeout(free, t.cap); // hindi dapat ma-hang ang buong pila dahil sa isang request
+    var p;
+    try { p = Promise.resolve(t.fn()); } catch (e) { p = Promise.reject(e); }
+    p.then(function (v) { t.res(v); free(); }, function (e) { t.rej(e); free(); });
+  }
+
+  /** add(key, priority, fn): parehong key na nakapila/tumatakbo = isang request lang (isasabay ang caller sa resulta). */
+  function add(key, pri, fn, cap) {
+    if (key && keys[key]) return keys[key].promise;
+    var t = { key: key, p: pri, n: ++n, fn: fn, cap: cap || 25000 };
+    t.promise = new Promise(function (res, rej) { t.res = res; t.rej = rej; });
+    t.promise.catch(function () {});
+    if (key) keys[key] = t;
+    q.push(t); pump();
+    return t.promise;
+  }
+
+  return { add: add, has: function (k) { return !!keys[k]; }, size: function () { return q.length + (running ? 1 : 0); } };
+})();
+
+(function () {
+  function seq(name, key, pri) {
+    var base = window[name];
+    if (typeof base !== 'function') return;
+    window[name] = function () {
+      var self = this, args = arguments;
+      return SEQ.add(key, pri, function () { return base.apply(self, args); });
+    };
+  }
+  seq('loadSchedule', 'schedule', 2);
+  seq('appRefreshSchedule_', 'schedule', 2);
+  seq('lbHubDueLoad_', 'payments', 4);
+  seq('appRefreshPayments_', 'payments-bg', 4);
+  seq('loadPaymentInfo', 'paymentInfo', 5);
+  seq('loadPackages', 'packages', 5);
+  seq('loadGallery_', 'gallery', 5);
+  seq('loadVersion_', 'version', 5);
+  seq('lbChatPoll_', 'chatPoll', 5);
+
+  var pfBase = pfRefresh_;
+  pfRefresh_ = function () {
+    if (SEQ.has('fullLogin')) return Promise.resolve(null); // may full load na ng login, huwag nang doblehin
+    var self = this, args = arguments;
+    return SEQ.add('pfRefresh', 3, function () { return pfBase.apply(self, args); });
+  };
+})();
+/* === END: REQUEST SEQUENCING === */
 
 /* ---- submit + offline queue (fail-safe) ---- */
 function lbPayQueueGet_() { try { return JSON.parse(localStorage.getItem(PAY_QUEUE_KEY) || '[]'); } catch (e) { return []; } }
@@ -11892,7 +12150,7 @@ verPaint_();
 if (document.getElementById('verModal').classList.contains('open')) verOpen_(); // naka-bukas habang nag-load: i-update
 }
 
-document.addEventListener('DOMContentLoaded', loadVersion_);
+document.addEventListener('DOMContentLoaded', function () { loadVersion_(); });
 /* === END: VERSION CONTROL === */
 
 /* === START: AUTO REFRESH — focus / interval / manual ↻ === */
@@ -13405,4 +13663,3 @@ document.addEventListener('DOMContentLoaded', staffSync_);
 </script>
 </body>
 </html>
-
