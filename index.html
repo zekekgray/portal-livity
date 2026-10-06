@@ -9385,6 +9385,28 @@ lbRenderPlayerHub_ = function () {
 };
 /* === END: FAMILY — SWITCHER SA HUB === */
 
+/* === START: YOUR PROGRESS — NASA PROFILE NA === */
+const lbHubBase7_ = lbRenderPlayerHub_;
+lbRenderPlayerHub_ = function () {
+  const h = lbHubBase7_();
+  const p = lbTopup.selected;
+  if (!p) return h;
+  const counted = (p.relationships || []).filter(lbCounted_);
+  if (!counted.length) return h;
+  let left = 0, used = 0;
+  counted.forEach(function (r) {
+    const rem = Math.max(0, Number(r.remaining) || 0), tot = Number(r.total) || 0;
+    if (r.state === 'active') left += rem;
+    if (tot > 0) used += Math.max(0, tot - rem);
+  });
+  const rate = (p.attendanceRate != null && !isNaN(Number(p.attendanceRate))) ? Math.round(Number(p.attendanceRate)) + '%' : null;
+  const prog = '<div class="mo-sec" style="margin-top:4px">Your progress</div><div class="hd-prog" style="margin-bottom:10px">'
+    + '<div class="hd-stat"><b>' + left + '</b><span>Sessions left</span></div>'
+    + '<div class="hd-stat"><b>' + (rate || used) + '</b><span>' + (rate ? 'Attendance' : 'Sessions used') + '</span></div></div>';
+  return h.replace('<div class="mo-sec" style="margin-top:4px">Training</div>', prog + '<div class="mo-sec">Training</div>');
+};
+/* === END: YOUR PROGRESS — NASA PROFILE NA === */
+
 /* ---- submit + offline queue (fail-safe) ---- */
 function lbPayQueueGet_() { try { return JSON.parse(localStorage.getItem(PAY_QUEUE_KEY) || '[]'); } catch (e) { return []; } }
 function lbPayQueueSet_(a) { try { localStorage.setItem(PAY_QUEUE_KEY, JSON.stringify(a)); } catch (e) {} }
@@ -13258,7 +13280,7 @@ function hdRender_() {
   if (p && !rels.length) mine = '<div class="mo-sec">My training</div><div class="panel" style="margin:0 0 6px">' + EMPTY.html('programs', { title:'No programs yet', text:'Add a program to start training.', primary:{ label:'Add a program', go:'hdOpenAddProg_()' } }) + '</div>';
 
   el.innerHTML = '<div class="hd-greet"><h2>' + hdGreeting_(p) + '</h2>' + (p ? '<div class="pay-badge ' + lbAcctState_(p).cls + '">' + lbAcctState_(p).label + '</div>' : '<span>Here\'s your training at a glance.</span>') + '</div>'
-    + fmSwitcherHtml_() + nextHtml + quick + mine + prog + disc;
+        + fmSwitcherHtml_() + nextHtml + quick + mine + disc;
 }
 
 (function () {
@@ -13383,3 +13405,4 @@ document.addEventListener('DOMContentLoaded', staffSync_);
 </script>
 </body>
 </html>
+
