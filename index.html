@@ -4042,6 +4042,16 @@ Coach Sam — Advanced Assessment
 </div>
 <!-- === END: SCAN MODAL — MARKUP === -->
 
+<!-- === START: ADMIN CONSOLE — MARKUP === -->
+<div class="scan-modal" id="adminModal" role="dialog" aria-modal="true" aria-label="Admin console">
+<div class="scan-head">
+<b>Admin Console</b>
+<button type="button" class="scan-close" onclick="closeAdmin_()" aria-label="Close">✕</button>
+</div>
+<div class="scan-body" id="adminBody"></div>
+</div>
+<!-- === END: ADMIN CONSOLE — MARKUP === -->
+
 <!-- === START: HOME DRAWER — MARKUP === -->
 <div class="hd-drawer-backdrop" id="hdBackdrop" onclick="hdDrawerClose_()"></div>
 <aside class="hd-drawer" id="hdDrawer" aria-label="Menu" aria-hidden="true">
@@ -4057,6 +4067,7 @@ Coach Sam — Advanced Assessment
 <button type="button" class="lb-pkg" onclick="BUILD.check(true)"><b>Check for Updates</b><span>›</span></button>
 <button type="button" class="lb-pkg" onclick="pfWhatsNew_()"><b>What's New<span class="ver-dot" id="hdVerDot"></span></b><span>›</span></button>
 <button type="button" class="pf-photo-rm" id="staffEntryBtn" style="display:block;margin:18px auto 0" onclick="openScan_()">Staff sign-in</button>
+<button type="button" class="pf-photo-rm" id="adminEntryBtn" style="display:block;margin:10px auto 0" onclick="openAdmin_()">Admin console</button>
 <!-- === END: DRAWER SECONDARY MENU === -->
 </aside>
 <!-- === END: HOME DRAWER — MARKUP === -->
@@ -4539,6 +4550,7 @@ const ERR = (function () {
 /* Pinakataas muna ang order (ito ang isasara ng Esc / Back). Dito lang idadagdag ang bagong modal. */
 const MODAL = (function () {
   var L = [
+    { id:'adminModal',         label:'Admin console',     close:function () { closeAdmin_(); } },
     { id:'scanModal',          label:'Scan attendance',   close:function () { closeScan_(); } },
     { id:'welcomeModal',       label:'Welcome to Livity', close:function () { closeWelcome(); } },
     { id:'tutorialModal',      label:'Help',              close:function () { closeTutorial(); } },
@@ -13735,6 +13747,197 @@ function scForgetKey_(msg) { scStop_(); staffClear_(); staffRenderGate_(msg || '
 staffSync_();
 document.addEventListener('DOMContentLoaded', staffSync_);
 /* === END: STAFF MODULE === */
+/* === START: ADMIN CONSOLE — PIN GATE + SHELL (TEMPORARY PIN, UI-only) === */
+/* TODO: palitan ng totoong server-side auth. Ang PIN sa client ay UI placeholder lang, HINDI seguridad. */
+const ADMIN_PIN_ = '111111';
+const ADMIN_SESSION_KEY = 'livity_admin_ui_v1'; // sessionStorage: nawawala pag sinara ang tab
+let adminAuthed_ = false;
+
+function adminEl_(id) { return document.getElementById(id); }
+
+function openAdmin_() {
+  try { adminAuthed_ = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; } catch (e) { adminAuthed_ = false; }
+  adminEl_('adminModal').classList.add('open');
+  lockBodyScroll_();
+  if (adminAuthed_) adminRenderMain_(); else adminRenderGate_('');
+}
+
+function closeAdmin_() {
+  const m = adminEl_('adminModal');
+  if (!m.classList.contains('open')) return;
+  m.classList.remove('open');
+  unlockBodyScroll_();
+}
+
+function adminRenderGate_(msg) {
+  adminEl_('adminBody').innerHTML = `
+<div class="tutorial-intro" style="margin-top:24px"><div class="tutorial-intro-ico">🛡️</div><h4 style="color:#fff">Admin Console</h4><p style="color:#c8c4bb">Financial approvals, overrides and finalized records. Authorized admins only.</p></div>
+<input class="lb-input" id="adminPin" type="password" inputmode="numeric" maxlength="6" placeholder="6-digit PIN" autocomplete="off" onkeydown="if(event.key==='Enter')adminSignIn_()">
+<div class="lb-err" id="adminErr">${lbEscapeHtml_(msg || '')}</div>
+<button class="btn primary" style="width:100%" onclick="adminSignIn_()">Unlock →</button>
+<div style="text-align:center"><button class="sc-link" onclick="closeAdmin_()">Cancel</button></div>`;
+  setTimeout(function () { var i = adminEl_('adminPin'); if (i) { try { i.focus({ preventScroll: true }); } catch (e) {} } }, 350);
+}
+
+function adminSignIn_() {
+  const v = (adminEl_('adminPin').value || '').trim();
+  if (v !== ADMIN_PIN_) {
+    adminEl_('adminErr').textContent = 'Wrong PIN.';
+    adminEl_('adminPin').value = '';
+    haptic('error');
+    return;
+  }
+  try { sessionStorage.setItem(ADMIN_SESSION_KEY, '1'); } catch (e) {}
+  adminAuthed_ = true;
+  haptic('success');
+  adminRenderMain_();
+}
+
+function adminLock_() {
+  try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch (e) {}
+  adminAuthed_ = false;
+  closeAdmin_();
+  appToast_('Admin console locked');
+}
+
+/* ---- UI SHELL: dito ka mag-iterate. Palitan ang mga card at i-wire sa backend mamaya. ---- */
+function adminCard_(title, sub, action) {
+  return '<button type="button" class="hd-row" onclick="' + action + '"><div><b>' + title + '</b><span>' + sub + '</span></div><i>›</i></button>';
+}
+
+/* === START: ADMIN CONSOLE — TABS (MOCK DATA, palitan ng adminApi_ mamaya) === */
+let adminTab_ = 'dash', adminQ_ = '', adminFilter_ = 'All', adminRecType_ = 'Players';
+
+/* MOCK lang para sa UI. Palitan ng totoong fetch sa Apps Script (may admin key, may pagination). */
+const ADMIN_MOCK_ = {
+  summary: { pending: 4, overdue: 2, verifiedToday: 7, sessionsToday: 3, attendanceRate: '86%', balanceDue: 18500 },
+  history: [
+    { ts:'Oct 14 · 4:52 PM', type:'Payment',    who:'Miguel Santos',   detail:'Submitted GCash payment',        amount:7500 },
+    { ts:'Oct 14 · 4:10 PM', type:'Attendance', who:'Kian Dela Cruz',  detail:'Present · Regular (Sat session)', amount:null },
+    { ts:'Oct 14 · 2:31 PM', type:'Override',   who:'Ana Reyes',       detail:'Late changed to Present',         amount:null },
+    { ts:'Oct 13 · 6:05 PM', type:'Payment',    who:'Patricia Lim',    detail:'Verified · Private pack',         amount:5000 },
+    { ts:'Oct 13 · 9:40 AM', type:'Payment',    who:'Ben Cruz',        detail:'Rejected · amount mismatch',      amount:4500 }
+  ],
+  players: [
+    { name:'Miguel Santos',  id:'LVTFA-AB12CD3', info:'Academy · 5 sessions left',  status:'Active' },
+    { name:'Ana Reyes',      id:'LVTFA-EF45GH6', info:'Advanced · 2 sessions left', status:'Running low' },
+    { name:'Kian Dela Cruz', id:'LVTFA-JK78LM9', info:'Regular · package ended',    status:'Ended' }
+  ],
+  payments: [
+    { name:'Miguel Santos', id:'PAY-0001', info:'Academy Regular · GCash',  status:'Submitted', amount:7500 },
+    { name:'Patricia Lim',  id:'PAY-0002', info:'Private pack · BPI',       status:'Paid',      amount:5000 },
+    { name:'Ben Cruz',      id:'PAY-0003', info:'Regular U9–U13 · GCash',   status:'Rejected',  amount:4500 }
+  ],
+  enrollments: [
+    { name:'Miguel Santos',  id:'ENR-0101', info:'Academy · Oct 2',  status:'Active' },
+    { name:'Kian Dela Cruz', id:'ENR-0102', info:'Regular · Sep 20', status:'Active' }
+  ],
+  audit: [
+    { ts:'Oct 14 · 2:31 PM', by:'Admin JA',     action:'Attendance override', field:'Status', from:'Late', to:'Present' },
+    { ts:'Oct 13 · 6:06 PM', by:'Admin JA',     action:'Payment verified',    field:'Status', from:'Submitted', to:'Paid' },
+    { ts:'Oct 13 · 9:41 AM', by:'Admin Chelsi', action:'Payment rejected',    field:'Status', from:'Submitted', to:'Rejected' }
+  ]
+};
+
+function adminPeso_(n) { return '₱' + Number(n).toLocaleString(); }
+
+function adminRow_(top, mid, bot, right) {
+  const e = lbEscapeHtml_;
+  return '<div style="display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px;margin-bottom:8px">'
+    + '<div style="min-width:0"><div style="font-size:13px;font-weight:800;color:#fff">' + e(top) + '</div>'
+    + '<div style="font-size:12px;color:#c8c4bb;margin-top:2px">' + e(mid) + '</div>'
+    + (bot ? '<div style="font-size:11px;color:#a8a49a;margin-top:2px">' + e(bot) + '</div>' : '') + '</div>'
+    + (right ? '<div style="font-size:12px;font-weight:800;color:var(--gold);text-align:right;flex-shrink:0">' + e(right) + '</div>' : '') + '</div>';
+}
+
+function adminMatch_(s) { return !adminQ_ || String(s).toLowerCase().indexOf(adminQ_.toLowerCase()) > -1; }
+
+function adminPills_(list, cur, fn) {
+  return '<div class="lb-pills" style="margin:8px 0">' + list.map(function (x) {
+    return '<button type="button" class="lb-pill ' + (x === cur ? 'sel' : '') + '" onclick="' + fn + "('" + x + "')" + '">' + x + '</button>';
+  }).join('') + '</div>';
+}
+
+function adminSearchHtml_() {
+  return '<input class="lb-input" id="adminSearch" placeholder="Search name, ID, detail…" value="' + lbEscapeHtml_(adminQ_) + '" oninput="adminQ_=this.value;adminList_()" style="margin:8px 0">';
+}
+
+function adminTab_set_(k) { adminTab_ = k; adminQ_ = ''; adminPane_(); }
+function adminFilterSet_(v) { adminFilter_ = v; adminPane_(); }
+function adminRecSet_(v) { adminRecType_ = v; adminPane_(); }
+
+function adminList_() {
+  const box = adminEl_('adminList');
+  if (!box) return;
+  const M = ADMIN_MOCK_;
+  let rows = '';
+  if (adminTab_ === 'history') {
+    rows = M.history.filter(function (h) { return (adminFilter_ === 'All' || h.type === adminFilter_) && adminMatch_(h.who + h.detail); })
+      .map(function (h) { return adminRow_(h.who, h.detail, h.ts + ' · ' + h.type, h.amount ? adminPeso_(h.amount) : ''); }).join('');
+  } else if (adminTab_ === 'records') {
+    const src = adminRecType_ === 'Players' ? M.players : (adminRecType_ === 'Payments' ? M.payments : M.enrollments);
+    rows = src.filter(function (r) { return adminMatch_(r.name + r.id + r.info); })
+      .map(function (r) { return adminRow_(r.name, r.info, r.id, r.amount ? adminPeso_(r.amount) + ' · ' + r.status : r.status); }).join('');
+  } else if (adminTab_ === 'audit') {
+    rows = M.audit.filter(function (a) { return adminMatch_(a.by + a.action + a.field); })
+      .map(function (a) { return adminRow_(a.action, a.field + ': ' + a.from + ' → ' + a.to, a.ts + ' · by ' + a.by, ''); }).join('');
+  }
+  box.innerHTML = rows || '<p class="lb-text" style="text-align:center;padding:16px 0">No records match.</p>';
+}
+
+function adminPane_() {
+  const M = ADMIN_MOCK_, S = M.summary, p = adminEl_('adminPane');
+  document.querySelectorAll('#adminTabs .lb-pill').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === adminTab_); });
+  if (adminTab_ === 'dash') {
+    const st = function (n, l) { return '<div><b>' + n + '</b><span>' + l + '</span></div>'; };
+    p.innerHTML = '<div class="sc-counts">' + st(S.pending, 'Pending') + st(S.overdue, 'Overdue') + st(S.verifiedToday, 'Verified today') + '</div>'
+      + '<div class="sc-counts">' + st(S.sessionsToday, 'Sessions today') + st(S.attendanceRate, 'Attendance') + st(adminPeso_(S.balanceDue), 'Balance due') + '</div>'
+      + '<div class="sc-label">Recent activity</div>'
+      + M.history.slice(0, 3).map(function (h) { return adminRow_(h.who, h.detail, h.ts + ' · ' + h.type, h.amount ? adminPeso_(h.amount) : ''); }).join('')
+      + '<div class="sc-label">Needs attention</div>'
+      + adminCard_('Payment approvals', S.pending + ' waiting for verification', "adminTab_set_('records');adminRecSet_('Payments')");
+    return;
+  }
+  const head = adminTab_ === 'history' ? adminPills_(['All', 'Payment', 'Attendance', 'Override'], adminFilter_, 'adminFilterSet_')
+    : (adminTab_ === 'records' ? adminPills_(['Players', 'Payments', 'Enrollments'], adminRecType_, 'adminRecSet_') : '');
+  p.innerHTML = head + adminSearchHtml_() + '<div id="adminList"></div>';
+  adminList_();
+}
+
+function adminRenderMain_() {
+  const tabs = [['dash', 'Dashboard'], ['history', 'History'], ['records', 'Records'], ['audit', 'Audit']];
+  adminEl_('adminBody').innerHTML =
+    '<div class="staff-bar"><div><b>Admin</b><span>Console access · UI preview (mock data)</span></div><button type="button" class="sc-link" onclick="adminLock_()">Lock</button></div>'
+    + '<div class="lb-pills" id="adminTabs">' + tabs.map(function (t) {
+        return '<button type="button" class="lb-pill" data-k="' + t[0] + '" onclick="adminTab_set_(\'' + t[0] + '\')">' + t[1] + '</button>';
+      }).join('') + '</div>'
+    + '<div id="adminPane"></div>';
+  adminPane_();
+}
+/* === END: ADMIN CONSOLE — TABS === */
+
+function adminRenderMainOld_() {
+  adminEl_('adminBody').innerHTML = `
+<div class="staff-bar"><div><b>Admin</b><span>Console access · UI preview</span></div><button type="button" class="sc-link" onclick="adminLock_()">Lock</button></div>
+
+<div class="sc-label">Financial approvals</div>
+${adminCard_('Payment approvals', 'Verify submitted payments', "appToast_('Coming soon')")}
+${adminCard_('Rejected / flagged', 'Underpaid, missing penalty', "appToast_('Coming soon')")}
+
+<div class="sc-label">Overrides</div>
+${adminCard_('Attendance override', 'Correct Present / Late / Absent', "appToast_('Coming soon')")}
+${adminCard_('Session adjustments', 'Add or deduct sessions', "appToast_('Coming soon')")}
+${adminCard_('Penalty waiver', 'Waive late penalty', "appToast_('Coming soon')")}
+
+<div class="sc-label">Finalized records</div>
+${adminCard_('Closed sessions', 'Locked attendance and payments', "appToast_('Coming soon')")}
+${adminCard_('Audit log', 'Who changed what, and when', "appToast_('Coming soon')")}
+`;
+}
+
+/* Esc / Back / scroll-lock: hawak na ng MODAL registry (adminModal) */
+/* === END: ADMIN CONSOLE === */
+
 /* === END: MORE / LIVITY REDESIGN — LOGIC === */
 
 </script>
