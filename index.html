@@ -2848,9 +2848,9 @@ html.sw-busy .view.active{animation:none}
 /* === END: HD-NEW HIDE RULE REMOVED === */
 /* === END: HOME DASHBOARD — STYLES === */
 /* === START: STAFF BOUNDARY — STYLES === */
-.bottom { grid-template-columns:repeat(4,1fr); }
+.bottom { grid-template-columns:repeat(5,1fr); }
 .bottom button[data-v="scan"] { display:none; }
-body.is-staff .bottom { grid-template-columns:repeat(5,1fr); }
+body.is-staff .bottom { grid-template-columns:repeat(6,1fr); }
 body.is-staff .bottom button[data-v="scan"] { display:flex; }
 .staff-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;margin:2px 0 10px}
 .staff-bar b{display:block;font-size:13px;color:#fff}
@@ -4099,6 +4099,15 @@ onclick="show('schedule')"
 >
 <b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path class="cut" d="M3.5 10h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></b>
 Schedule
+</button>
+
+
+<button
+data-v="store"
+onclick="if(lbProfileMode)closeLivityBall();window.open('https://syndromesupply.com','_blank','noopener')"
+aria-label="Shop gear and uniforms"
+>
+<b><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fl" d="M5 8h14l-1 11.2a1.5 1.5 0 0 1-1.5 1.3h-9A1.5 1.5 0 0 1 6 19.2z"/><path class="cut" d="M9 10.5V7a3 3 0 0 1 6 0v3.5"/></svg></b>
 </button>
 
 
@@ -9248,7 +9257,6 @@ ${compact ? `<button type="button" class="btn primary" style="width:100%;margin:
 <div class="session-detail-label">Already paid? Send your details</div>
 ${methods.length ? `<select class="lb-input" id="payMethodSel">${opts}</select>` : ''}
 <input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="${Number(pay.total) || Number(pay.amount) || ''}" oninput="this.dataset.touched='1'">
-<input class="lb-input" id="payRef" placeholder="Reference number" autocapitalize="characters" autocomplete="off">
 ${lbPayPhotoHtml_()}
 <div class="lb-err" id="payErr"></div>
 <button type="button" class="btn primary" id="payBtn" style="width:100%" onclick="lbPaySubmit_()">Send Payment Details →</button>
@@ -9263,7 +9271,7 @@ function lbPayToggle_(which) {
   if (!d) return;
   lbPayOpen_ = true;
   d.style.display = 'block';
-  const t = document.getElementById(which === 'form' ? 'payRef' : 'payList');
+  const t = document.getElementById(which === 'form' ? 'payAmt' : 'payList');
   if (t) {
     t.scrollIntoView({ block:'center', behavior:'smooth' });
     if (which === 'form') { try { t.focus({ preventScroll:true }); } catch (e) {} }
@@ -9305,7 +9313,6 @@ function lbPayResubmitHtml_(pay, head, note) {
     + '<div class="session-detail-label">Send the correct details</div>'
     + (methods.length ? '<select class="lb-input" id="payMethodSel">' + opts + '</select>' : '')
     + '<input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="' + total + '">'
-    + '<input class="lb-input" id="payRef" placeholder="Reference number" autocapitalize="characters" autocomplete="off">'
     + lbPayPhotoHtml_()
     + '<div class="lb-err" id="payErr"></div>'
     + '<button type="button" class="btn primary" id="payBtn" style="width:100%" onclick="lbPaySubmit_()">Resubmit Payment Details →</button>'
@@ -9713,9 +9720,9 @@ let lbPayPhoto_ = '';
 
 function lbPayPhotoHtml_() {
 lbPayPhoto_ = '';
-return '<div class="session-detail-label">No reference number? Attach a photo of your receipt</div>'
+return '<div class="session-detail-label">Payment screenshot or receipt photo (required)</div>'
 + '<input type="file" id="payPhotoFile" accept="image/*" hidden onchange="lbPayPhotoPicked_(this)">'
-+ '<button type="button" class="btn outline" style="width:100%;margin-bottom:8px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="document.getElementById(\'payPhotoFile\').click()">📷 Attach receipt photo (optional)</button>'
++ '<button type="button" class="btn outline" style="width:100%;margin-bottom:8px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="document.getElementById(\'payPhotoFile\').click()">📷 Attach screenshot / receipt photo</button>'
 + '<div id="payPhotoPrev"></div>';
 }
 
@@ -9762,12 +9769,11 @@ const pay = lbPayCur;
 if (!pay) return;
 const err = document.getElementById('payErr');
 const btn = document.getElementById('payBtn');
-const ref = (document.getElementById('payRef').value || '').replace(/\s+/g, '').toUpperCase();
+const ref = '';
 const amt = Number(document.getElementById('payAmt').value);
 const sel = document.getElementById('payMethodSel');
 
-if (ref && !/^[A-Z0-9-]{6,32}$/.test(ref)) { if (err) err.textContent = 'Reference number must be 6–32 letters or numbers.'; return; }
-if (!ref && !lbPayPhoto_) { if (err) err.textContent = 'Enter the reference number, or attach a photo of your receipt.'; return; }
+if (!lbPayPhoto_) { if (err) err.textContent = 'Attach a screenshot or photo of your payment receipt.'; return; }
 if (!(amt > 0)) { if (err) err.textContent = 'Enter the amount you sent.'; return; }
 if (err) err.textContent = '';
 if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
