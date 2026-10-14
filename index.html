@@ -11,6 +11,8 @@
 <!-- === END: FAVICON EDIT === -->
 <meta property="og:url" content="https://livityportal.artiplay.app">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="app-build" content="2026-10-14.1">
 
 <style>
 :root {
@@ -2849,9 +2851,6 @@ html.sw-busy .view.active{animation:none}
 /* === END: HOME DASHBOARD — STYLES === */
 /* === START: STAFF BOUNDARY — STYLES === */
 .bottom { grid-template-columns:repeat(5,1fr); }
-.bottom button[data-v="scan"] { display:none; }
-body.is-staff .bottom { grid-template-columns:repeat(6,1fr); }
-body.is-staff .bottom button[data-v="scan"] { display:flex; }
 .staff-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;margin:2px 0 10px}
 .staff-bar b{display:block;font-size:13px;color:#fff}
 .staff-bar span{font-size:11px;color:#a8a49a}
@@ -4055,6 +4054,7 @@ Coach Sam — Advanced Assessment
 <button type="button" class="lb-pkg" onclick="nav.info('about')"><b>About Livity</b><span>›</span></button>
 <button type="button" class="lb-pkg" onclick="openTutorial()"><b>Help</b><span>›</span></button>
 <button type="button" class="lb-pkg" onclick="moShare_()"><b>Share App</b><span>›</span></button>
+<button type="button" class="lb-pkg" onclick="BUILD.check(true)"><b>Check for Updates</b><span>›</span></button>
 <button type="button" class="lb-pkg" onclick="pfWhatsNew_()"><b>What's New<span class="ver-dot" id="hdVerDot"></span></b><span>›</span></button>
 <button type="button" class="pf-photo-rm" id="staffEntryBtn" style="display:block;margin:18px auto 0" onclick="openScan_()">Staff sign-in</button>
 <!-- === END: DRAWER SECONDARY MENU === -->
@@ -4081,15 +4081,6 @@ onclick="show('programs')"
 >
 <b><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="fl" x="3.5" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="13" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="3.5" y="13" width="7.5" height="7.5" rx="2.2"/><rect class="fl" x="13" y="13" width="7.5" height="7.5" rx="2.2"/></svg></b>
 Programs
-</button>
-
-
-<button
-data-v="scan"
-onclick="openScan_()"
-aria-label="Scan player QR"
->
-<b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V6a2.5 2.5 0 0 1 2.5-2.5h2M16 3.5h2A2.5 2.5 0 0 1 20.5 6v2M20.5 16v2a2.5 2.5 0 0 1-2.5 2.5h-2M8 20.5H6A2.5 2.5 0 0 1 3.5 18v-2"/><rect x="8" y="8" width="8" height="8" rx="1.5"/></svg></b>
 </button>
 
 
@@ -4246,6 +4237,77 @@ location.replace(url);
 } catch (e) {}
 })();
 /* === END: DAILY AUTO-REFRESH === */
+
+/* === START: BUILD WATCHER — AUTO-UPDATE KAPAG MAY BAGONG CODE === */
+const BUILD = (function () {
+  var RUN = (document.querySelector('meta[name="app-build"]') || {}).content || '';
+  var TRY_KEY = 'livity_build_try_v1';
+  var checking = false, last = 0, waiting = '';
+
+  /* huwag mag-reload habang may ginagawa ang user */
+  function busy() {
+    try {
+      var a = document.activeElement;
+      if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return true;
+      var open = function (id) { var e = document.getElementById(id); return !!(e && e.classList.contains('open')); };
+      if (open('scanModal')) return true;
+      if (open('livityModal') && typeof lbScreen !== 'undefined' && lbScreen === 'enroll') return true;
+      if (typeof lbPayPhoto_ !== 'undefined' && lbPayPhoto_) return true;
+      if (typeof pfPh !== 'undefined' && (pfPh.state === 'uploading' || pfPh.state === 'preview')) return true;
+      if (typeof rateSending_ !== 'undefined' && rateSending_) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function toast(t, msg, o) { try { TOAST[t](msg, o); } catch (e) {} }
+
+  /* isang try lang kada build: iwas infinite reload kung luma pa ang CDN */
+  function go(nb, force) {
+    try {
+      if (!force && sessionStorage.getItem(TRY_KEY) === nb) { ask(nb); return; }
+      sessionStorage.setItem(TRY_KEY, nb);
+    } catch (e) {}
+    location.replace(location.pathname + '?v=' + encodeURIComponent(nb) + (location.hash || ''));
+  }
+
+  function ask(nb) {
+    toast('info', 'New version ready', { ms: 12000, action: { label: 'Update', fn: function () { go(nb, true); } } });
+  }
+
+  async function check(manual) {
+    if (checking) return;
+    if (!navigator.onLine) { if (manual) toast('warn', "No connection. Can't check for updates."); return; }
+    if (!manual && Date.now() - last < 30000) return;
+    checking = true; last = Date.now();
+    try {
+      var r = await fetch(location.pathname + '?bc=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('status ' + r.status);
+      var m = /<meta name="app-build" content="([^"]+)"/.exec(await r.text());
+      if (!m) throw new Error('no build tag');
+      if (RUN && m[1] !== RUN) {
+        waiting = m[1];
+        if (manual || !busy()) go(m[1], manual); else ask(m[1]);
+      } else {
+        waiting = '';
+        if (manual) toast('success', 'You have the latest version');
+      }
+    } catch (e) {
+      if (manual) toast('warn', "Couldn't check for updates. Try again.");
+    } finally { checking = false; }
+  }
+
+  function tick() { if (waiting && !busy()) go(waiting); else check(false); }
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+  window.addEventListener('focus', tick);
+  window.addEventListener('online', tick);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) tick(); });
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(tick, 1200); });
+  setInterval(function () { if (!document.hidden) tick(); }, 300000);
+
+  return { check: check, run: RUN };
+})();
+/* === END: BUILD WATCHER === */
 
 /* === START: GLOBAL CONNECTIVITY — SINGLE SOURCE OF TRUTH === */
 const NET_SYNC_KEY = 'livity_last_sync_v1';
@@ -6282,7 +6344,7 @@ return `
 <p class="lb-text">${totalLine}</p>
 <div class="lb-pills">${opts}</div>
 ${lbPaymentDetailsHtml_()}${lbForm.programId === 'PRG-ACAD' && lbForm.package ? lbAcademyBreakdownHtml_(lbForm.package, true) : ''}
-<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">After you submit, you'll see the payment details and can send your amount and reference number right here.</p>
+<p class="lb-text" style="font-size:11px;color:var(--muted);margin-top:8px">After you submit, you'll see the payment details and can upload your payment screenshot right here.</p>
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
 <button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
@@ -6528,7 +6590,7 @@ if (!p) return '';
 
 const map = {
 Paid: { bg:'#eafbef', bd:'#b8e6c3', fg:'#1f7a3a', head:'🟢 PAID', when:'Paid', note:'' },
-Pending: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'⏳ PAYMENT DUE', when:'Created', note:'Send your payment, then enter the reference number below.' },
+Pending: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'⏳ PAYMENT DUE', when:'Created', note:'Send your payment, then upload your screenshot below.' },
 Submitted: { bg:'#eef4ff', bd:'#b7d0f7', fg:'var(--navy)', head:'🕓 PAYMENT SENT — VERIFYING', when:'', note:"We're confirming your payment." },
 Overdue: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT OVERDUE', when:'', note:'Please settle this payment or message Admin JA.' },
 Rejected: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT NOT VERIFIED', when:'', note:"We couldn't match this payment. Check the amount and reference number, then resubmit." },
@@ -6558,7 +6620,7 @@ ${p.status === 'Rejected' && p.rejectReason ? `<p style="margin:6px 0 0;font-siz
 function lbNextStepsHtml_(first, last) {
 const steps = [
 { done:true, text:first },
-{ done:false, now:true, text:'Send payment & reference no.' },
+{ done:false, now:true, text:'Send payment & screenshot' },
 { done:false, text:'Payment verification' },
 { done:false, text:last }
 ];
@@ -8691,10 +8753,12 @@ async function pfRefresh_() {
 const snap = pfSnapLoad_();
 const saved = pfLoad_() || {};
 const q = (snap && snap.pid) || saved.q;
+const ep_ = LOGOUT_EPOCH;
 if (!q) return;
 try {
 const json = await lbFetchJson_(LIVITY_API_URL + '?action=findPlayer&query=' + encodeURIComponent(q), { timeoutMs: 10000, retries: 1 });
 if (!json.success || !json.players || !json.players.length) return;
+if (ep_ !== LOGOUT_EPOCH) return;
 const pid = (lbTopup.selected && lbTopup.selected.playerId) || (snap && snap.pid) || saved.pid;
 const sel = json.players.find(function (p) { return p.playerId === pid; }) || json.players[0];
 try { localStorage.setItem(PF_SNAP_KEY, JSON.stringify({ pid: sel.playerId, players: json.players })); } catch (e) {}
@@ -9234,7 +9298,7 @@ if (pay.status === 'Rejected') return lbPayResubmitHtml_(pay, '🔴 PAYMENT NOT 
 
 if (pay.status === 'Submitted') {
 const rcv = pay.submittedAt ? new Date(pay.submittedAt).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' }) : '';
-return `<div id="payPanel"><div style="font-size:18px;font-weight:850;color:var(--navy)">🕓 Payment Submitted</div><p class="lb-text" style="margin:8px 0 0">Your payment details were received${rcv ? ' at <b>' + rcv + '</b>' : ''}${pay.reference ? ' (Ref. <b>' + esc(pay.reference) + '</b>)' : ''}.<br>Livity Admin will verify your payment. Your balance stays until it's verified.</p><button type="button" class="pf-photo-rm" onclick="lbPayCorrect_()">Wrong amount or reference? Correct it</button></div>`;
+return `<div id="payPanel"><div style="font-size:18px;font-weight:850;color:var(--navy)">🕓 Payment Submitted</div><p class="lb-text" style="margin:8px 0 0">Your payment details were received${rcv ? ' at <b>' + rcv + '</b>' : ''}${pay.reference && !/^PHOTO-/.test(pay.reference) ? ' (Ref. <b>' + esc(pay.reference) + '</b>)' : ' (receipt photo)'}.<br>Livity Admin will verify your payment. Your balance stays until it's verified.</p><a class="pf-photo-rm" style="display:inline-block;margin-top:6px" href="${contactWaUrl_('Hi Admin JA, I need to correct my payment submission.')}" target="_blank" rel="noopener">Wrong amount or photo? Message Admin</a></div>`;
 }
 
 const methods = lbMethodsList_();
@@ -9331,7 +9395,7 @@ function lbPayReceipt_(id) {
   if (!p) return;
   const esc = lbEscapeHtml_, peso = function (n) { return '₱' + Number(n).toLocaleString(); };
   const row = function (l, v) { return v ? '<div class="event" style="padding:10px 0"><div class="session-detail-label" style="margin:0 0 2px">' + l + '</div><div class="event-title" style="margin:0">' + v + '</div></div>' : ''; };
-  const ref = p.reference || p.receiptCode || '';
+  const ref = (/^PHOTO-/.test(p.reference || '') ? '' : p.reference) || p.receiptCode || '';
   document.getElementById('lbTitle').textContent = 'Receipt';
   lbBody().innerHTML = '<button class="back" style="margin-bottom:10px" onclick="lbOpenPayments_()">← Payments</button>'
     + '<div class="panel" style="padding:4px 16px;margin-bottom:12px"><div style="text-align:center;padding:12px 0 4px"><div class="pay-badge paid">✓ PAID</div><div style="font-size:28px;font-weight:850;color:var(--text);margin-top:8px">' + peso(p.total != null ? p.total : p.amount) + '</div></div>'
@@ -9339,7 +9403,7 @@ function lbPayReceipt_(id) {
     + row('Player', esc((lbTopup.selected || {}).fullName || ''))
     + row('Date', lbFormatShortDate_(p.date))
     + (p.penalty ? row('Includes late penalty', peso(p.penalty)) : '')
-    + row('Reference no.', esc(p.reference || ''))
+    + row('Reference no.', /^PHOTO-/.test(p.reference || '') ? '' : esc(p.reference || ''))
     + row('Receipt no.', esc(p.receiptCode || ''))
     + row('Payment ID', esc(p.paymentId || ''))
     + '</div>'
@@ -9495,6 +9559,7 @@ async function lbFindProgressive_(p, fullP) {
   if (!document.getElementById('lbFindEmpty')) return; // umalis na sa screen
   lbFindFailClear_();
   navMarkKnown_();
+  const ep_ = LOGOUT_EPOCH;
   p.relationships = []; p.packages = []; p._lite = true;
   lbTopup.players = [p]; lbTopup.selected = p; lbTopup.query = p.playerId;
   pfSave_({ q: p.playerId, pid: p.playerId });
@@ -9508,6 +9573,7 @@ async function lbFindProgressive_(p, fullP) {
     appRefreshSchedule_();                        // priority 2
     const json = await SEQ.add('fullLogin', 3, fullP); // priority 3: programs + QR (payments = priority 4, kusa nang sumusunod)
     if (!json || !json.success || !json.players || !json.players.length) throw new Error((json && json.error) || 'Could not load details.');
+    if (ep_ !== LOGOUT_EPOCH) return;
     const full = json.players.filter(function (x) { return x.playerId === p.playerId; })[0] || json.players[0];
     if (lbTopup.selected === p) { lbTopup.players = json.players; lbTopup.selected = full; }
     try { localStorage.setItem(PF_SNAP_KEY, JSON.stringify({ pid: full.playerId, players: json.players })); } catch (e) {}
@@ -9796,7 +9862,7 @@ if (btn) { btn.disabled = false; btn.textContent = 'Send Payment Details →'; }
 return;
 }
 TOAST.info('Saved. Will send when you\'re online');
-if (panel) panel.innerHTML = `<div class="pay-badge pending">📶 Saved on this device</div><p class="lb-text" style="margin-top:8px">We couldn't reach the server. Your reference number is saved and will be sent automatically once you're online — no need to send it again.</p>`;
+if (panel) panel.innerHTML = `<div class="pay-badge pending">📶 Saved on this device</div><p class="lb-text" style="margin-top:8px">We couldn't reach the server. Your payment details are saved and will be sent automatically once you're online — no need to send it again.</p>`;
 }
 /* === END: PAYMENT PANEL EDIT === */
 
@@ -11823,7 +11889,9 @@ el.innerHTML = ctxHelp_(el.getAttribute('data-ctx'));
 /* === END: CONTEXTUAL HELP (ⓘ) === */
 
 /* === START: LOGOUT — FULL DEVICE WIPE (overrides pfSwitch_) === */
+var LOGOUT_EPOCH = 0;
 function pfLogout_() {
+  LOGOUT_EPOCH++;
   try {
     const toRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -11832,13 +11900,15 @@ function pfLogout_() {
       if (k.indexOf(PF_PHOTO_KEY) === 0 || k.indexOf(PF_QR_KEY) === 0) toRemove.push(k);
     }
     toRemove.forEach(function (k) { localStorage.removeItem(k); });
-    [PROFILE_KEY, PF_SNAP_KEY, KNOWN_KEY, LB_CHAT_CONTACT_KEY, LB_DRAFT_KEY, LB_REF_KEY, LB_CHAT_OUTBOX_KEY, LB_CHAT_SEEN_KEY].forEach(function (k) { localStorage.removeItem(k); });
+    [PROFILE_KEY, PF_SNAP_KEY, KNOWN_KEY, LB_CHAT_CONTACT_KEY, LB_DRAFT_KEY, LB_REF_KEY, LB_CHAT_OUTBOX_KEY, LB_CHAT_SEEN_KEY, LB_RESV_KEY, LB_FIND_FAIL_KEY, PAY_QUEUE_KEY].forEach(function (k) { localStorage.removeItem(k); });
   } catch (e) {}
 
   lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
   lbChatContact = null;
   lbChatMessages = [];
   lbPayments = { loading:true, balanceDue:0, payments:[] };
+  lbPayCur = null; lbPayOpen_ = false; lbWelcome_ = ''; lbSyncNote_ = '';
+  lbForm = lbBlankForm_('');
 
   // reset bottom tab + home tile back to default
   const btn = document.querySelector('.bottom button[data-v="player"], .bottom button[data-v="enroll"]');
@@ -11852,11 +11922,11 @@ appToast_('Logged out');
 }
 
 async function pfSwitch_() {
-  const unsent = lbOutboxLoad_().length;
+  const unsent = lbOutboxLoad_().length + lbPayQueueGet_().length;
   const ok = await CONFIRM.ask({
     title: 'Log out on this device?',
     text: 'Your saved player, photo and QR will be removed from this phone.'
-      + (unsent ? '\n\n' + unsent + ' unsent message' + (unsent === 1 ? '' : 's') + ' will be deleted.' : ''),
+      + (unsent ? '\n\n' + unsent + ' unsent message/payment' + (unsent === 1 ? '' : 's') + ' will be deleted.' : ''),
     confirmLabel: 'Log out'
   });
   if (!ok) return;
@@ -12166,6 +12236,7 @@ const APP_REFRESH_TICK_MS = CONFIG.cache.refreshTickMs;  // auto-refresh habang 
 
 /** True kapag may tina-type sa loob ng modal — huwag i-re-render. */
 function appTyping_() {
+if (lbPayPhoto_) return true;
 const a = document.activeElement;
 return !!(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && a.closest && a.closest('#livityModal'));
 }
@@ -12926,7 +12997,7 @@ swipeGo_(SW_TABS_[n], dx < 0 ? -1 : 1);
 }, { passive: true });
 })();
 /* === END: SWIPE NAV — TABS + SUB-SCREENS === */
-const MO_TABS_ = [['story','Story'],['philosophy','Philosophy'],['mission','Mission'],['values','Values'],['team','Coaches'],['voices','Voices'],['gallery','Gallery'],['rules','Policies']];
+const MO_TABS_ = [['about','About'],['coaches','Coaches'],['venues','Venues'],['testimonials','Voices'],['gallery','Gallery'],['rules','Policies'],['contact','Contact']];
 let moTab_ = 'about', moQ_ = { age:'', goal:'' }, moGalLoaded_ = false;
 
 /* ---- hero stats (live mula sa Schedule sheet) ---- */
