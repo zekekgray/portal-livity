@@ -2859,6 +2859,21 @@ html.sw-busy .view.active{animation:none}
 .ver-dot.on{display:inline-block}
 /* === END: STAFF BOUNDARY — STYLES === */
 
+/* === START: ADMIN DASHBOARD — STYLES === */
+.ad-head{margin:2px 2px 12px}
+.ad-head b{display:block;font-size:15px;letter-spacing:2px;color:var(--gold)}
+.ad-head span{font-size:11px;color:#a8a49a}
+.ad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.ad-tile{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
+.ad-tile small{display:block;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#a8a49a}
+.ad-tile b{display:block;font-size:26px;font-weight:850;color:#fff;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.ad-tile span{font-size:11px;color:#c8c4bb;line-height:1.35;display:block}
+.ad-tile.bad{border-color:rgba(255,69,58,.5)}
+.ad-tile.warn{border-color:rgba(255,159,10,.5)}
+.ad-tile.good{border-color:rgba(52,199,89,.5)}
+.ad-note{font-size:11.5px;color:#a8a49a;margin:2px 2px 10px;line-height:1.45}
+/* === END: ADMIN DASHBOARD — STYLES === */
+
 /* === START: GLOBAL CONNECTIVITY BAR — STYLES === */
 .net-bar{position:fixed;left:50%;bottom:calc(82px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);width:calc(100% - 24px);max-width:456px;z-index:calc(var(--z-system) + 10);display:flex;flex-direction:column;gap:1px;padding:9px 14px;border-radius:16px;font-size:12px;line-height:1.35;color:#fff;background:#171714;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .35s cubic-bezier(.34,1.56,.64,1)}
 .net-bar.show{opacity:1;transform:translate(-50%,0)}
@@ -13888,6 +13903,8 @@ function adminList_() {
 function adminPane_() {
   const M = ADMIN_MOCK_, S = M.summary, p = adminEl_('adminPane');
   document.querySelectorAll('#adminTabs .lb-pill').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === adminTab_); });
+  if (adminTab_ === 'dash' || adminTab_ === 'gaps' || adminTab_ === 'system') { p.innerHTML = adminLive_(adminTab_); return; }
+  document.querySelectorAll('#adminTabs .lb-pill').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === adminTab_); });
   if (adminTab_ === 'dash') {
     const st = function (n, l) { return '<div><b>' + n + '</b><span>' + l + '</span></div>'; };
     p.innerHTML = '<div class="sc-counts">' + st(S.pending, 'Pending') + st(S.overdue, 'Overdue') + st(S.verifiedToday, 'Verified today') + '</div>'
@@ -13905,9 +13922,9 @@ function adminPane_() {
 }
 
 function adminRenderMain_() {
-  const tabs = [['dash', 'Dashboard'], ['history', 'History'], ['records', 'Records'], ['audit', 'Audit']];
+  const tabs = [['dash', 'Dashboard'], ['gaps', 'Gap Register'], ['system', 'System']];
   adminEl_('adminBody').innerHTML =
-    '<div class="staff-bar"><div><b>Admin</b><span>Console access · UI preview (mock data)</span></div><button type="button" class="sc-link" onclick="adminLock_()">Lock</button></div>'
+    '<div class="staff-bar"><div><b>Admin</b><span>Console access · live device data only</span></div><button type="button" class="sc-link" onclick="adminLock_()">Lock</button></div>'
     + '<div class="lb-pills" id="adminTabs">' + tabs.map(function (t) {
         return '<button type="button" class="lb-pill" data-k="' + t[0] + '" onclick="adminTab_set_(\'' + t[0] + '\')">' + t[1] + '</button>';
       }).join('') + '</div>'
@@ -13915,6 +13932,334 @@ function adminRenderMain_() {
   adminPane_();
 }
 /* === END: ADMIN CONSOLE — TABS === */
+
+/* === START: ADMIN — API LATENCY LOG (this device, since page load) === */
+const NETLOG = (function () {
+  var L = [], raw = window.fetch;
+  function act(input, init) {
+    try {
+      var u = typeof input === 'string' ? input : ((input && input.url) || '');
+      var q = new URL(u, location.href).searchParams.get('action');
+      if (q) return q;
+      return JSON.parse((init && init.body) || '{}').action || 'POST';
+    } catch (e) { return '?'; }
+  }
+  function rec(a, t, s) { L.push({ a: a, ms: Date.now() - t, s: s, at: Date.now() }); if (L.length > 100) L.shift(); }
+  if (raw) window.fetch = function (input, init) {
+    var u = typeof input === 'string' ? input : ((input && input.url) || '');
+    if (!CONFIG.api.isApi(u)) return raw.apply(this, arguments);
+    var t = Date.now(), a = act(input, init);
+    return raw.apply(this, arguments).then(
+      function (r) { rec(a, t, r && r.ok ? 'ok' : 'HTTP ' + (r && r.status)); return r; },
+      function (e) { rec(a, t, 'network'); throw e; }
+    );
+  };
+  return { all: function () { return L.slice(); } };
+})();
+
+function adminNetStats_() {
+  const l = NETLOG.all();
+  if (!l.length) return 'No calls yet';
+  const bad = l.filter(function (x) { return x.s !== 'ok'; }).length;
+  const ms = l.map(function (x) { return x.ms; }).sort(function (a, b) { return a - b; });
+  const p = function (q) { return ms[Math.min(ms.length - 1, Math.floor(ms.length * q))]; };
+  return l.length + ' calls · ' + bad + ' failed · median ' + p(0.5) + ' ms · p95 ' + p(0.95) + ' ms';
+}
+
+function adminDatasets_() {
+  const rows = DATA.all().map(function (s) {
+    return adminRow_(s.key, s.status + (s.stale ? ' · stale' : '') + (s.refreshing ? ' · refreshing' : ''), s.updatedAt ? 'updated ' + lbSchedAgo_(s.updatedAt) : 'never loaded', '');
+  }).join('');
+  return rows || '<p class="lb-text">No data requests yet.</p>';
+}
+/* === END: ADMIN — API LATENCY LOG === */
+
+/* === START: ADMIN CONSOLE — LIVE DASHBOARD + GAP REGISTER === */
+/* Walang imbentong numero. Server data = adminSummary endpoint (hindi pa umiiral). Device data = totoong galing sa app na ito.
+   Inaasahang sagot ng adminSummary:
+   { success:true,
+     players:{active,inactive,pending},
+     payments:{submitted,overdue,rejected},
+     attendance:{unresolved,duplicates},
+     critical:[{title,detail}], awaiting:[{title,detail}], reconcile:[{title,detail}] } */
+let adminSum_ = { status:'idle', data:null, msg:'' };
+
+async function adminSumLoad_() {
+  if (adminSum_.status === 'loading') return;
+  adminSum_ = { status:'loading', data:null, msg:'' };
+  if (adminTab_ === 'dash' && adminEl_('adminPane')) adminPane_();
+  try {
+    if (!scKey_()) throw new Error('Staff key required. Use Staff sign-in first.');
+    const r = await scApi_('adminSummary', {});
+    adminSum_ = { status:'ok', data:r, msg:'' };
+  } catch (e) {
+    adminSum_ = { status:'na', data:null, msg:String((e && e.message) || 'Not connected') };
+  }
+  if (adminTab_ === 'dash' && adminEl_('adminPane')) adminPane_();
+}
+
+/** Mga totoong tseke na kaya ng browser mismo. */
+function adminChecks_() {
+  const out = [], S = DATA.summary();
+  out.push({ sev:'critical', t:'Admin PIN is checked in the browser', d:'ADMIN_PIN_ is visible in the page source. Move approvals behind server-side auth before relying on this console.' });
+  if (!CONFIG.api.ready()) out.push({ sev:'critical', t:'API URL is not set', d:'The app cannot reach the Livity backend.' });
+  if (CONFIG.env !== 'production') out.push({ sev:'warn', t:'Non-production host', d:'Env "' + CONFIG.env + '". Unless a test API URL is set, writes go to the production Sheet.' });
+  if (!navigator.onLine) out.push({ sev:'warn', t:'Device is offline', d:'Last synced: ' + NET.lastSyncLabel() });
+  if (S.error) out.push({ sev:'warn', t:S.error + ' data request(s) failed', d:'See System tab. Data shown may be a saved copy.' });
+  if (S.offline) out.push({ sev:'warn', t:S.offline + ' request(s) could not reach the server', d:'Network or Apps Script is unreachable.' });
+  if (typeof lbSchedState_ !== 'undefined' && lbSchedState_ !== 'live') out.push({ sev:'warn', t:'Schedule is not live', d:'State: ' + lbSchedState_ + '. Players may see saved or default times.' });
+  const pq = lbPayQueueGet_().length;
+  if (pq) out.push({ sev:'warn', t:pq + ' payment submission(s) waiting on this device', d:'Not yet delivered to the server.' });
+  return out;
+}
+
+function adminTile_(label, value, sub, cls) {
+  const e = lbEscapeHtml_;
+  return '<div class="ad-tile ' + (cls || '') + '"><small>' + e(label) + '</small><b>' + e(value) + '</b><span>' + e(sub) + '</span></div>';
+}
+
+function adminPrio_(title, sub, items, emptyMsg) {
+  const e = lbEscapeHtml_;
+  const body = items.length
+    ? items.map(function (i) { return adminRow_(i.t || i.title || '', i.d || i.detail || '', '', i.sev === 'critical' ? 'CRITICAL' : ''); }).join('')
+    : '<p class="lb-text" style="color:#a8a49a;margin:2px 2px 12px">' + e(emptyMsg) + '</p>';
+  return '<div class="sc-label">' + e(title) + '</div><p class="ad-note" style="margin-top:0">' + e(sub) + '</p>' + body;
+}
+
+/** Async na totoong bilang mula sa IndexedDB ng device na ito. */
+async function adminFillLocal_() {
+  const el = adminEl_('adAtt');
+  if (!el) return;
+  try {
+    const all = await scIdbGetAll_('attendance');
+    const c = { pending:0, error:0, duplicate:0 };
+    all.forEach(function (a) { if (c[a.syncStatus] != null) c[a.syncStatus]++; });
+    el.querySelector('b').textContent = String(c.pending);
+    el.querySelector('span').textContent = 'on this device · ' + c.error + ' need review · ' + c.duplicate + ' duplicate';
+    el.classList.toggle('warn', c.pending > 0 || c.error > 0);
+  } catch (e) {
+    el.querySelector('span').textContent = 'Could not read local scan queue';
+  }
+}
+
+const ADMIN_GAPS_OLD_ = [
+  ['Player enrollment flow', 'Existing', 'Enroll, add program, add player, draft resume, duplicate check.'],
+  ['Player QR + staff scanner', 'Existing', 'Offline queue, cached players, diagnostic mode.'],
+  ['Package / session display', 'Existing', 'Remaining, expiry, low-balance, per-program state.'],
+  ['Payment submit + statuses', 'Existing', 'Photo proof, live clock, penalty display, offline queue.'],
+  ['Policies shown to players', 'Existing', 'Payment, attendance, packages, weather.'],
+  ['Automatic session deduction', 'Validate', 'Not visible in this file. Confirm server deducts once per Present/Late and never twice on re-sync.'],
+  ['Late penalty rule', 'Validate', 'Client mirrors backend formula. Confirm both match.'],
+  ['Offline scan reconciliation', 'Validate', 'Offline Late/Present is an estimate. Confirm server result overrides it and is reported.'],
+  ['Reserve / cancel spot', 'Validate', 'CONFIG.flags.reserveApi is false, so reservations go through WhatsApp.'],
+  ['Server-side admin auth', 'Build', 'Replace ADMIN_PIN_. Roles per admin, revocable, logged.'],
+  ['adminSummary endpoint', 'Build', 'Feeds the dashboard tiles and priority queues.'],
+  ['Payment approval actions', 'Build', 'Verify / reject with reason, from the console.'],
+  ['Attendance override + audit log', 'Build', 'Who changed what, when, from/to.'],
+  ['Session adjustments + penalty waiver', 'Build', 'Admin-only, always audited.'],
+  ['Sheet ↔ Supabase reconciliation', 'Build', 'Count and balance mismatches. Needed during migration.'],
+  ['System error log', 'Build', 'Failed writes and API errors collected server-side, not only on the device.']
+];
+
+/* === START: GAP REGISTER — DATA + RENDER === */
+/* item = [title, description, status ('Confirmed gap' | 'Validate'), code note (optional)]
+   Magdagdag ng module: kopyahin ang { id:'B', ... } block sa dulo ng ADMIN_GAP_REG_. */
+const ADMIN_GAP_TOTAL_ = 82;
+const ADMIN_GAP_DONE_KEY = 'livity_gapdone_v1';
+const ADMIN_GAP_REG_ = [
+  { id:'A', name:'Security and access control', p:'P0', items:[
+    ['Replace the temporary Admin PIN', 'The code uses a client-side PIN (111111) and sessionStorage. This is a UI gate, not secure server-side authorization.', 'Confirmed gap', 'ADMIN_PIN_ is readable in the page source.'],
+    ['Role-based permissions', 'Separate owner/admin, finance, coach/scanner, and read-only access.', 'Validate', 'The console has one PIN for everyone. The scanner role comes from the server on staff sign-in.'],
+    ['Server-side authorization', 'Protect every admin API action, not just the console screen.', 'Validate', 'Console actions are not wired to the backend yet, so the server protects nothing here.'],
+    ['Failed-login protection', 'Rate limits, lockout/cooldown, and suspicious-attempt logs.', 'Validate', 'adminSignIn_ has no attempt limit. Find-player throttling is client-side only and can be bypassed.'],
+    ['Session expiry and revocation', 'Idle timeout, logout, revoke access, and reauthentication for sensitive changes.', 'Validate', 'Admin session lasts until the tab closes, with no idle timeout. Staff 12h idle timeout is also client-side.'],
+    ['Audit trail', 'Record who changed what, before/after values, time, and reason.', 'Validate', 'The app writes no audit entries today. ADMIN_MOCK_.audit is sample data.'],
+    ['Sensitive data protection', 'Limit exposure of guardian contacts, player information, payment references, and photos.', 'Validate', 'Player lookup sends photo, QR token and guardian details to the browser. Confirm the server only returns them on a Player ID / number match.']
+  ]}
+];
+ADMIN_GAP_REG_.push({ id:'B', name:'Database and Supabase migration', p:'P0', items:[
+  ['Authoritative data source', 'Define which system is authoritative for each record and field; do not let Sheet and Supabase silently overwrite each other.', 'Architecture decision', 'This file only talks to the Apps Script API (CONFIG.api.url). There is no Supabase client here yet, so every read and write goes through the Sheet today.'],
+  ['Player identity and relationships', 'Stable player IDs, guardian links, multiple programs per child, and duplicate detection.', 'Validate', 'Scanner accepts two ID formats (LVTFA-XXXXXXX and LVT-123). Confirm legacy IDs map to one record. Duplicate check (lbFindDuplicate_) is client-side, by WhatsApp number + full name, and can be bypassed with "register anyway".'],
+  ['Schema and constraints', 'Required fields, unique IDs, foreign keys, allowed statuses, and data validation.', 'Validate', 'Enroll form only checks that names, gender, guardian and WhatsApp are not empty. No format check on the WhatsApp number, DOB or age.'],
+  ['Sheet-to-Supabase sync status', 'Last successful sync, records processed, failures, and retry queue.', 'New admin control', 'NET.lastSync only tracks this device reaching the API. It says nothing about Sheet-to-database sync.'],
+  ['Conflict resolution', 'Show old/new values and source; require approval for sensitive conflicts.', 'New admin control'],
+  ['Idempotent writes', 'Retries must not create duplicate enrollments, payments, scans, or deductions.', 'Validate', 'enroll, submitPayment, sendMessage and submitRating send a requestId. topup, addProgram and offline scans do not. They depend on the server to catch duplicates.'],
+  ['Reconciliation tools', 'Compare record counts, totals, IDs, and updated timestamps between systems.', 'New admin control', 'The dashboard queue "Data requiring reconciliation" is empty until adminSummary exists.'],
+  ['Backup and restore', 'Scheduled exports, restore procedure, recovery checks, and documented recovery point.', 'Validate'],
+  ['Migration verification', 'Dry-run import, rejected-row report, duplicate report, and sign-off before switching live reads.', 'New admin control']
+]});
+ADMIN_GAP_REG_.push({ id:'C', name:'Attendance and scanner', p:'P0', items:[
+  ['Offline scan queue monitoring', 'The code queues scans locally and tracks pending sync; expose queue status and unresolved records centrally.', 'Confirmed capability', 'Admin visibility to validate. The queue lives in each staff phone (IndexedDB). The Attendance sync tile only reads the device you are on, so scans stuck on other phones are invisible until the server reports them.'],
+  ['Duplicate and retry handling', 'Prevent duplicate check-ins when a queued scan is retried.', 'Validate', 'scQueueFlush_ sends scheduleId, code and manual only (no requestId or localId) and relies on the server returning DUPLICATE. Test by cutting the connection after the POST is sent but before the reply arrives, then retrying.'],
+  ['Identity not in cache', 'Offline scans can be queued even if the player is not cached; flag identity for confirmation after sync.', 'Confirmed behavior', 'Resolution needed. The scanner shows "identity will be confirmed on sync" but nothing flags it afterwards. Also, scQueueFlush_ stops at the first failed job, so one invalid scan blocks every scan behind it until it reaches 20 retries (about 10 minutes at the 30s flush interval).'],
+  ['Attendance corrections', 'Correct Present/Late/Absent only with reason and an audit entry.', 'New admin control'],
+  ['Session and scanner selection', 'Ensure the scan is attached to the correct session, date, and authorized staff member.', 'Validate', 'The request carries the shared staff key and scheduleId, not the staff member\'s name (staffMeta name stays on the device). Per-person attribution is not possible today. The default session is picked by clock (first session ending within 30 min).'],
+  ['Time and lateness rules', 'Compare device time with server time; review offline grace-period discrepancies.', 'Validate', 'SC_OFFLINE_GRACE_MIN is hardcoded to 10 and uses the device clock. The queue stores scannedAt, but the flush does not send it. Unless the server infers it, a late sync can record the sync time and the wrong lateness.'],
+  ['Offline queue recovery', 'Retry, inspect, resolve, or safely discard a failed scan with audit trail.', 'New admin control', 'Failed jobs are only counted as "needs review". There is no screen to inspect, retry or discard one. staffSignOut_ checks pending scans only, then clears the whole attendance store, so jobs in "error" are deleted silently.'],
+  ['Attendance-to-deduction link', 'Every qualifying attendance should trigger exactly one correct session deduction.', 'Critical validation', 'No deduction logic exists in this file; the client only displays remaining sessions. Test: Present, Late, duplicate scan, offline then sync, retry after timeout, and Test mode (no session selected should record nothing).']
+]});
+ADMIN_GAP_REG_.push({ id:'D', name:'Packages, sessions and membership', p:'P0', items:[
+  ['Automatic session deduction', 'Deduct after accepted attendance scan, not on opening the QR or looking up the player.', 'Business rule', 'Validate implementation. The client sends lookup:"1" for phone-camera scans and for Test mode (no session selected). Confirm the server records and deducts nothing when lookup is set or scheduleId is missing, and only deducts on an accepted Present/Late (never on DUPLICATE).'],
+  ['Deduction ledger', 'Show before/after balance, attendance ID, package, timestamp, and reason.', 'New admin control', 'The app only displays remaining, total and expiryDate from the server. There is no ledger of deductions.'],
+  ['Multiple programs per child', 'Academy and Private Training must coexist without sharing or corrupting balances.', 'Validate', 'Balances are per program (relationships[]). But Regular and Academy both run Saturday 7:00-9:00 at the same venue, and a scan sends only scheduleId. Confirm the server checks the child actually holds that session\'s program, so a wrong session choice cannot deduct from the wrong balance. Test Mixed packages (Private + Academy) separately.'],
+  ['Single-session payment', 'Correct price, payment status, attendance linkage, and no accidental package deduction.', 'Validate', 'Single sessions and assessments (₱500-₱1,300) are shown on the pricing page, but the app has no purchase flow or payment type for them (except Advanced "Book Session" at ₱1,300). Confirm how they are recorded and linked to attendance.'],
+  ['Package expiry and top-ups', 'Correct validity dates, remaining sessions, exhausted/expired state, and top-up history.', 'Validate', 'Regular prices are hardcoded in several places (DETAIL_REGULAR_RATES, LB_TOPUP_PRICE, catPrice) while Academy packages come from the Sheet. A price change needs several edits, and the amount the server charges may differ from what the screen shows. There is no top-up history view apart from the payments list.'],
+  ['Academy membership prerequisite', 'First-time Academy enrollment requires verified membership payment before activation.', 'Validate', 'After submitting a top-up or add-program, the client sets hasMembership = true immediately, before the payment is verified. If that payment is rejected or never paid, the app stops adding the fee until the next refresh from the server.'],
+  ['Membership uniqueness', 'Membership fee is charged once per player under the approved policy, not every package top-up.', 'Validate', 'The client decides whether to add ₱4,000 from p.hasMembership === false. The server must decide independently on the amount it records, per player (including a second child added under the same guardian).'],
+  ['Manual balance override', 'Require reason, authorized role, before/after balance, and linked correction entry.', 'New admin control'],
+  ['Cancellation and weather rules', 'Enforce approved 45-minute weather policy and cancellation handling consistently.', 'Validate', 'The 45-minute rule is policy text only. The schedule can mark a session Cancelled/Rescheduled and the client strikes it through, but no field records when a weather cancellation happened. Test deduction for a cancelled, rescheduled and 45+ minute session.']
+]});
+ADMIN_GAP_REG_.push({ id:'E', name:'Payments and finance', p:'P0', items:[
+  ['Payment verification queue', 'Approve/reject payment submissions and link each decision to the correct player and obligation.', 'Existing flow', 'Admin completion to validate. Players submit proof and see Submitted/Paid/Rejected, but approval happens in the Google Sheet menu ("Livity Admin → Verify a Payment"). The console has no approve/reject action yet.'],
+  ['Payment proof and reference review', 'View submitted proof/reference, amount, method, submission time, and duplicate reference warnings.', 'Validate', 'lbPaySubmit_ always sends reference:"" (the field was removed). The proof is a compressed photo, so a duplicate-reference warning has nothing to compare. The server already returns flags (UNDERPAID, MISSING_PENALTY); surface those in the queue.'],
+  ['Overdue calculation', 'Check 12-hour due rule and ₱100 penalty after 5 PM the following day against server time and approved policy.', 'Validate', 'The live clock uses penaltyRule and serverNow from the server, but "12 hours" and "₱100" are also hardcoded in policy text in several places. Confirm perDay is 0 (policy says flat) and that the text and server rule agree.'],
+  ['Penalty override', 'Waive or adjust only with reason and audit log.', 'New admin control'],
+  ['Payment ledger', 'Full chronological payment history, statuses, adjustments, and receipts.', 'New admin control', 'Players only see their own list and a receipt for Paid items. There is no admin-wide ledger or adjustment entries.'],
+  ['Outstanding balances', 'Reconcile fees, payments, penalties, credits, and remaining amounts due.', 'New admin control', 'balanceDue is computed by the server and only displayed. Nothing reconciles it against payments.'],
+  ['Approval-to-account propagation', 'Verified payment should update the correct account and package state without requiring a manual workaround.', 'Critical validation', 'The client only polls (about every 45s) and reflects the server state (pending_payment to active). Test: enrollment with membership, top-up, add program, Private pack, reject then resubmit, underpaid, and a payment with a late penalty.'],
+  ['Invoices and email delivery', 'Track generated invoice, send status, failed delivery, and resend action.', 'Validate', 'A receipt screen exists (receipt no., payment ID) but there is no invoice generation, email send status or resend control in this file. Guardian email is optional at enrollment.'],
+  ['Refunds and reversals', 'If supported by policy, use linked reversal records rather than deleting the original transaction.', 'Validate', 'Policy says non-refundable. The client knows Paid, Pending, Submitted, Overdue, Rejected, Cancelled and Expired only. Any other status (e.g. Refunded/Reversed) falls through to "Due", so a reversed payment would look unpaid to the player.']
+]});
+ADMIN_GAP_REG_.push({ id:'F', name:'Enrollment and account management', p:'P1', items:[
+  ['New enrollment review', 'Review player/guardian data, program, package, membership requirement, and payment before activation.', 'Validate', 'Enrollment goes straight to the backend and the player is added to the Players sheet automatically. Activation waits only on payment verification. There is no admin review step for the submitted data.'],
+  ['Duplicate player detection', 'Warn on matching IDs, name/date of birth, or guardian contact before creating a duplicate.', 'New admin control', 'The current check (lbFindDuplicate_) runs in the browser at submit, matches WhatsApp number + full name only (no date of birth), and can be bypassed with "register anyway". A second parent using a different number, or a spelling variant, is not caught.'],
+  ['Account activation and deactivation', 'Control status, explain the reason, and record who made the change.', 'Validate', 'The client only reads p.status and shows INACTIVE with "Message Admin JA to reactivate". Confirm the server also refuses scans and top-ups for inactive players, and that status changes are logged.'],
+  ['Guardian and linked-player management', 'Correctly support siblings or multiple players under a guardian where permitted.', 'Validate', 'Add Another Player pre-fills guardian details from the selected player and skips the guardian step, so relationship and emergency contact are sent blank. Confirm the server does not overwrite existing guardian or emergency contact data with blanks. Also decide the policy: the UI has a sibling switcher, but pfSnapLoad_ keeps one player per device and findPlayer asks for a Player ID when a number has several players.'],
+  ['Account recovery', 'Monitor Forgot ID/PIN or recovery requests and securely verify identity.', 'Validate', 'There is no PIN in the player app. Anyone who knows a registered mobile number can open that player (payments, QR, photo); the only throttle is client-side. Recovery is "Message Admin JA". The enroll form\'s "Welcome back" card also shows player names for any number typed, with no verification.'],
+  ['Data correction requests', 'Queue profile edits requiring admin review, with before/after values.', 'New admin control', '"Request a Change" opens the Ask Admin chat. Requests are free-text messages with no structure, before/after values or status.'],
+  ['Consent and privacy records', 'Retain required consent evidence and limit access to sensitive data.', 'Validate', 'The client sends consentPrivacy:true only, with no consent text version or client-side timestamp, so the server must stamp time and version. Player photos (minors) are uploaded and shown to scanner staff with no separate photo consent.']
+]});
+ADMIN_GAP_REG_.push({ id:'G', name:'Schedule and program operations', p:'P1', items:[
+  ['Schedule management', 'Create/edit sessions, dates, times, venue, program, and capacity.', 'Validate', 'The schedule is weekly by day name (no calendar dates), so one-off sessions and holidays can only be expressed through status/newDate. Session programName must match LB_PROGRAM_NAME_TO_ID exactly, otherwise programId is empty and the Reserve/Register actions disappear. A hardcoded fallback schedule is shown if the Sheet cannot be reached.'],
+  ['Reservation API readiness', 'The current config sets `reserveApi: false`; confirm whether booking endpoints are implemented before enabling reservations.', 'Confirmed config flag', 'With the flag off, Reserve and Cancel open WhatsApp. Before turning it on: the client remembers reservations in localStorage under playerId|programId|day|startTime with no date, so a spot reserved for this Saturday would show "You are reserved" next Saturday too.'],
+  ['Capacity and booking conflicts', 'Prevent overbooking and conflicting sessions.', 'Validate', 'No capacity field is read anywhere in the client. "Open for reservation" depends only on time (2-hour cutoff). The walk-in limit (2 per month) cannot be enforced in the browser.'],
+  ['Coach assignment', 'Assign authorized coaches and identify unassigned sessions.', 'New admin control', 'Sessions have no coach field. The Coaches tab is a hardcoded list (MO_COACHES_) mapped to programs, and availability is derived from the program\'s schedule.'],
+  ['Cancellation and rescheduling', 'Notify affected families and preserve attendance/payment history.', 'Validate', 'Families only see changes when the app refreshes ("Schedule updated" toast). No notification is sent. For Rescheduled sessions the new time is displayed, but reservation cutoffs and Next Training still use the original start time.'],
+  ['Program and pricing configuration', 'Centralize package rates, membership fee, validity, and policy version to avoid conflicting values.', 'Validate', 'Academy packages, membership fee and Private packs come from the Sheet. Regular prices and the Advanced ₱1,300 are hardcoded in at least six places each. Validity (30 days) and policy text (12 hours, ₱100, 2 walk-ins, 45 minutes, Thursday/Friday notice times) are repeated in the Policies panel, Rules tab, program details and Help. There is no policy version.']
+]});
+ADMIN_GAP_REG_.push({ id:'H', name:'Notifications and communication', p:'P1', items:[
+  ['Email delivery log', 'Queued/sent/failed status, timestamps, retry and recipient.', 'New admin control', 'No email sending, queue or log exists in this file; any emails are sent by the backend. Apps Script has daily email quotas, so a failed or skipped send should be logged server-side. Guardian email is optional at enrollment.'],
+  ['Payment and enrollment notifications', 'Verify the right event triggers the right message exactly once.', 'Validate', 'The app promises "Livity will notify you" without naming a channel, while the form says "We\'ll reach you via WhatsApp". WhatsApp links (wa.me) are manual only. There is no push notification or in-app notification feed. Test each event: enrollment submitted, payment submitted, verified, rejected. A double-tap or retry must not send twice.'],
+  ['Overdue reminders', 'Avoid duplicate reminders; show due time, penalty basis, and delivery history.', 'Validate', 'No reminder logic is in the client; it only shows the live due clock. Reminders must come from a server trigger. Confirm a sent-flag per payment and per reminder type so a trigger that re-runs cannot send twice.'],
+  ['Admin-parent messages', 'Track incoming messages, ownership, response status, and unread items.', 'Validate', 'Conversations are keyed by WhatsApp number only, and the thread is fetched by number with no verification, so typing another family\'s number in Ask Admin could show their messages. The server supports a closed state, but ownership (which admin replies) and response time are not visible. Unread tracking exists only on the parent side.'],
+  ['Announcement and policy management', 'Publish, schedule, expire, and audit announcements and policy changes.', 'New admin control', 'The only Sheet-managed message is the version / What\'s New text. The welcome message, policies and the maintenance modal are hardcoded. There is no publish, schedule, expire or audit trail, and no policy version.']
+]});
+ADMIN_GAP_REG_.push({ id:'I', name:'Performance, caching and offline behavior', p:'P1', items:[
+  ['Data freshness indicator', 'Show live, cached, stale, offline, or error state for important datasets.', 'New admin control', 'The DATA state machine already tracks loading/success/empty/error/offline, stale and updatedAt per dataset. The System tab only shows totals; see optional Edit 5 to list each dataset.'],
+  ['Cache invalidation', 'Ensure approved changes invalidate or refresh cached player/payment/package data.', 'Validate', 'The player snapshot, photos, QR, schedule and payment methods are cached on the device. DATA ttl only marks data "stale" and does not force a refetch. Payments refresh only while the Payments screen is open. The scanner\'s player cache is a working copy, so a player deactivated on the server stays usable until the next sync.'],
+  ['Refresh monitoring', 'Config sets a 15-second minimum refresh interval and a 45-second refresh tick; verify requests and UI updates behave as intended.', 'Confirmed config', 'Each open device runs schedule + player refresh every 45s, a chat poll every 60s, and the build watcher (BUILD.check) downloads the whole HTML page every 5 minutes and on focus (30s throttle). Multiply by open devices to estimate load on Apps Script, which limits concurrent executions.'],
+  ['API latency and errors', 'Track timeouts, HTTP errors, retries, and failure rate.', 'New admin control', 'NET only records ok/fail. POST calls (doFetch, scApi_) have no timeout, so a hanging request leaves buttons on "Submitting…". Only lbFetchJson_ has timeouts and retries. See optional Edit 4 for a device-side latency log.'],
+  ['Offline queue visibility', 'Show pending, synced, failed, and unresolved queue counts.', 'New admin control', 'The offline bar counts pending items only. Failed chat messages and scanner jobs in "error" are excluded, so they are invisible there.'],
+  ['Large-data performance', 'Paginate history and avoid loading all players/payments at once.', 'Validate', 'A player\'s payment list and the gallery load in full. In the scanner, synced and duplicate attendance records are never pruned, and the flush (every 30s) and the cache summary read the whole attendance store each time, so it slows as records grow. The admin console should receive counts and pages, not full lists.'],
+  ['QR and scanner resilience', 'Test slow devices, expired credentials, offline mode, repeated scans, and camera permission failures.', 'Validate', 'Handled: camera-blocked messages, native detector with jsQR fallback, 2.5s repeat guard, offline queue, key error sign-out. Risk: the jsQR path creates a new canvas and decodes on every animation frame, which is heavy on low-end phones. Throttle to about 8 fps and reuse one canvas.']
+]});
+function adminGapStatuses_() {
+  const s = [];
+  ADMIN_GAP_REG_.forEach(function (m) { m.items.forEach(function (it) { if (s.indexOf(it[2]) < 0) s.push(it[2]); }); });
+  return s;
+}
+let adminGapPri_ = 'All', adminGapSt_ = 'All';
+
+function adminGapDone_() { try { return JSON.parse(localStorage.getItem(ADMIN_GAP_DONE_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function adminGapToggle_(k) {
+  const d = adminGapDone_();
+  if (d[k]) delete d[k]; else d[k] = Date.now();
+  try { localStorage.setItem(ADMIN_GAP_DONE_KEY, JSON.stringify(d)); } catch (e) {}
+  adminPane_();
+}
+function adminGapPriSet_(v) { adminGapPri_ = v; adminPane_(); }
+function adminGapStSet_(v) { adminGapSt_ = v; adminPane_(); }
+
+function adminGapsHtml_() {
+  const e = lbEscapeHtml_, done = adminGapDone_();
+  const col = { 'Confirmed gap': '#FF453A', 'Critical validation': '#FF453A', 'Business rule': '#FF453A', 'Existing flow': '#34C759', 'Confirmed config flag': '#FF9F0A', 'Confirmed config': '#FF9F0A', 'Confirmed behavior': '#FF9F0A', 'Validate': '#FF9F0A', 'Confirmed capability': '#34C759', 'Architecture decision': '#4A9DE0', 'New admin control': '#FFDE00' };
+  let loaded = 0, doneN = 0, shown = '';
+  ADMIN_GAP_REG_.forEach(function (m) {
+    m.items.forEach(function (it, i) { loaded++; if (done[m.id + (i + 1)]) doneN++; });
+    if (adminGapPri_ !== 'All' && m.p !== adminGapPri_) return;
+    const rows = m.items.map(function (it, i) { return { k: m.id + (i + 1), it: it }; })
+      .filter(function (x) { return adminGapSt_ === 'All' || x.it[2] === adminGapSt_; });
+    if (!rows.length) return;
+    shown += '<div class="sc-label">' + e(m.id + ' · ' + m.name) + ' · ' + e(m.p) + ' · ' + m.items.length + ' checks</div>'
+      + rows.map(function (x) {
+        const dn = !!done[x.k], it = x.it;
+        return '<div style="display:flex;gap:10px;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px;margin-bottom:8px;opacity:' + (dn ? '.5' : '1') + '">'
+          + '<div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:800;color:#fff;' + (dn ? 'text-decoration:line-through' : '') + '">' + e(x.k + ' · ' + it[0]) + '</div>'
+          + '<div style="font-size:12px;color:#c8c4bb;margin-top:2px">' + e(it[1]) + '</div>'
+          + (it[3] ? '<div style="font-size:11px;color:#a8a49a;margin-top:4px">Code note: ' + e(it[3]) + '</div>' : '') + '</div>'
+          + '<div style="text-align:right;flex-shrink:0"><div style="font-size:10px;font-weight:800;letter-spacing:.5px;color:' + (dn ? '#34C759' : col[it[2]] || '#fff') + '">' + (dn ? 'DONE' : e(it[2]).toUpperCase()) + '</div>'
+          + '<button type="button" class="sc-link" style="margin:6px 0 0" onclick="adminGapToggle_(\'' + x.k + '\')">' + (dn ? 'Reopen' : 'Mark done') + '</button></div></div>';
+      }).join('');
+  });
+  return '<div class="ad-head"><b>GAP REGISTER</b><span>' + loaded + ' of ' + ADMIN_GAP_TOTAL_ + ' checks loaded · ' + (loaded - doneN) + ' open · ' + doneN + ' done (this device)</span></div>'
+    + adminPills_(['All', 'P0', 'P1', 'P2'], adminGapPri_, 'adminGapPriSet_')
+    + adminPills_(['All'].concat(adminGapStatuses_()), adminGapSt_, 'adminGapStSet_')
+    + (shown || '<p class="lb-text" style="text-align:center;padding:16px 0">No checks match this filter.</p>')
+    + '<p class="ad-note">P0 = safety/data integrity · P1 = core operations · P2 = reporting and usability. "Confirmed gap" has a direct basis in code. "Validate" needs an end-to-end test. "Architecture decision" must be decided before building. "New admin control" is a feature to build in this console. "Confirmed capability" and "Confirmed behavior" exist in the code today. "Critical validation" must pass before go-live. "Business rule" is non-negotiable; the implementation must prove it. "Existing flow" works today; the admin side still needs completing. "Confirmed config flag" is a setting in code that currently blocks a feature. "Confirmed config" is a configured value whose behavior still needs testing.</p>';
+}
+/* === END: GAP REGISTER — DATA + RENDER === */
+
+function adminLive_(tab) {
+  const e = lbEscapeHtml_;
+  const st = adminSum_.status, ok = st === 'ok', d = ok ? (adminSum_.data || {}) : {};
+  if (st === 'idle') setTimeout(adminSumLoad_, 0);
+  setTimeout(adminFillLocal_, 0);
+  const checks = adminChecks_();
+
+  if (tab === 'gaps') { return adminGapsHtml_();
+    const order = { Build:0, Validate:1, Existing:2 };
+    const rows = ADMIN_GAPS_.slice().sort(function (a, b) { return order[a[1]] - order[b[1]]; })
+      .map(function (g) { return adminRow_(g[0], g[2], '', g[1].toUpperCase()); }).join('');
+    return '<div class="ad-head"><b>GAP REGISTER</b><span>From code review of this file. Not live status.</span></div>' + rows;
+  }
+
+  if (tab === 'system') {
+    const S = DATA.summary();
+    const row = function (k, v) { return adminRow_(k, String(v), '', ''); };
+    return '<div class="ad-head"><b>SYSTEM</b><span>This device only</span></div>'
+      + row('Build', BUILD.run || '—')
+      + row('Environment', CONFIG.env)
+      + row('API configured', CONFIG.api.ready() ? 'Yes' : 'No')
+      + row('Online', navigator.onLine ? 'Yes' : 'No')
+      + row('Last successful sync', NET.lastSyncLabel())
+      + row('Schedule state', typeof lbSchedState_ !== 'undefined' ? lbSchedState_ : '—')
+      + row('Data requests', 'loading ' + S.loading + ' · error ' + S.error + ' · offline ' + S.offline + ' · stale ' + S.stale)
+      + row('Unsent changes', NET.pending())
+      + row('API calls since page load', adminNetStats_())
+      + '<div class="sc-label">Datasets</div>' + adminDatasets_()
+      + '<div class="sc-label">Checks</div>'
+      + (checks.length ? checks.map(function (c) { return adminRow_(c.t, c.d, '', c.sev === 'critical' ? 'CRITICAL' : 'WARN'); }).join('') : '<p class="lb-text">No issues found on this device.</p>');
+  }
+
+  /* dashboard */
+  const pl = d.players || {}, py = d.payments || {}, at = d.attendance || {};
+  const has = function (v) { return v != null && !isNaN(Number(v)); };
+  const na = st === 'loading' ? 'Loading…' : 'Not connected';
+  const crit = checks.filter(function (c) { return c.sev === 'critical'; }).length;
+  const tiles = '<div class="ad-grid">'
+    + adminTile_('Player records', has(pl.active) ? String(pl.active) : '—', has(pl.active) ? (pl.inactive || 0) + ' inactive · ' + (pl.pending || 0) + ' pending' : na)
+    + adminTile_('Payment queue', has(py.submitted) ? String(py.submitted) : '—', has(py.submitted) ? 'For verification · ' + (py.overdue || 0) + ' overdue' : na, has(py.overdue) && py.overdue > 0 ? 'warn' : '')
+    + '<div class="ad-tile" id="adAtt"><small>Attendance sync</small><b>…</b><span>Reading local queue</span></div>'
+    + adminTile_('Data integrity', String(checks.length), crit + ' critical · device checks only', crit ? 'bad' : (checks.length ? 'warn' : 'good'))
+    + '</div>';
+
+  const banner = ok ? ''
+    : '<div class="ad-note">' + (st === 'loading' ? 'Connecting to the Livity backend…' : 'Server data is not connected: ' + e(adminSum_.msg || '') + '. Player, payment and server-side counts stay blank instead of guessing.')
+      + (st === 'na' ? ' <button type="button" class="sc-link" style="margin:0" onclick="adminSumLoad_()">Retry</button>' : '') + '</div>';
+
+  const srvOr = function (arr, ownMsg) { return Array.isArray(arr) ? arr : null; };
+  const critical = checks.filter(function (c) { return c.sev === 'critical'; }).concat(Array.isArray(d.critical) ? d.critical : []);
+  const awaiting = srvOr(d.awaiting), recon = srvOr(d.reconcile);
+
+  return '<div class="ad-head"><b>LIVITY ADMIN</b><span>Operations · Finance · Data Integrity</span></div>'
+    + tiles + banner
+    + '<div class="sc-label">Priority action queue</div>'
+    + adminPrio_('Critical system issues', 'Failed writes, unsafe access, sync failures, conflicting records.', critical, 'None found.')
+    + adminPrio_('Awaiting admin decision', 'Payment proofs, new enrollments, membership verification, manual corrections.', awaiting || [], awaiting ? 'Nothing waiting.' : 'Not connected. Needs adminSummary.')
+    + adminPrio_('Data requiring reconciliation', 'Unsynced attendance, missing player links, session balances, Sheet/database mismatches.', recon || [], recon ? 'Nothing to reconcile.' : 'Not connected. Needs adminSummary.')
+    + '<button type="button" class="btn outline" style="width:100%;margin-top:6px" onclick="adminSum_.status=\'idle\';adminPane_()">Refresh</button>';
+}
+/* === END: ADMIN CONSOLE — LIVE DASHBOARD + GAP REGISTER === */
 
 function adminRenderMainOld_() {
   adminEl_('adminBody').innerHTML = `
