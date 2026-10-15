@@ -3959,6 +3959,9 @@ Coach Sam — Advanced Assessment
 </section>
 
 
+<!-- POLL (shareable link: #/poll) -->
+<section id="poll" class="view content"></section>
+
 <!-- === START: ANYTIME LIVITY BALL — MARKUP === -->
 <div class="livity-ball-backdrop" id="livityBackdrop" onclick="closeLivityBall()"></div>
 
@@ -4153,7 +4156,7 @@ const CONFIG = (function () {
 
   /* Isang URL kada environment. TODO: maglagay ng hiwalay na TEST deployment/Sheet sa staging at development. */
   var API_URLS = {
-    production:  'https://script.google.com/macros/s/AKfycbz2gi1CXnf8yMhxQ0I7TGVRWS7NJATdpQK-YHsm_z0Afo7ZCKUjYM-zHkjI9ykJ08_40w/exec',
+    production:  'https://script.google.com/macros/s/AKfycbxlTQYIkgfuV-qPy-ef3ZyqE1kiEl4sGftDYSggSMaaMNkko9jC3OTyJw5ss5ouhmeBEg/exec',
     staging:     '',
     development: ''
   };
@@ -5582,6 +5585,7 @@ function lbSessionLifeInner_(s, idx) {
 
   /* Who + Can I attend */
   out += row('Who can attend', txt(who));
+out += rsvpWhoSection_(s, day, pid);
 
   /* Actions */
   const wa = function (msg) { return contactWaUrl_(msg); };
@@ -5893,7 +5897,7 @@ return `
 <div class="event-title">${lbShortProgramName_(s.programName)}</div>
 ${lbSessionStatusHtml_(s)}
 <a href="${lbMapsLink_(s.venue)}" target="_blank" rel="noopener" class="event-venue" style="text-decoration:underline;text-decoration-color:var(--line);display:inline-block">📍 ${s.venue}</a>
-${fmWhoHtml_(s)}${tagHtml}
+${fmWhoHtml_(s)}${rsvpSchedHtml_(s, day)}${tagHtml}
 </div>
 `;
 }).join('');}
@@ -11936,6 +11940,7 @@ function pfLogout_() {
   lbPayments = { loading:true, balanceDue:0, payments:[] };
   lbPayCur = null; lbPayOpen_ = false; lbWelcome_ = ''; lbSyncNote_ = '';
   lbForm = lbBlankForm_('');
+  RSVP = { map: {}, coaches: {}, counts: {}, eligible: {}, loaded: false, failed: false };
 
   // reset bottom tab + home tile back to default
   const btn = document.querySelector('.bottom button[data-v="player"], .bottom button[data-v="enroll"]');
@@ -12511,8 +12516,8 @@ toggleLivityBallBase_();
 /* === START: BACK NAVIGATION — OPTION A (top-left back + swipe back + browser back) === */
 const NAVH = (function () {
   var ROOT = ['home', 'programs', 'schedule'];
-  var PARENT = { detail: 'programs', pricing: 'programs', enroll: 'home' };
-  var NAMES = { home: 'Home', programs: 'Programs', schedule: 'Schedule', detail: 'Program', pricing: 'Pricing', enroll: 'Enroll' };
+  var PARENT = { detail: 'programs', pricing: 'programs', enroll: 'home', poll: 'home' };
+  var NAMES = { home: 'Home', programs: 'Programs', schedule: 'Schedule', detail: 'Program', pricing: 'Pricing', enroll: 'Enroll', poll: 'Poll' };
   var CHEV = '<svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10 2 2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   /* pinakataas muna: ito ang isasara ng back */
@@ -12544,7 +12549,7 @@ const NAVH = (function () {
   function hashFor(s) {
     if (s.v === 'programs') return '#/programs';
     if (s.v === 'detail') return s.k ? '#/programs/' + encodeURIComponent(s.k) : '#/programs';
-    if (s.v === 'schedule' || s.v === 'pricing' || s.v === 'enroll') return '#/' + s.v;
+    if (s.v === 'schedule' || s.v === 'pricing' || s.v === 'enroll' || s.v === 'poll') return '#/' + s.v;
     return '';
   }
   function urlFor(s) { return base() + hashFor(s); }
@@ -12555,7 +12560,7 @@ const NAVH = (function () {
     });
     var a = p[0] || '';
     if (a === 'programs') return (p[1] && Object.prototype.hasOwnProperty.call(data, p[1])) ? { v: 'detail', k: p[1] } : { v: 'programs' };
-    if (a === 'schedule' || a === 'pricing' || a === 'enroll') return { v: a };
+    if (a === 'schedule' || a === 'pricing' || a === 'enroll' || a === 'poll') return { v: a };
     if (a === 'player') return { v: 'home', player: ['payments', 'sessions', 'qr'].indexOf(p[1]) > -1 ? p[1] : 'hub' };
     return { v: 'home' };
   }
@@ -14287,7 +14292,9 @@ ${adminCard_('Audit log', 'Who changed what, and when', "appToast_('Coming soon'
 /* === START: RSVP — WEEKLY ATTENDANCE POLL (replaces WhatsApp poll) === */
 const RSVP_ACAD_DEFAULT_YES = true;                       // Academy = expected unless "Not going"
 const RSVP_PROGRAMS_ = ['PRG-REG', 'PRG-ADV', 'PRG-ACAD']; // Private stays WhatsApp
-let RSVP = { map: {}, coaches: {}, loaded: false, failed: false };
+const RSVP_SHOW_NAMES = true;      // false = bilang lang, walang pangalan
+const RSVP_POLL_MS = 30000;
+let RSVP = { map: {}, coaches: {}, counts: {}, eligible: {}, loaded: false, failed: false };
 
 function rsvpDateIso_(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function rsvpKey_(pid, date, start) { return [pid, date, start].join('|'); }
@@ -14313,7 +14320,6 @@ function rsvpStatus_(playerId, pid, date, start) {
 
 async function rsvpLoad_() {
   const list = (typeof fmPlayers_ === 'function') ? fmPlayers_() : [];
-  if (!list.length) return;
   try {
     const ids = list.map(function (p) { return p.playerId; }).join(',');
     const json = await lbFetchJson_(LIVITY_API_URL + '?action=weekRsvp&playerIds=' + encodeURIComponent(ids), { timeoutMs: 10000, retries: 1 });
@@ -14321,6 +14327,8 @@ async function rsvpLoad_() {
     RSVP.map = {};
     (json.rsvps || []).forEach(function (r) { RSVP.map[r.playerId + '|' + rsvpKey_(r.programId, r.sessionDate, r.startTime)] = r.status; });
     RSVP.coaches = json.coaches || {};
+    RSVP.counts = json.counts || {};
+    RSVP.eligible = json.eligible || {};
     RSVP.loaded = true; RSVP.failed = false;
   } catch (e) { RSVP.failed = true; }
   hdRender_();
@@ -14346,6 +14354,77 @@ function rsvpEligible_(p) {
   return out;
 }
 
+/** Schedule tab: live bar + pills para sa isang session */
+function rsvpSchedHtml_(s, day) {
+  const pid = lbSessionProgramId_(s);
+  if (RSVP_PROGRAMS_.indexOf(pid) < 0 || s.status === 'Cancelled') return '';
+  const w = lbSessionWhen_(day, s.startTime, s.endTime);
+  if (!w) return '';
+  const date = rsvpDateIso_(w.start), ph = lbSessionPhase_(s, w);
+  let h = rsvpLiveHtml_(pid, date, s.startTime);
+  const p = fmActive_();
+  const mine = p && !p._lite && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; });
+  if (mine && ph.k !== 'ended') {
+    const st = rsvpStatus_(p.playerId, pid, date, s.startTime), locked = ph.k !== 'open';
+    const args = "'" + p.playerId + "','" + pid + "','" + date + "','" + s.startTime + "'";
+    const pill = function (val, label) {
+      return '<button type="button" class="lb-pill' + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled style="opacity:.5"' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
+    };
+    h += '<div class="lb-pills" style="margin:8px 0 0">' + pill('yes', 'Going') + pill('no', 'Not going') + '</div>'
+      + (locked ? '<div class="event-venue" style="margin-top:4px">' + lbEscapeHtml_(ph.label) + '</div>' : '');
+  }
+  return '<div style="margin-top:6px">' + h + '</div>';
+}
+
+/** Session detail: buong listahan ng Going (parang tap sa WhatsApp poll) */
+function rsvpWhoSection_(s, day, pid) {
+  if (RSVP_PROGRAMS_.indexOf(pid) < 0) return '';
+  const w = lbSessionWhen_(day, s.startTime, s.endTime);
+  if (!w) return '';
+  const c = (RSVP.counts || {})[rsvpKey_(pid, rsvpDateIso_(w.start), s.startTime)] || { yes: 0, no: 0, names: [] };
+  const e = lbEscapeHtml_;
+  const list = (RSVP_SHOW_NAMES && c.names.length)
+    ? c.names.map(function (n, i) { return '<p class="lb-text" style="margin:0 0 2px">' + (i + 1) + '. ' + e(n) + '</p>'; }).join('')
+    : '<p class="lb-text">' + (c.yes ? c.yes + ' going' : 'No one yet.') + '</p>';
+  return '<div class="session-detail-label">Going (' + c.yes + ')</div>' + list
+    + (c.no ? '<p class="lb-text" style="color:var(--muted)">' + c.no + ' not going</p>' : '');
+}
+
+/** Parang WhatsApp poll: bilang + bar + pangalan. Pareho ang nakikita ng lahat ng pamilya. */
+function rsvpLiveHtml_(pid, date, start) {
+  const c = (RSVP.counts || {})[rsvpKey_(pid, date, start)] || { yes: 0, no: 0, names: [] };
+  const acad = pid === 'PRG-ACAD' && RSVP_ACAD_DEFAULT_YES;
+  const elig = Number((RSVP.eligible || {})[pid]) || 0;
+  const expected = acad ? Math.max(0, elig - c.yes - c.no) : 0;
+  const going = c.yes + expected;
+  const base = acad && elig ? elig : Math.max(1, c.yes + c.no);
+  const pct = Math.min(100, Math.round(going / base * 100));
+  const e = lbEscapeHtml_;
+  const names = (RSVP_SHOW_NAMES && c.names.length)
+    ? '<div class="event-venue" style="margin-top:4px">' + c.names.map(e).join(', ') + (expected ? ' + ' + expected + ' expected' : '') + '</div>' : '';
+  return '<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden"><span style="display:block;height:100%;width:' + pct + '%;background:#2e9e4f;border-radius:3px;transition:width .4s ease"></span></div>'
+    + '<b style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums">' + going + '</b></div>'
+    + '<div class="event-venue" style="margin-top:2px">' + going + ' going' + (c.no ? ' · ' + c.no + ' not going' : '') + '</div>' + names;
+}
+
+/* live: tahimik na refresh habang bukas ang Home o Schedule */
+setInterval(function () {
+  const home = document.getElementById('home'), sched = document.getElementById('schedule');
+  if (document.hidden || !navigator.onLine) return;
+  const pollEl_ = document.getElementById('poll');
+  if (!((home && home.classList.contains('active')) || (sched && sched.classList.contains('active')) || (pollEl_ && pollEl_.classList.contains('active')))) return;
+  if (MODAL.anyOpen() || appTyping_()) return;
+  rsvpLoad_();
+}, RSVP_POLL_MS);
+
+const hdRenderBase_ = hdRender_;
+hdRender_ = function () {
+  const r = hdRenderBase_.apply(this, arguments);
+  pollRender_();
+  if (lbScheduleWeek && lbScheduleActiveDay) renderScheduleDay(lbScheduleActiveDay);
+  return r;
+};
+
 function rsvpCardHtml_() {
   const p = fmActive_();
   if (!p || p._lite || !lbScheduleWeek) return '';
@@ -14364,11 +14443,13 @@ function rsvpCardHtml_() {
     return '<div class="event"><div class="event-time" style="font-size:16px">' + (x.date === todayIso ? 'Today' : x.day.slice(0, 3)) + ' · ' + lbFormatTimeRange_(x.s.startTime, x.s.endTime) + '</div>'
       + '<div class="event-title">' + e(lbShortProgramName_(x.s.programName)) + '</div>'
       + '<div class="event-venue">' + e(x.s.venue) + (coach ? ' · Coach ' + e(coach) : '') + '</div>'
+      + rsvpLiveHtml_(x.pid, x.date, x.s.startTime)
       + '<div class="lb-pills" style="margin:8px 0 0">' + pill('yes', 'Going') + pill('no', 'Not going') + '</div>'
       + (locked ? '<div class="event-venue" style="margin-top:4px">' + e(ph.label) + '</div>' : (st.implicit ? '<div class="event-venue" style="margin-top:4px">Expected by default. Tap Not going if you can\'t make it.</div>' : ''))
       + '</div>';
   }).join('');
   return '<div class="mo-sec" style="margin-top:4px">This week <i>tap to confirm</i></div><div class="panel" style="padding:4px 16px;margin:0 0 14px">' + rows
+    + '<button type="button" class="pf-photo-rm" style="display:block;margin:10px auto 6px" onclick="rsvpWeekNo_(\'' + p.playerId + '\')">Will not attend this week</button>'
     + (RSVP.failed ? '<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0">📶 Couldn\'t refresh. Showing saved answers.</p>' : '') + '</div>';
 }
 
@@ -14393,8 +14474,90 @@ async function rsvpSet_(playerId, pid, date, start, val) {
   haptic('selection');
   try {
     await rsvpApply_(playerId, pid, date, start, next);
+    rsvpLoad_();
     appToast_(next === 'yes' ? 'See you there ✓' : (next === 'no' ? 'Marked not going' : 'Answer cleared'));
   } catch (e) { TOAST.error(/closed/i.test(e.message || '') ? e.message : "Couldn't save your answer. Try again."); }
+}
+
+function pollRender_() {
+  const el = document.getElementById('poll');
+  if (!el) return;
+  const e = lbEscapeHtml_, p = fmActive_();
+  const back = '<button class="back" onclick="NAVH.back()">← Back</button>';
+  const head = '<div class="section-title"><h2>Weekly Poll</h2></div><p style="color:var(--muted);font-size:13px;margin:0 0 12px">Which Livity training session/s will your child attend this week?</p>';
+  if (!lbScheduleWeek) { el.innerHTML = back + head + lbLoadingHtml_('Loading sessions…'); return; }
+
+  const list = [];
+  lbScheduleWeek.forEach(function (d) {
+    if (!d.active) return;
+    (d.sessions || []).forEach(function (s) {
+      const pid = lbSessionProgramId_(s);
+      if (RSVP_PROGRAMS_.indexOf(pid) < 0 || s.status === 'Cancelled') return;
+      const w = lbSessionWhen_(d.day, s.startTime, s.endTime);
+      if (!w || w.end.getTime() <= w.now.getTime()) return;
+      list.push({ s: s, day: d.day, w: w, pid: pid, date: rsvpDateIso_(w.start) });
+    });
+  });
+  list.sort(function (a, b) { return a.w.start - b.w.start; });
+
+  const ready = !!(p && !p._lite);
+  const can = function (pid) { return ready && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; }); };
+  const todayIso = rsvpDateIso_(new Date());
+  const rows = list.map(function (x) {
+    const ph = lbSessionPhase_(x.s, x.w), locked = ph.k !== 'open', mine = can(x.pid);
+    let pills = '';
+    if (mine) {
+      const st = rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime);
+      const args = "'" + p.playerId + "','" + x.pid + "','" + x.date + "','" + x.s.startTime + "'";
+      const pill = function (val, label) {
+        return '<button type="button" class="lb-pill' + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled style="opacity:.5"' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
+      };
+      pills = '<div class="lb-pills" style="margin:8px 0 0">' + pill('yes', 'Going') + pill('no', 'Not going') + '</div>'
+        + (locked ? '<div class="event-venue" style="margin-top:4px">' + e(ph.label) + '</div>' : (st.implicit ? '<div class="event-venue" style="margin-top:4px">Expected by default. Tap Not going if you can\'t make it.</div>' : ''));
+    }
+    return '<div class="event"><div class="event-time" style="font-size:16px">' + (x.date === todayIso ? 'Today' : x.day.slice(0, 3)) + ' · ' + lbFormatTimeRange_(x.s.startTime, x.s.endTime) + '</div>'
+      + '<div class="event-title">' + e(lbShortProgramName_(x.s.programName)) + '</div>'
+      + '<div class="event-venue">' + e(x.s.venue) + '</div>'
+      + rsvpLiveHtml_(x.pid, x.date, x.s.startTime) + pills + '</div>';
+  }).join('');
+
+  let foot = '';
+  if (!ready) {
+    foot = '<button type="button" class="btn primary" style="width:100%;margin-top:12px" onclick="openProfile_()">Find my player to vote →</button>'
+      + '<p class="lb-text" style="font-size:11px;color:var(--muted);text-align:center;margin:8px 0 0">Use the mobile number or Player ID from registration. You only need to do this once.</p>';
+  } else if (!list.some(function (x) { return can(x.pid); })) {
+    foot = '<div class="notice">No active package for ' + e(p.fullName) + ', so voting is off. Top up in My Livity to join the poll.</div>';
+  } else {
+    foot = '<button type="button" class="btn outline" style="width:100%;margin-top:12px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="rsvpWeekNo_(\'' + p.playerId + '\')">Will not attend this week</button>';
+  }
+
+  el.innerHTML = back + head + (ready ? fmSwitcherHtml_() : '')
+    + (list.length ? '<div class="panel" style="padding:4px 16px;margin:0">' + rows + '</div>' : EMPTY.html('schedule', { title: 'No sessions left this week', text: 'Check back next week or message Admin.' }))
+    + (RSVP.failed ? '<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0">📶 Couldn\'t refresh. Showing saved answers.</p>' : '')
+    + foot;
+  if (typeof NAVH !== 'undefined') NAVH.skin();
+}
+document.addEventListener('DOMContentLoaded', function () { pollRender_(); });
+
+const showPollBase_ = show;
+show = function (id) {
+  const r = showPollBase_.apply(this, arguments);
+  if (id === 'poll') { pollRender_(); rsvpLoad_(); }
+  return r;
+};
+
+async function rsvpWeekNo_(playerId) {
+  const p = fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0] || fmActive_();
+  if (!p) return;
+  const todo = rsvpEligible_(p).filter(function (x) { return lbSessionPhase_(x.s, x.w).k === 'open'; });
+  if (!todo.length) { appToast_('No open sessions to update'); return; }
+  const first = String(p.fullName || '').trim().split(/\s+/)[0];
+  if (!(await CONFIRM.ask({ title: 'Not attending this week?', text: first + ' will be marked Not going for ' + todo.length + ' session' + (todo.length === 1 ? '' : 's') + '.', confirmLabel: 'Mark all Not going', danger: false }))) return;
+  try {
+    for (const x of todo) await rsvpApply_(p.playerId, x.pid, x.date, x.s.startTime, 'no');
+    rsvpLoad_();
+    appToast_('Marked not going this week');
+  } catch (e) { TOAST.error("Couldn't save. Try again."); }
 }
 
 /* override: Session Detail "Reserve Spot" / "Cancel Reservation" gumagamit na rin ng parehong RSVP */
@@ -14458,6 +14621,7 @@ async function adminRosterLoad_() {
 function adminRosterHtml_() {
   const e = lbEscapeHtml_, R = adminRos_;
   const head = '<div class="ad-head"><b>WEEK ROSTER</b><span>RSVPs from the app · assign coaches</span></div>'
+    + '<button type="button" class="btn primary" style="width:100%;margin:0 0 8px" onclick="adminRosterShare_()">Send weekly poll to WhatsApp group →</button>'
     + '<button type="button" class="btn outline" style="width:100%;margin:0 0 10px" onclick="adminRos_.status=\'idle\';adminRosterLoad_()">Refresh</button>';
   if (R.status === 'loading' || R.status === 'idle') return head + '<p class="lb-text" style="text-align:center">Loading…</p>';
   if (R.status !== 'ok') return head + '<div class="ad-note">Not connected: ' + e(R.msg) + '</div>';
@@ -14481,6 +14645,17 @@ function adminRosterHtml_() {
       + '<div class="sc-manual"><input class="lb-input" id="arAdd' + i + '" placeholder="Add by Player ID (WhatsApp reply)" autocapitalize="characters" autocomplete="off"><button class="btn primary" onclick="adminRosterAdd_(' + i + ')">Add</button></div>'
       + '<button type="button" class="sc-link" onclick="adminRosterCopy_(' + i + ')">Copy summary for WhatsApp</button></div>';
   }).join('');
+}
+
+function adminRosterShare_() {
+  const list = rsvpWeekSessions_();
+  if (!list.length) { appToast_('No sessions this week'); return; }
+  const lines = list.map(function (s) {
+    return '• ' + s.day.slice(0, 3) + ' (' + s.sessionDate.slice(5).replace('-', '/') + ') – ' + s.programName + ' | ' + lbFormatTimeRange_(s.startTime, s.endTime) + ' | ' + s.venue;
+  });
+  const msg = 'Good Day, Livity Parents! May we ask which Livity Training Session/s your child will be attending this week? Tap the link to vote (live results):\n\n'
+    + lines.join('\n') + '\n\n' + CONFIG.branding.portalUrl + '#/poll';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 
 async function adminRosterCoach_(i, coachId) {
@@ -14515,3 +14690,4 @@ function adminRosterCopy_(i) {
 </script>
 </body>
 </html>
+
