@@ -2985,6 +2985,57 @@ html.sw-busy .view.active{animation:none}
 .pc-rule{margin-top:6px}
 .pc-rule b{display:block;font-size:11px;color:var(--text)}
 /* === END: PRICING — COMPARISON STYLES === */
+/* === START: POLL — STYLES === */
+.pl-hero{position:relative;overflow:hidden;border-radius:24px;padding:20px;margin:0 0 14px;color:#fff;background:linear-gradient(160deg,#0B2F64 0%,#171714 80%)}
+.pl-hero:after{content:"";position:absolute;width:220px;height:220px;right:-80px;top:-90px;border-radius:50%;background:radial-gradient(circle,#FFDE0040,transparent 65%)}
+.pl-hero>*{position:relative;z-index:1}
+.pl-live{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold-light)}
+.pl-live i{width:8px;height:8px;border-radius:50%;background:#34C759;animation:plPulse 1.6s ease-out infinite}
+@keyframes plPulse{0%{box-shadow:0 0 0 0 rgba(52,199,89,.6)}100%{box-shadow:0 0 0 10px rgba(52,199,89,0)}}
+.pl-hero h2{margin:8px 0 2px;font-family:Georgia,serif;font-size:30px}
+.pl-hero p{margin:0;font-size:13px;color:#ddd8ce;line-height:1.45}
+.pl-prog{margin-top:14px}
+.pl-prog b{font-size:12px;color:var(--gold)}
+.pl-prog div{height:6px;border-radius:3px;background:rgba(255,255,255,.18);margin-top:6px;overflow:hidden}
+.pl-prog i{display:block;height:100%;background:var(--gold);border-radius:3px;transition:width .5s ease}
+.pl-sec{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:18px 2px 8px}
+.pl-cs{display:flex;gap:10px;overflow-x:auto;margin:0 -18px;padding:2px 18px 8px;scrollbar-width:none}
+.pl-cs::-webkit-scrollbar{display:none}
+.pl-cc{flex:0 0 auto;display:flex;gap:10px;align-items:center;background:#fff;border-radius:18px;padding:10px 14px 10px 10px;box-shadow:0 2px 10px rgba(11,47,100,.08)}
+.pl-ca{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
+.pl-cc b{display:block;font-size:13px;color:var(--text)}
+.pl-cc span{font-size:11px;color:var(--muted)}
+.pl-card{background:#fff;border-radius:22px;padding:16px;margin:0 0 12px;box-shadow:0 2px 14px rgba(11,47,100,.08);border:2px solid transparent;transition:border-color .25s ease,box-shadow .25s ease}
+.pl-card.in{border-color:#34C759;box-shadow:0 6px 22px rgba(52,199,89,.22)}
+.pl-top{display:flex;gap:12px;align-items:center}
+.pl-date{width:54px;flex-shrink:0;border-radius:16px;background:var(--navy);color:#fff;text-align:center;padding:8px 0;transition:background .25s ease}
+.pl-card.in .pl-date{background:#1f7a3a}
+.pl-date b{display:block;font-size:22px;line-height:1.05}
+.pl-date span{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--gold-light)}
+.pl-t{min-width:0}
+.pl-t b{display:block;font-size:15px;color:var(--text)}
+.pl-t span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.pl-coach{display:inline-block;margin-top:10px;font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:9px;background:#fff8dd;border:1px solid #ffe38a;color:var(--navy)}
+.pl-coach.ok{background:#eafbef;border-color:#b8e6c3;color:#1f7a3a}
+.pl-coach.tba{background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)}
+.pl-bar{height:10px;border-radius:5px;background:#eef1f6;overflow:hidden;margin:12px 0 8px}
+.pl-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#34C759,#2e9e4f)}
+.pl-anim .pl-bar i{animation:plGrow .8s cubic-bezier(.2,.8,.2,1)}
+@keyframes plGrow{from{width:0}}
+.pl-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pl-av{display:flex}
+.pl-av span{width:26px;height:26px;border-radius:50%;margin-left:-8px;border:2px solid #fff;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff}
+.pl-av span:first-child{margin-left:0}
+.pl-cnt{font-size:13px;font-weight:800;color:var(--text)}
+.pl-cnt small{font-weight:600;color:var(--muted);font-size:11px}
+.pl-names{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.pl-vote{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.pl-vote button{border:0;border-radius:14px;padding:13px 6px;font-size:14px;font-weight:800;background:#f5f2ea;color:var(--text);cursor:pointer}
+.pl-vote .go.sel{background:#34C759;color:#fff;box-shadow:0 6px 16px rgba(52,199,89,.35)}
+.pl-vote .no.sel{background:#ffeceb;color:var(--red);box-shadow:inset 0 0 0 2px var(--red)}
+.pl-vote button:disabled{opacity:.45;cursor:default}
+.pl-lock{font-size:11.5px;color:var(--muted);margin-top:8px;text-align:center}
+/* === END: POLL — STYLES === */
 /* === END: MORE / LIVITY REDESIGN — STYLES === */
 </style>
 </head>
@@ -4156,7 +4207,7 @@ const CONFIG = (function () {
 
   /* Isang URL kada environment. TODO: maglagay ng hiwalay na TEST deployment/Sheet sa staging at development. */
   var API_URLS = {
-    production:  'https://script.google.com/macros/s/AKfycbxlTQYIkgfuV-qPy-ef3ZyqE1kiEl4sGftDYSggSMaaMNkko9jC3OTyJw5ss5ouhmeBEg/exec',
+    production:  'https://script.google.com/macros/s/AKfycbyOc0IjYnszZNHOCnl4JZ24gnpeMrbFCiUeAAhoaAb-K_SEZE6qTUqOAUhYSbr9jj1MFA/exec',
     staging:     '',
     development: ''
   };
@@ -11465,6 +11516,7 @@ unlockBodyScroll_(); // now handles the nav reset/re-pin retries centrally
 function scRenderMain_() {
 scEl_('scanBody').innerHTML = `
 ${staffBarHtml_()}
+<button type="button" class="btn outline" style="width:100%;margin:0 0 10px;padding:11px;font-size:12px" onclick="coachAvailOpen_()">🗓 My availability this week →</button>
 <div style="display:flex;gap:8px;margin:2px 0 12px">
 <button type="button" class="btn primary" id="scModeAttBtn" style="flex:1;padding:11px;font-size:12px" onclick="scSetMode_('attendance')">▶ Start Attendance</button>
 <button type="button" class="btn outline" id="scModeTestBtn" style="flex:1;padding:11px;font-size:12px" onclick="scSetMode_('test')">🔍 Test / Verify QR</button>
@@ -14327,6 +14379,7 @@ async function rsvpLoad_() {
     RSVP.map = {};
     (json.rsvps || []).forEach(function (r) { RSVP.map[r.playerId + '|' + rsvpKey_(r.programId, r.sessionDate, r.startTime)] = r.status; });
     RSVP.coaches = json.coaches || {};
+    RSVP.avail = json.avail || {};
     RSVP.counts = json.counts || {};
     RSVP.eligible = json.eligible || {};
     RSVP.loaded = true; RSVP.failed = false;
@@ -14479,7 +14532,130 @@ async function rsvpSet_(playerId, pid, date, start, val) {
   } catch (e) { TOAST.error(/closed/i.test(e.message || '') ? e.message : "Couldn't save your answer. Try again."); }
 }
 
+var pollAnim_ = true;
+function pollWeekLabel_() {
+  const t = new Date(), mon = new Date(t.getFullYear(), t.getMonth(), t.getDate() - getTodayIndex_());
+  const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+  const f = function (d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+  return f(mon) + ' – ' + f(sun);
+}
+function pollColor_(n) {
+  const P = ['#1C68D4', '#ED1C24', '#c77700', '#0B2F64', '#2e9e4f', '#8e44ad'];
+  let h = 0; String(n).split('').forEach(function (c) { h += c.charCodeAt(0); });
+  return P[h % P.length];
+}
+function pollIni_(n) { return String(n || '?').trim().split(/\s+/).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase(); }
+
 function pollRender_() {
+  const el = document.getElementById('poll');
+  if (!el) return;
+  const e = lbEscapeHtml_, p = fmActive_(), todayIso = rsvpDateIso_(new Date());
+  const back = '<button class="back" onclick="NAVH.back()">← Back</button>';
+  if (!lbScheduleWeek) { el.innerHTML = back + lbLoadingHtml_('Loading sessions…'); return; }
+
+  const list = [];
+  lbScheduleWeek.forEach(function (d) {
+    if (!d.active) return;
+    (d.sessions || []).forEach(function (s) {
+      const pid = lbSessionProgramId_(s);
+      if (RSVP_PROGRAMS_.indexOf(pid) < 0 || s.status === 'Cancelled') return;
+      const w = lbSessionWhen_(d.day, s.startTime, s.endTime);
+      if (!w || w.end.getTime() <= w.now.getTime()) return;
+      list.push({ s: s, day: d.day, w: w, pid: pid, date: rsvpDateIso_(w.start) });
+    });
+  });
+  list.sort(function (a, b) { return a.w.start - b.w.start; });
+
+  const ready = !!(p && !p._lite);
+  const can = function (pid) { return ready && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; }); };
+  const mineList = list.filter(function (x) { return can(x.pid); });
+  const answered = mineList.filter(function (x) { const s = rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime); return s.v && !s.implicit; }).length;
+  const pct = mineList.length ? Math.round(answered / mineList.length * 100) : 0;
+  const avail = RSVP.avail || {};
+
+  /* ---- hero ---- */
+  const hero = '<div class="pl-hero"><div class="pl-live"><i></i>Live · updates every 30s</div>'
+    + '<h2>Weekly Poll</h2><p>Week of ' + pollWeekLabel_() + '<br>Which Livity session/s will your child attend?</p>'
+    + (ready && mineList.length ? '<div class="pl-prog"><b>' + answered + ' of ' + mineList.length + ' answered for ' + e(String(p.fullName || '').trim().split(/\s+/)[0]) + '</b><div><i style="width:' + pct + '%"></i></div></div>' : '')
+    + '</div>';
+
+  /* ---- coaches this week ---- */
+  const cm = {};
+  list.forEach(function (x) {
+    const key = rsvpKey_(x.pid, x.date, x.s.startTime), day = x.day.slice(0, 3), as = RSVP.coaches[key];
+    const add = function (n, ok) {
+      const a = cm[n] = cm[n] || [];
+      const hit = a.filter(function (z) { return z.d === day; })[0];
+      if (hit) hit.ok = hit.ok || ok; else a.push({ d: day, ok: ok });
+    };
+    if (as) add(as, true);
+    (avail[key] || []).forEach(function (n) { add(n, n === as); });
+  });
+  const names = Object.keys(cm);
+  const coaches = names.length
+    ? '<div class="pl-sec">Coaches this week <span style="text-transform:none;letter-spacing:0;font-weight:600">· ✓ = confirmed</span></div><div class="pl-cs">'
+      + names.map(function (n) {
+        return '<div class="pl-cc"><div class="pl-ca" style="background:' + pollColor_(n) + '">' + e(pollIni_(n)) + '</div><div><b>' + e(n) + '</b><span>' + cm[n].map(function (z) { return z.d + (z.ok ? ' ✓' : ''); }).join(' · ') + '</span></div></div>';
+      }).join('') + '</div>'
+    : '<p class="lb-text" style="font-size:12px;color:var(--muted);margin:12px 2px 0">Coach availability will show here once coaches respond.</p>';
+
+  /* ---- session cards ---- */
+  const cards = list.map(function (x) {
+    const key = rsvpKey_(x.pid, x.date, x.s.startTime);
+    const c = (RSVP.counts || {})[key] || { yes: 0, no: 0, names: [] };
+    const acad = x.pid === 'PRG-ACAD' && RSVP_ACAD_DEFAULT_YES;
+    const elig = Number((RSVP.eligible || {})[x.pid]) || 0;
+    const expected = acad ? Math.max(0, elig - c.yes - c.no) : 0;
+    const going = c.yes + expected;
+    const base = acad && elig ? elig : Math.max(1, c.yes + c.no);
+    const barPct = Math.min(100, Math.round(going / base * 100));
+    const ph = lbSessionPhase_(x.s, x.w), locked = ph.k !== 'open', mine = can(x.pid);
+    const st = mine ? rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime) : { v: '' };
+    const av = c.names.slice(0, 5).map(function (n) { return '<span style="background:' + pollColor_(n) + '">' + e(pollIni_(n)) + '</span>'; }).join('')
+      + (c.names.length > 5 ? '<span style="background:#8e8e93">+' + (c.names.length - 5) + '</span>' : '');
+    const as = RSVP.coaches[key], av2 = avail[key] || [];
+    const coach = as ? '<div class="pl-coach ok">Coach ' + e(as) + ' · confirmed</div>'
+      : (av2.length ? '<div class="pl-coach">Available: ' + av2.map(e).join(', ') + ' · awaiting approval</div>' : '<div class="pl-coach tba">Coach to be announced</div>');
+    let vote = '';
+    if (mine) {
+      const args = "'" + p.playerId + "','" + x.pid + "','" + x.date + "','" + x.s.startTime + "'";
+      const b = function (val, cls, label) {
+        return '<button type="button" class="' + cls + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
+      };
+      vote = '<div class="pl-vote">' + b('yes', 'go', st.v === 'yes' ? '✓ I\'m going' : 'Going') + b('no', 'no', 'Not going') + '</div>'
+        + (locked ? '<div class="pl-lock">' + e(ph.label) + '</div>' : (st.implicit ? '<div class="pl-lock">Expected by default. Tap Not going if you can\'t make it.</div>' : ''));
+    }
+    return '<div class="pl-card' + (st.v === 'yes' ? ' in' : '') + '"><div class="pl-top">'
+      + '<div class="pl-date"><b>' + x.w.start.getDate() + '</b><span>' + x.day.slice(0, 3).toUpperCase() + '</span></div>'
+      + '<div class="pl-t"><b>' + e(lbShortProgramName_(x.s.programName)) + '</b><span>' + lbFormatTimeRange_(x.s.startTime, x.s.endTime) + '</span><span>' + e(x.s.venue) + '</span></div></div>'
+      + coach
+      + '<div class="pl-bar"><i style="width:' + barPct + '%"></i></div>'
+      + '<div class="pl-row"><div class="pl-av">' + av + '</div><div class="pl-cnt">' + going + ' going' + (c.no ? ' <small>· ' + c.no + ' not going</small>' : '') + '</div></div>'
+      + (RSVP_SHOW_NAMES && c.names.length ? '<div class="pl-names">' + c.names.map(e).join(', ') + (expected ? ' + ' + expected + ' expected' : '') + '</div>' : '')
+      + vote + '</div>';
+  }).join('');
+
+  /* ---- footer ---- */
+  let foot = '';
+  if (!ready) {
+    foot = '<button type="button" class="btn primary" style="width:100%;margin-top:6px" onclick="openProfile_()">Find my player to vote →</button>'
+      + '<p class="lb-text" style="font-size:11px;color:var(--muted);text-align:center;margin:8px 0 0">Use the mobile number or Player ID from registration. You only need to do this once.</p>';
+  } else if (!mineList.length) {
+    foot = '<div class="notice">No active package for ' + e(p.fullName) + ', so voting is off. Top up in My Livity to join the poll.</div>';
+  } else {
+    foot = '<button type="button" class="btn outline" style="width:100%;margin-top:4px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="rsvpWeekNo_(\'' + p.playerId + '\')">Will not attend this week</button>';
+  }
+
+  el.innerHTML = back + '<div class="pl-wrap' + (pollAnim_ ? ' pl-anim' : '') + '">' + hero + (ready ? fmSwitcherHtml_() : '') + coaches
+    + '<div class="pl-sec">Sessions</div>'
+    + (list.length ? cards : EMPTY.html('schedule', { title: 'No sessions left this week', text: 'Check back next week or message Admin.' }))
+    + (RSVP.failed ? '<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0">📶 Couldn\'t refresh. Showing saved answers.</p>' : '')
+    + foot + '</div>';
+  if (el.classList.contains('active')) pollAnim_ = false; // animation: isang beses lang bawat bukas
+  if (typeof NAVH !== 'undefined') NAVH.skin();
+}
+
+function pollRenderOld_() {
   const el = document.getElementById('poll');
   if (!el) return;
   const e = lbEscapeHtml_, p = fmActive_();
@@ -14542,9 +14718,63 @@ document.addEventListener('DOMContentLoaded', function () { pollRender_(); });
 const showPollBase_ = show;
 show = function (id) {
   const r = showPollBase_.apply(this, arguments);
-  if (id === 'poll') { pollRender_(); rsvpLoad_(); }
+  if (id === 'poll') { pollAnim_ = true; pollRender_(); rsvpLoad_(); }
   return r;
 };
+
+/* ---- COACH AVAILABILITY (staff sign-in) ---- */
+const COACH_ME_KEY = 'livity_coach_me_v1';
+var coachAv_ = { status: 'idle', coaches: [], map: {}, sessions: [], msg: '' };
+function coachMe_() { try { return localStorage.getItem(COACH_ME_KEY) || ''; } catch (e) { return ''; } }
+function coachMeSet_(id) { try { localStorage.setItem(COACH_ME_KEY, id); } catch (e) {} coachAvailPaint_(); }
+
+async function coachAvailOpen_() {
+  scStop_();
+  coachAv_ = { status: 'loading', coaches: [], map: {}, sessions: rsvpWeekSessions_(), msg: '' };
+  coachAvailPaint_();
+  try {
+    const r = await scApi_('coachAvailGet', {});
+    coachAv_.coaches = r.coaches || []; coachAv_.map = r.avail || {}; coachAv_.status = 'ok';
+  } catch (e) { coachAv_.status = 'na'; coachAv_.msg = String((e && e.message) || 'Not connected'); }
+  coachAvailPaint_();
+}
+
+function coachAvailPaint_() {
+  const body = scEl_('scanBody');
+  if (!body) return;
+  const e = lbEscapeHtml_, A = coachAv_;
+  const top = '<button type="button" class="sc-link" style="margin:4px 0 10px" onclick="scRenderMain_()">← Back to scanner</button>'
+    + '<div class="ad-head"><b>MY AVAILABILITY</b><span>Tell the Academy which sessions you can coach this week</span></div>';
+  if (A.status === 'loading') { body.innerHTML = top + lbLoadingHtml_('Loading…'); return; }
+  if (A.status !== 'ok') { body.innerHTML = top + '<div class="ad-note">Could not load: ' + e(A.msg) + '</div><button type="button" class="btn outline" style="width:100%" onclick="coachAvailOpen_()">Try again</button>'; return; }
+  const me = coachMe_(), today = rsvpDateIso_(new Date());
+  const opts = '<option value="">Select your name</option>' + A.coaches.map(function (c) { return '<option value="' + e(c.coachId) + '"' + (c.coachId === me ? ' selected' : '') + '>' + e(c.name) + '</option>'; }).join('');
+  const rows = me ? A.sessions.map(function (s, i) { return { s: s, i: i }; }).filter(function (x) { return x.s.sessionDate >= today; }).map(function (x) {
+    const v = A.map[me + '|' + x.s.key] || '';
+    const pill = function (val, label) { return '<button type="button" class="lb-pill' + (v === val ? ' sel' : '') + '" onclick="coachAvailSet_(' + x.i + ',\'' + val + '\')">' + label + '</button>'; };
+    return '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px;margin-bottom:8px"><div style="font-size:13px;font-weight:800;color:#fff">' + e(x.s.programName) + '</div>'
+      + '<div style="font-size:12px;color:#c8c4bb;margin:2px 0 8px">' + e(x.s.day.slice(0, 3)) + ' ' + e(x.s.sessionDate) + ' · ' + lbFormatTimeRange_(x.s.startTime, x.s.endTime) + ' · ' + e(x.s.venue) + '</div>'
+      + '<div class="lb-pills" style="margin:0">' + pill('yes', 'Available') + pill('no', "Can't make it") + '</div></div>';
+  }).join('') : '<p class="lb-text" style="color:#c8c4bb">Pick your name to continue.</p>';
+  body.innerHTML = top + '<select class="lb-input" onchange="coachMeSet_(this.value)">' + opts + '</select>' + (rows || '<p class="lb-text" style="color:#c8c4bb">No upcoming sessions this week.</p>');
+}
+
+async function coachAvailSet_(i, val) {
+  const s = coachAv_.sessions[i], me = coachMe_();
+  if (!s || !me) return;
+  const k = me + '|' + s.key, prev = coachAv_.map[k], next = prev === val ? '' : val;
+  if (next) coachAv_.map[k] = next; else delete coachAv_.map[k];
+  coachAvailPaint_();
+  try {
+    await scApi_('setCoachAvail', { coachId: me, sessionKey: s.key, status: next });
+    haptic('selection');
+    appToast_(next === 'yes' ? 'Marked available ✓' : (next === 'no' ? 'Marked unavailable' : 'Cleared'));
+  } catch (err) {
+    if (prev) coachAv_.map[k] = prev; else delete coachAv_.map[k];
+    coachAvailPaint_();
+    TOAST.error(err.message || "Couldn't save");
+  }
+}
 
 async function rsvpWeekNo_(playerId) {
   const p = fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0] || fmActive_();
@@ -14621,6 +14851,7 @@ async function adminRosterLoad_() {
 function adminRosterHtml_() {
   const e = lbEscapeHtml_, R = adminRos_;
   const head = '<div class="ad-head"><b>WEEK ROSTER</b><span>RSVPs from the app · assign coaches</span></div>'
+    + '<button type="button" class="btn outline" style="width:100%;margin:0 0 8px" onclick="adminRosterAuto_()">✨ Auto-assign coaches (by availability &amp; preferences)</button>'
     + '<button type="button" class="btn primary" style="width:100%;margin:0 0 8px" onclick="adminRosterShare_()">Send weekly poll to WhatsApp group →</button>'
     + '<button type="button" class="btn outline" style="width:100%;margin:0 0 10px" onclick="adminRos_.status=\'idle\';adminRosterLoad_()">Refresh</button>';
   if (R.status === 'loading' || R.status === 'idle') return head + '<p class="lb-text" style="text-align:center">Loading…</p>';
@@ -14641,7 +14872,9 @@ function adminRosterHtml_() {
       + '<div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:6px">Going ' + total + ' · Not going ' + d.notGoing.length + (acad ? '' : ' · No reply ' + d.noReply.length) + '</div>'
       + '<div style="font-size:12px;color:#c8c4bb;line-height:1.5"><b style="color:#fff">Going:</b> ' + names(d.going) + (acad && d.noReply.length ? ', <i>expected:</i> ' + names(d.noReply) : '')
       + '<br><b style="color:#fff">Not going:</b> ' + names(d.notGoing) + (acad ? '' : '<br><b style="color:#fff">No reply:</b> ' + names(d.noReply)) + '</div>'
-      + '<div class="sc-label">Coach</div><select class="lb-input" onchange="adminRosterCoach_(' + i + ',this.value)">' + coachOpts + '</select>'
+      + '<div class="sc-label">Coach' + (d.coachId ? '' : ' · awaiting approval') + '</div>'
+      + ((d.available || []).length && !d.coachId ? '<div style="margin:0 0 8px"><span style="font-size:11px;color:#a8a49a;display:block;margin-bottom:6px">Available. Tap to approve:</span>' + d.available.map(function (c) { return '<button type="button" class="mo-chip" style="margin:0 6px 6px 0" onclick="adminRosterCoach_(' + i + ',\'' + e(c.coachId) + '\')">✓ ' + e(c.name) + '</button>'; }).join('') + '</div>' : '')
+      + '<select class="lb-input" onchange="adminRosterCoach_(' + i + ',this.value)">' + coachOpts + '</select>'
       + '<div class="sc-manual"><input class="lb-input" id="arAdd' + i + '" placeholder="Add by Player ID (WhatsApp reply)" autocapitalize="characters" autocomplete="off"><button class="btn primary" onclick="adminRosterAdd_(' + i + ')">Add</button></div>'
       + '<button type="button" class="sc-link" onclick="adminRosterCopy_(' + i + ')">Copy summary for WhatsApp</button></div>';
   }).join('');
@@ -14656,6 +14889,15 @@ function adminRosterShare_() {
   const msg = 'Good Day, Livity Parents! May we ask which Livity Training Session/s your child will be attending this week? Tap the link to vote (live results):\n\n'
     + lines.join('\n') + '\n\n' + CONFIG.branding.portalUrl + '#/poll';
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+
+async function adminRosterAuto_() {
+  const sessions = adminRos_.sessions.map(function (s) { return { key: s.key, programId: s.programId, day: s.day, sessionDate: s.sessionDate, startTime: s.startTime }; });
+  try {
+    const r = await scApi_('autoAssign', { sessions: sessions });
+    appToast_((r.assigned || []).length ? 'Auto-assigned ' + r.assigned.length + ' session(s) ✓' : 'Nothing to assign');
+    adminRos_.status = 'idle'; adminRosterLoad_();
+  } catch (e) { TOAST.error(e.message || "Couldn't auto-assign"); }
 }
 
 async function adminRosterCoach_(i, coachId) {
@@ -14690,4 +14932,3 @@ function adminRosterCopy_(i) {
 </script>
 </body>
 </html>
-
