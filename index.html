@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://livityportal.artiplay.app">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="app-build" content="2026-10-15.1">
+<meta name="app-build" content="2026-10-21.2">
 
 <style>
 :root {
@@ -4416,18 +4416,7 @@ const NET = (function () {
     return n;
   }
 
-  function ensure() {
-    var el = document.getElementById('netBar');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'netBar';
-      el.className = 'net-bar';
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-live', 'polite');
-      document.body.appendChild(el);
-    }
-    return el;
-  }
+  function ensure() { return null; }
 
   function render() {
     var off = offline(), busy = off || pending > 0;
@@ -4452,9 +4441,9 @@ const NET = (function () {
       html = '<b>Online</b><span>All changes synced</span>';
     }
 
-    var el = ensure(), key = cls + '|' + html;
-    if (key !== lastKey) { lastKey = key; if (html) el.innerHTML = html; }
-    el.className = 'net-bar' + (cls ? ' ' + cls + ' show' : '');
+    /* SILENT: walang visible na bar. Tuloy pa rin ang tracking (body.is-offline, pending, justSynced) sa background. */
+    var el = document.getElementById('netBar');
+    if (el) el.className = 'net-bar';
   }
 
   function refresh() { count().then(function (n) { pending = n; render(); }); render(); }
@@ -5618,6 +5607,10 @@ function lbFmtLeft_(ms) {
 /** Status ng session: Open / Closed / In progress / Ended / Cancelled. */
 function lbSessionPhase_(s, w) {
   if (s.status === 'Cancelled') return { k:'cancelled', cls:'overdue', label:'Cancelled', note: s.statusNote || '' };
+  if (s.status === 'Rescheduled' && s.newStart) {
+    const nd = /^\d{4}-\d{2}-\d{2}$/.test(String(s.newDate || '')) ? s.newDate : (w ? rsvpDateIso_(w.start) : '');
+    if (nd) w = { start: new Date(nd + 'T' + s.newStart + ':00+08:00'), end: new Date(nd + 'T' + (s.newEnd || s.newStart) + ':00+08:00'), now: new Date() };
+  }
   if (!w) return { k:'open', cls:'pending', label:'Scheduled', note:'' };
   const n = w.now.getTime(), st = w.start.getTime(), en = w.end.getTime(), cut = st - LB_RESERVE_CUTOFF_H * 3600000;
   if (n >= en) return { k:'ended', cls:'pending', label:'Ended', note:'This session has finished.' };
@@ -5993,6 +5986,7 @@ const res = await fetch(LIVITY_API_URL + '?action=paymentInfo');
 const json = await res.json();
 if (!json.success) throw new Error('bad payment info payload');
 lbPaymentInfo = json; lbMethodsSet_(json.methods);
+if (json.penaltyRule) { lbPayCtx.rule = json.penaltyRule; if (typeof moTab_ !== 'undefined' && moTab_ === 'rules') moDraw_(); }
 } catch (e) {
 lbPaymentInfo = LIVITY_PAYMENT_INFO_FALLBACK;
 }
@@ -6053,7 +6047,7 @@ return document.getElementById('lbBody');
 function lbStartDirectEnroll(programId) {
 
 lbForm._linkedGuardian = false;
-lbForm.programId = programId;lbForm.package = '';
+lbForm.programId = programId;lbForm.package = '';lbForm.regType = '';
 lbForm.category = '';
 
 lbGoTo('enroll'); // canonical entry — same logic ginagamit ng lahat ng enroll triggers
@@ -6234,7 +6228,7 @@ function lbComputeTotal_() {
 const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
 if (lbForm.programId === 'PRG-ACAD' && lbForm.package) return lbPackages[lbForm.package].price + LB_MEMBERSHIP_FEE;
 if (lbForm.programId === 'PRG-ADV') return 1300;
-if (lbForm.programId === 'PRG-REG' && lbForm.category) return catPrice[lbForm.category];
+if (lbForm.programId === 'PRG-REG' && lbForm.category) { const t_ = lbForm.regType || 'package'; return t_ === 'single' ? LB_REG_SINGLE[lbForm.category] : (t_ === 'assess' ? LB_REG_ASSESS[lbForm.category] : catPrice[lbForm.category]); }
 return null; // Private — no fixed price
 }
 /* === END: LIVITY ENROLL — PROGRAM SELECTION STEP === */
@@ -6384,17 +6378,19 @@ const catPrice = { 'U5-U7':4000, 'U9-U13':5000, 'U15+':6000 };
 const catOpts = cats.map(c => `
 <button type="button" class="lb-pill ${lbForm.category === c ? 'sel' : ''}" onclick="lbForm.category='${c}';lbRerender()">${c}</button>
 `).join('');
-const priceLine = lbForm.category ? `<p class="lb-text"><b>${lbForm.category}</b> — ₱${catPrice[lbForm.category].toLocaleString()} / 5-session package</p>` : '';
+const priceLine = lbForm.category ? `<p class="lb-text"><b>${lbForm.category}</b> — ₱${lbComputeTotal_().toLocaleString()} / ${({single:'single session',assess:'assessment'})[lbForm.regType] || '5-session package'}</p>` : '';
 
 return `
 <h5 class="lb-step-title">Specialized Training — Regular</h5>
+<p class="lb-text" style="font-size:11px;color:var(--muted)">What does the player need?</p>
+<div class="lb-pills">${[['package','5-Session Package'],['single','Single Session'],['assess','Assessment']].map(t => `<button type="button" class="lb-pill ${(lbForm.regType||'package')===t[0]?'sel':''}" onclick="lbForm.regType='${t[0]}';lbRerender()">${t[1]}</button>`).join('')}</div>
 <p class="lb-text" style="font-size:11px;color:var(--muted)">Select the player's age category.</p>
 <div class="lb-pills">${catOpts}</div>
 ${priceLine}
 <div class="lb-err" id="lbErr"></div>
 <div class="lb-nav">
 <button class="btn outline" onclick="lbPrevEnroll()">← Back</button>
-<button class="btn primary" onclick="lbForm.package='regular-cat';lbNextEnroll()">Next →</button>
+<button class="btn primary" onclick="lbForm.package=(lbForm.regType==='single'?'regular-single':lbForm.regType==='assess'?'regular-assess':'regular-cat');lbNextEnroll()">Next →</button>
 </div>
 `;
 
@@ -6474,7 +6470,7 @@ function lbStepReview() {
 const total = lbComputeTotal_();
 const totalLine = total !== null ? `₱${total.toLocaleString()}` : 'To be confirmed';
 const packageLabel = lbForm.programId === 'PRG-ACAD' && lbForm.package ? lbPackages[lbForm.package].label
-: lbForm.programId === 'PRG-REG' ? (lbForm.category || '—')
+: lbForm.programId === 'PRG-REG' ? ((lbForm.category || '—') + ' · ' + ({single:'Single Session',assess:'Assessment'}[lbForm.regType] || '5-Session Package'))
 : lbForm.programId === 'PRG-ADV' ? 'Per Session'
 : 'Private (rate confirmed by coach)';
 
@@ -6555,7 +6551,7 @@ if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
 const payload = {
 player: { firstName: lbForm.firstName, lastName: lbForm.lastName, dob: lbForm.dob, age: lbForm.age, gender: lbForm.gender, nationality: lbForm.nationality, area: lbForm.area },
 guardian: { guardianName: lbForm.guardianName, relationship: lbForm.relationship, whatsapp: lbForm.whatsapp, email: lbForm.email, emName: lbForm.emName, emNumber: lbForm.emNumber, contactMode: lbForm.contactMode },
-enrollment: { programId: lbForm.programId, category: lbForm.category, packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPrivacy: true, consent: true, requestId: (lbForm._reqId = lbForm._reqId || ('EN' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8))) }
+enrollment: { programId: lbForm.programId, category: lbForm.category, regType: lbForm.regType || '', packageKey: lbForm.package, paymentMethod: lbForm.paymentMethod, consentPrivacy: true, consent: true, requestId: (lbForm._reqId = lbForm._reqId || ('EN' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8))) }
 };
 
 try {
@@ -6654,6 +6650,8 @@ lbGoTo('menu');
 /* === START: TOP-UP FLOW — EXISTING PLAYER (Identify → Top Up → Payment → Confirm) === */
 let lbTopup = { query:'', players:[], selected:null, paymentMethod:'', packageKey:'', activeProgramId:'' };
 const LB_TOPUP_PRICE = { 'U5-U7':3500, 'U9-U13':4500, 'U15+':5000 };
+const LB_REG_SINGLE = { 'U5-U7':1000, 'U9-U13':1200, 'U15+':1300 };
+const LB_REG_ASSESS = { 'U5-U7':500, 'U9-U13':800, 'U15+':1000 };
 /* === START: PACKAGE STATE — DISPLAY MESSAGES === */
 function lbCurrentRel_(programId) {
 const p = lbTopup.selected;
@@ -6668,6 +6666,7 @@ if (r.state === 'expired') {
 const dateStr = r.expiryDate ? new Date(r.expiryDate).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : '';
 return { text:'Your package expired' + (dateStr ? ' on ' + dateStr : '') + '. Top up to continue training.', badge:'<span class="pay-badge overdue">Expired</span>' };
 }
+if (r.state === 'reversed') return { text:'Your last payment was reversed. Message Admin JA for details.', badge:'<span class="pay-badge overdue">Payment Reversed</span>' };
 if (r.state === 'pending_payment') return { text:"We're confirming your last payment — this will update once verified.", badge:'<span class="pay-badge pending">Payment Pending</span>' };
 return { text:'No active package yet.', badge:'' };
 }
@@ -6680,7 +6679,7 @@ const rej_ = payments.filter(function (p) { return p.status === 'Rejected'; })[0
 if (rej_) return rej_;
 const byDate = payments.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
 const pick = function (status) { return byDate.find(function (p) { return p.status === status; }); };
-return pick('Overdue') || pick('Pending') || byDate.find(function (p) { return p.status !== 'Paid'; }) || pick('Paid') || null;
+return pick('Overdue') || pick('Partial') || pick('Pending') || pick('Submitted') || pick('Reversed') || byDate.find(function (p) { return p.status !== 'Paid'; }) || pick('Paid') || null;
 }
 
 function lbPaymentHeroHtml_() {
@@ -6692,6 +6691,8 @@ Paid: { bg:'#eafbef', bd:'#b8e6c3', fg:'#1f7a3a', head:'🟢 PAID', when:'Paid',
 Pending: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'⏳ PAYMENT DUE', when:'Created', note:'Send your payment, then upload your screenshot below.' },
 Submitted: { bg:'#eef4ff', bd:'#b7d0f7', fg:'var(--navy)', head:'🕓 PAYMENT SENT — VERIFYING', when:'', note:"We're confirming your payment." },
 Overdue: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT OVERDUE', when:'', note:'Please settle this payment or message Admin JA.' },
+Partial: { bg:'#fff8dd', bd:'#ffe38a', fg:'var(--navy)', head:'🟡 PARTLY PAID', when:'', note:'We received part of your payment. Send the remaining balance with a new screenshot.' },
+Reversed: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT REVERSED', when:'', note:'This payment was reversed. Message Admin JA for details.' },
 Rejected: { bg:'#ffeceb', bd:'#f7c9c6', fg:'var(--red)', head:'🔴 PAYMENT NOT VERIFIED', when:'', note:"We couldn't match this payment. Check the amount and reference number, then resubmit." },
 Cancelled: { bg:'#f5f2ea', bd:'#e2e2e2', fg:'var(--muted)', head:'⚪ PAYMENT CANCELLED', when:'', note:'This payment was cancelled. No action needed.' },
 Expired: { bg:'#f5f2ea', bd:'#e2e2e2', fg:'var(--muted)', head:'⚪ PAYMENT EXPIRED', when:'', note:'This payment request expired. <a href="' + contactWaUrl_() + '" target="_blank" rel="noopener" style="color:var(--royal);font-weight:800;text-decoration:none">Message ' + CONTACT.adminName + ' for a new one →</a>' }
@@ -6707,7 +6708,7 @@ return `
 <div class="panel" style="margin:0 0 14px;background:${st.bg};border:1px solid ${st.bd}">
 <div style="font-size:20px;font-weight:850;letter-spacing:.3px;color:${st.fg}">${st.head}</div>
 <div class="event-title" style="margin-top:8px">${p.label}</div>
-<div style="font-size:26px;font-weight:850;color:var(--text);margin-top:2px">₱${Number(p.total != null ? p.total : p.amount).toLocaleString()}</div>
+<div style="font-size:26px;font-weight:850;color:var(--text);margin-top:2px">₱${Number(['Partial', 'Rejected', 'Submitted'].indexOf(p.status) > -1 && Number(p.verified) > 0 && p.remaining != null ? p.remaining : (p.total != null ? p.total : p.amount)).toLocaleString()}</div>${(['Partial', 'Rejected', 'Submitted'].indexOf(p.status) > -1 && Number(p.verified) > 0) ? '<div class="event-venue">Received ₱' + Number(p.verified || 0).toLocaleString() + ' of ₱' + Number(p.total != null ? p.total : p.amount).toLocaleString() + '</div>' : ''}
 ${p.penalty ? `<div class="event-venue">Includes ₱${Number(p.penalty).toLocaleString()} late penalty</div>` : ''}
 ${meta.length ? `<div class="event-venue">${meta.join(' · ')}</div>` : ''}
 ${st.note ? `<p style="margin:10px 0 0;font-size:13px;font-weight:650;color:${st.fg}">${st.note}</p>` : ''}
@@ -6789,13 +6790,15 @@ if (status === 'Overdue') return 'Overdue';
 if (status === 'Pending') return 'Due';
 if (status === 'Submitted') return 'Verifying';
 if (status === 'Rejected') return 'Not verified';
+if (status === 'Partial') return 'Partly paid';
+if (status === 'Reversed') return 'Reversed';
 if (status === 'Cancelled') return 'Cancelled';
 if (status === 'Expired') return 'Expired';
 return 'Due';
 }
 
 function lbPaymentStatusClass_(status) {
-if (status === 'Rejected' || status === 'Expired') return 'overdue';
+if (status === 'Rejected' || status === 'Expired' || status === 'Reversed') return 'overdue';
 if (status === 'Paid') return 'paid';
 if (status === 'Overdue') return 'overdue';
 return 'pending';
@@ -6824,10 +6827,10 @@ return back + (lbPayments.balanceDue > 0 ? balanceHtml : '') +
 }
 
 const rows = lbPayments.payments.map(function (p) {
-const icon = p.status === 'Paid' ? '✓ ' : '⏳ ';
+const icon = p.status === 'Paid' ? '✓ ' : ((p.status === 'Reversed' || p.status === 'Rejected') ? '✕ ' : '⏳ ');
 return `
 <div class="event">
-<div class="event-time" style="font-size:17px">₱${p.amount.toLocaleString()}</div>
+<div class="event-time" style="font-size:17px">₱${Number(p.total != null ? p.total : p.amount).toLocaleString()}</div>
 <div class="event-title">${p.label}${p.sessions ? ' · ' + p.sessions + ' sessions' : ''}</div>
 <div class="event-venue">${lbFormatShortDate_(p.date)}</div>
 <div class="pay-badge ${lbPaymentStatusClass_(p.status)}">${icon}${lbPaymentStatusLabel_(p.status)}</div>${p.status === 'Paid' ? `<button type="button" class="pf-photo-rm" style="margin-left:10px" onclick="lbPayReceipt_('${lbEscapeHtml_(p.paymentId)}')">View receipt</button>` : ''}
@@ -7389,7 +7392,9 @@ return `
 ${lbSessionsBlock_(rel, { dark:false, cta:false })}
 <div class="lb-err" id="lbErr"></div>
 ${rel.state === 'pending_payment' ? '' : (topupPrice
-? `<button class="btn primary" style="width:100%" onclick="lbTopup.packageKey='';lbBody().innerHTML=lbRenderTopupPayment_()">Top Up → ₱${topupPrice.toLocaleString()}</button>`
+? `<button class="btn primary" style="width:100%" onclick="lbTopup.regType='';lbTopup.packageKey='';lbBody().innerHTML=lbRenderTopupPayment_()">Top Up (5 sessions) → ₱${topupPrice.toLocaleString()}</button>
+<button class="btn outline" style="width:100%;margin-top:8px" onclick="lbTopup.regType='single';lbTopup.packageKey='regular-single';lbBody().innerHTML=lbRenderTopupPayment_()">Single Session → ₱${(LB_REG_SINGLE[p.category] || 0).toLocaleString()}</button>
+<button class="btn outline" style="width:100%;margin-top:8px" onclick="lbTopup.regType='assess';lbTopup.packageKey='regular-assess';lbBody().innerHTML=lbRenderTopupPayment_()">Assessment → ₱${(LB_REG_ASSESS[p.category] || 0).toLocaleString()}</button>`
 : `<p class="lb-text" style="color:var(--muted)">Top-up rate for this category isn't set yet — please WhatsApp Admin JA.</p>`)}
 `;
 }
@@ -7470,7 +7475,7 @@ const pid = lbTopup.activeProgramId;
 if (pid === 'PRG-ACAD' && lbPackages[lbTopup.packageKey]) return lbPackages[lbTopup.packageKey].price + (p && p.hasMembership === false ? LB_MEMBERSHIP_FEE : 0);
 if (pid === 'PRG-PRIV' && lbPrivatePacks[lbTopup.packageKey]) return lbPrivatePacks[lbTopup.packageKey].price;
 if (pid === 'PRG-ADV') return 1300;
-if (pid === 'PRG-REG') return LB_TOPUP_PRICE[p.category] || 0;
+if (pid === 'PRG-REG') { const t_ = lbTopup.regType; return (t_ === 'single' ? LB_REG_SINGLE : t_ === 'assess' ? LB_REG_ASSESS : LB_TOPUP_PRICE)[p.category] || 0; }
 return 0;
 }
 
@@ -7506,7 +7511,7 @@ const result = await doFetch('topup', {
 playerId: lbTopup.selected.playerId,
 programId: lbTopup.activeProgramId,
 category: lbTopup.selected.category,
-packageKey: lbTopup.packageKey || '',
+packageKey: lbTopup.packageKey || '', regType: lbTopup.regType || '',
 paymentMethod: lbTopup.paymentMethod
 });
 if (lbTopup.activeProgramId === 'PRG-ACAD') lbTopup.selected.hasMembership = true; lbShowTopupSuccess_(result);
@@ -9346,6 +9351,7 @@ document.getElementById('payClockSub').innerHTML = 'Amount ₱' + (Number(box.ge
 return;
 }
 const base = Number(box.getAttribute('data-base')) || 0;
+const ver = Number(box.getAttribute('data-ver')) || 0;
 const diff = due - (Date.now() + lbPayCtx.offset);
 const over = diff <= 0;
 const r = lbPayCtx.rule;
@@ -9362,10 +9368,10 @@ if (hd) hd.textContent = (over && !inGrace) ? '🔴 PAYMENT OVERDUE' : '⏳ PAYM
 document.getElementById('payClockTime').textContent = lbPayFmt_(Math.abs(diff));
 document.getElementById('payClockSub').innerHTML = 'Amount ' + peso(base)
 + (pen > 0 ? ' + Late penalty ' + peso(pen) : (r.flat > 0 && !over ? ' · ' + peso(r.flat) + ' penalty if late' : ''))
-+ '<br><b>Total ' + peso(base + pen) + '</b>';
++ (ver > 0 ? '<br>Already received ' + peso(ver) : '') + '<br><b>' + (ver > 0 ? 'Remaining ' : 'Total ') + peso(Math.max(0, base + pen - ver)) + '</b>';
 
 const amt = document.getElementById('payAmt');
-if (amt && !amt.dataset.touched && document.activeElement !== amt) amt.value = base + pen;
+if (amt && !amt.dataset.touched && document.activeElement !== amt) amt.value = Math.max(0, base + pen - ver);
 }
 
 function lbPayClockStart_() {
@@ -9375,14 +9381,14 @@ lbPayTick_();
 
 /* ---- panel ---- */
 function lbPayObj_(p, playerId, contact) {
-return { paymentId: p.paymentId, playerId: playerId, contact: contact, amount: p.amount, penalty: p.penalty, total: p.total, dueAt: p.dueAt, status: p.status, reference: p.reference || '', label: p.label, submittedAt: p.submittedAt || '', rejectReason: p.rejectReason || p.note || '' };
+return { paymentId: p.paymentId, playerId: playerId, contact: contact, amount: p.amount + (Number(p.adjustment) || 0), penalty: p.penalty, total: p.total, dueAt: p.dueAt, status: p.status, reference: p.reference || '', label: p.label, submittedAt: p.submittedAt || '', rejectReason: p.rejectReason || p.note || '', verified: Number(p.verified) || 0 };
 }
 
 /** Unpaid muna (pinakamaagang due), kung wala — pinakabagong Submitted. */
 function lbPayPick_(list) {
 const rej_ = list.filter(function (p) { return p.status === 'Rejected'; })[0];
 if (rej_) return rej_;
-const unpaid = list.filter(function (p) { return p.status === 'Pending' || p.status === 'Overdue'; })
+const unpaid = list.filter(function (p) { return p.status === 'Pending' || p.status === 'Overdue' || p.status === 'Partial'; })
 .sort(function (a, b) { return new Date(a.dueAt) - new Date(b.dueAt); });
 if (unpaid.length) return unpaid[0];
 return list.filter(function (p) { return p.status === 'Submitted'; })[0] || null;
@@ -9392,7 +9398,7 @@ function lbPayPanelHtml_(pay, compact) {
 lbPayCur = pay;
 const esc = lbEscapeHtml_;
 const attr = function (s) { return esc(s).replace(/"/g, '&quot;'); };
-if (pay.status === 'Paid' || pay.status === 'Cancelled' || pay.status === 'Expired') return '';
+if (pay.status === 'Paid' || pay.status === 'Cancelled' || pay.status === 'Expired' || pay.status === 'Reversed') return '';
 if (pay.status === 'Rejected') return lbPayResubmitHtml_(pay, '🔴 PAYMENT NOT VERIFIED', pay.rejectReason || "We couldn't match your payment. Check the amount and reference number, then send them again.");
 
 if (pay.status === 'Submitted') {
@@ -9409,7 +9415,7 @@ const opts = methods.map(function (m) { return `<option value="${attr(m.name)}">
 return `
 <div id="payPanel">
 <div id="payHead" style="font-size:20px;font-weight:850;letter-spacing:.3px;margin:0 0 8px;color:var(--text)">⏳ PAYMENT DUE</div>
-<div class="pay-clock due" id="payClock" data-due="${attr(pay.dueAt)}" data-base="${Number(pay.amount) || 0}">
+<div class="pay-clock due" id="payClock" data-due="${attr(pay.dueAt)}" data-base="${Number(pay.amount) || 0}" data-ver="${Number(pay.verified) || 0}">
 <div class="pay-clock-label" id="payClockLabel"></div>
 <div class="pay-clock-time" id="payClockTime">--:--:--</div>
 <div class="pay-clock-sub" id="payClockSub"></div>
@@ -9419,7 +9425,7 @@ ${compact ? `<button type="button" class="btn primary" style="width:100%;margin:
 <div id="payList">${list}</div>
 <div class="session-detail-label">Already paid? Send your details</div>
 ${methods.length ? `<select class="lb-input" id="payMethodSel">${opts}</select>` : ''}
-<input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="${Number(pay.total) || Number(pay.amount) || ''}" oninput="this.dataset.touched='1'">
+<input class="lb-input" id="payAmt" type="number" inputmode="decimal" min="1" step="any" placeholder="Amount sent (₱)" value="${Math.max(0, (Number(pay.total) || Number(pay.amount) || 0) - (Number(pay.verified) || 0)) || ''}" oninput="this.dataset.touched='1'">
 ${lbPayPhotoHtml_()}
 <div class="lb-err" id="payErr"></div>
 <button type="button" class="btn primary" id="payBtn" style="width:100%" onclick="lbPaySubmit_()">Send Payment Details →</button>
@@ -9466,7 +9472,7 @@ function lbPayResubmitHtml_(pay, head, note) {
   const list = methods.map(function (m) {
     return '<div class="pay-method"><div style="min-width:0"><div class="pay-m-name">' + esc(m.name) + '<span class="pay-m-type">' + esc(m.type) + '</span></div><div class="pay-acct">' + esc(m.accountNumber) + '</div><div class="pay-m-holder">' + esc(m.accountName) + '</div></div><button type="button" class="pay-copy" data-copy="' + attr(m.accountNumber) + '" onclick="lbPayCopy_(this)">Copy</button></div>';
   }).join('');
-  const total = Number(pay.total) || Number(pay.amount) || 0;
+  const total = Math.max(0, (Number(pay.total) || Number(pay.amount) || 0) - (Number(pay.verified) || 0));
   return '<div id="payPanel">'
     + '<div style="font-size:20px;font-weight:850;letter-spacing:.3px;margin:0 0 8px;color:var(--red)">' + head + '</div>'
     + '<p class="lb-text" style="margin:0 0 10px">' + esc(note) + '</p>'
@@ -9594,6 +9600,7 @@ function lbAcctState_(p) {
       : { cls:'paid', label:'TRAINING ACTIVE', msg:'' };
   }
   if (core.some(function (r) { return r.state === 'pending_payment'; })) return { cls:'pending', label:'PAYMENT PENDING', msg:'Training activates once Livity verifies your payment. Status is shown above.' };
+  if (core.some(function (r) { return r.state === 'reversed'; })) return { cls:'overdue', label:'PAYMENT REVERSED', msg:'Your last payment was reversed. Message Admin JA for details.' };
   if (core.some(function (r) { return r.state === 'expired'; })) return { cls:'overdue', label:'PACKAGE EXPIRED', msg:'Top up to continue training.' };
   if (core.some(function (r) { return r.state === 'exhausted' || r.state === 'active'; })) return { cls:'pending', label:'PACKAGE ENDED', msg:'Top up to continue training.' };
   return { cls:'pending', label:'NOT YET ACTIVE', msg:'No package yet. Pick a program to start training.' };
@@ -9878,7 +9885,7 @@ return `<div class="pay-badge pending">🕓 Payment sent — verifying</div>
 <p class="lb-text" style="margin:8px 0 2px">${/^PHOTO-/.test(r.reference || '') ? 'Proof: <b>Receipt photo</b>' : 'Reference no. <b>' + esc(r.reference) + '</b>'}</p>
 <p class="lb-text" style="margin:0 0 2px">Recorded ${esc(r.submittedAtLabel)}${r.receiptCode ? ' · Receipt <b>' + esc(r.receiptCode) + '</b>' : ''}</p>
 ${r.penalty > 0 ? `<p class="lb-text" style="margin:0">Total due at that time: ₱${Number(r.total).toLocaleString()} (includes ₱${Number(r.penalty).toLocaleString()} late penalty)</p>` : ''}
-${low ? `<p class="lb-text" style="color:var(--red);font-weight:700;margin:8px 0 0">The amount you sent is lower than the total due (₱${Number(r.total).toLocaleString()}). Admin JA may message you.</p>` : ''}`;
+${low ? `<p class="lb-text" style="color:var(--red);font-weight:700;margin:8px 0 0">The amount you sent is lower than the amount still due (₱${Number(r.owed != null ? r.owed : r.total).toLocaleString()}). Admin JA may message you.</p>` : ''}`;
 }
 
 let lbPayPhoto_ = '';
@@ -11351,9 +11358,9 @@ return mins > SC_OFFLINE_GRACE_MIN ? { status: 'Late', minutesLate: mins } : { s
 
 async function scQueueAdd_(job) {
 await scIdbPut_('attendance', {
-localId: scNewLocalId_(), scheduleId: job.scheduleId, code: job.code, manual: job.manual,
+localId: job.requestId || scNewLocalId_(), scheduleId: job.scheduleId, code: job.code, manual: job.manual,
 localStatus: job.localStatus || 'Present', localMinutesLate: job.localMinutesLate || 0,
-scannedAt: new Date().toISOString(), syncStatus: 'pending', retryCount: 0
+scannedAt: job.scannedAt || new Date().toISOString(), syncStatus: 'pending', retryCount: 0
 });
 scRenderSyncStatus_();
 return scPendingCount_();
@@ -11379,8 +11386,8 @@ scShowSyncProgress_('SYNCING…', pending.length);
 for (let i = 0; i < pending.length; i++) {
 const job = pending[i];
 try {
-const r = await scApi_('scanPlayer', { scheduleId: job.scheduleId, code: job.code, manual: job.manual });
-const isDup = r.result === 'DUPLICATE';
+const r = await scApi_('scanPlayer', { scheduleId: job.scheduleId, code: job.code, manual: job.manual, requestId: job.localId, scannedAt: job.scannedAt });
+const isDup = r.result === 'DUPLICATE' && !r.replay;
 await scIdbPut_('attendance', Object.assign({}, job, { syncStatus: isDup ? 'duplicate' : 'synced' }));
 if (isDup) duplicate++; else accepted++;
 if (r.player) scCachePlayer_(r.player);
@@ -11704,6 +11711,7 @@ const res = await fetch(CONFIG.api.scannerUrl, {
 method: 'POST',
 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
 body: JSON.stringify(Object.assign({ action: action, key: scKey_() }, params || {})),
+signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(20000) : undefined,
 redirect: 'follow'
 });
 const data = await res.json();
@@ -11774,18 +11782,19 @@ return;
 }
 
 let kind = 'err';
+const rid_ = scNewLocalId_(), at_ = new Date().toISOString();
 try {
-const r = await scApi_('scanPlayer', { scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0' });
+const r = await scApi_('scanPlayer', { scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0', requestId: rid_, scannedAt: at_ });
 kind = { PRESENT: 'ok', LATE: 'late', DUPLICATE: 'dup' }[r.result] || 'err';
 scShowPlayer_(kind, r);
 if (r.player) scCachePlayer_(r.player);
 if (r.counts) scRenderCounts_(r.counts);
 } catch (e) {
 if (/key/i.test(e.message)) { scBusy = false; return scForgetKey_('Wrong or missing staff key.'); }
-const isNetworkFail = (e instanceof TypeError) || !navigator.onLine || /network|fetch|Failed to fetch|NetworkError/i.test(e.message || '');
+const isNetworkFail = (e instanceof TypeError) || !navigator.onLine || (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) || /network|fetch|Failed to fetch|NetworkError/i.test(e.message || '');
 if (isNetworkFail) {
 const local = scComputeLocalStatus_(scSession);
-const pendingCount = await scQueueAdd_({ scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0', localStatus: local.status, localMinutesLate: local.minutesLate });
+const pendingCount = await scQueueAdd_({ scheduleId: scSession, code: String(code).trim(), manual: manual ? '1' : '0', localStatus: local.status, localMinutesLate: local.minutesLate, requestId: rid_, scannedAt: at_ });
 const cachedPlayer = await scIdbGet_('players', scLocalPlayerIdFromCode_(code));
 kind = local.status === 'Late' ? 'late' : 'ok';
 const note = 'OFFLINE — SAVED LOCALLY · Pending sync: ' + pendingCount;
@@ -13280,12 +13289,16 @@ function moPanelGallery_() {
 return '<div class="mo-sec" style="margin-top:6px">Academy Gallery <i>tap to open</i></div><div id="galleryGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"></div>';
 }
 
+function payRuleTxt_() {
+  var r = lbPayCtx.rule || {}, known = r.deadlineHours != null; // hindi pa naka-load = lumang default lang
+  return { hrs: known ? r.deadlineHours : 12, flat: known ? r.flat : 100, grace: known ? r.graceMinutes : 0, perDay: known ? r.perDay : 0 };
+}
 function moPanelRules_() {
 return '<div class="mo-sec" style="margin-top:6px">Quick facts</div><div class="mo-facts">'
-+ '<div class="mo-fact"><b>12 hrs</b><span>to pay after session</span></div><div class="mo-fact"><b>₱100</b><span>flat late penalty</span></div>'
++ '<div class="mo-fact"><b>' + payRuleTxt_().hrs + ' hrs</b><span>to pay after request</span></div><div class="mo-fact"><b>₱' + payRuleTxt_().flat + '</b><span>late penalty</span></div>'
 + '<div class="mo-fact"><b>2 / month</b><span>free walk-ins</span></div><div class="mo-fact"><b>45 min</b><span>weather cancel window</span></div></div>'
 + '<details class="mo-det"><summary>Attendance &amp; Registration</summary><ul><li>Academy players are automatically expected to attend.</li><li>Notify by 2:00 PM Thursday or 10:00 PM Friday for Saturday.</li><li>Registration is required at least 2 hours before sessions.</li><li>Maximum 2 walk-ins per calendar month; the 3rd onward is charged at 1.5×.</li></ul></details>'
-+ '<details class="mo-det"><summary>Payment</summary><ul><li>Payment must be completed within 12 hours after the session ends.</li><li>Still unpaid by 5:00 PM the following day: flat ₱100 overdue penalty.</li></ul></details>'
++ (function () { var R = payRuleTxt_(); return '<details class="mo-det"><summary>Payment</summary><ul><li>Payment is due ' + R.hrs + ' hours after your payment request is created.</li><li>If still unpaid after that: flat ₱' + R.flat + ' late penalty' + (R.perDay > 0 ? ', plus ₱' + R.perDay + ' for each full day late' : '') + (R.grace > 0 ? ' (after a ' + R.grace + '-minute grace period)' : '') + '.</li><li>The amount in My Livity → Payments is computed by the server clock. Send that amount.</li></ul></details>'; })()
 + '<details class="mo-det"><summary>Packages &amp; Cancellations</summary><ul><li>Packages are non-transferable and non-refundable.</li><li>Weather cancellation within the first 45 minutes: session is not deducted.</li><li>If training runs more than 45 minutes, it counts as completed.</li></ul></details>'
 + '<p class="mo-note" style="text-align:center;margin-top:12px">Questions? <a href="#" onclick="moChat_();return false" style="color:var(--royal);font-weight:800;text-decoration:none">Ask Admin →</a></p>';
 }
@@ -13977,7 +13990,13 @@ function adminList_() {
 function adminPane_() {
   const M = ADMIN_MOCK_, S = M.summary, p = adminEl_('adminPane');
   document.querySelectorAll('#adminTabs .lb-pill').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === adminTab_); });
-  if (adminTab_ === 'roster') { if (adminRos_.status === 'idle') adminRosterLoad_(); else adminRosterPaint_(); return; }
+  if (adminTab_ === 'roster') {
+    adminRosterPaint_();
+    if (adminRos_.status !== 'loading' && !adminRos_.refreshing && (adminRos_.status === 'idle' || Date.now() - (adminRos_.at || 0) > 60000)) adminRosterLoad_();
+    return;
+  }
+if (adminTab_ === 'pay') { adminPayPaint_(true); if (adminPay_.status === 'idle' || Date.now() - (adminPay_.at || 0) > 30000) adminPayLoad_(); return; }
+if (adminTab_ === 'ledger') { adminLedgerPaint_(); if (adminLed_.status === 'idle') adminLedgerLoad_(); return; }
 if (adminTab_ === 'dash' || adminTab_ === 'gaps' || adminTab_ === 'system') { p.innerHTML = adminLive_(adminTab_); return; }
   document.querySelectorAll('#adminTabs .lb-pill').forEach(function (b) { b.classList.toggle('sel', b.dataset.k === adminTab_); });
   if (adminTab_ === 'dash') {
@@ -13997,7 +14016,7 @@ if (adminTab_ === 'dash' || adminTab_ === 'gaps' || adminTab_ === 'system') { p.
 }
 
 function adminRenderMain_() {
-  const tabs = [['roster', 'Roster'], ['dash', 'Dashboard'], ['gaps', 'Gap Register'], ['system', 'System']];
+  const tabs = [['pay', 'Payments'], ['roster', 'Roster'], ['ledger', 'Ledger'], ['dash', 'Dashboard'], ['gaps', 'Gap Register'], ['system', 'System']];
   adminEl_('adminBody').innerHTML =
     '<div class="staff-bar"><div><b>Admin</b><span>Console access · live device data only</span></div><button type="button" class="sc-link" onclick="adminLock_()">Lock</button></div>'
     + '<div class="lb-pills" id="adminTabs">' + tabs.map(function (t) {
@@ -14388,31 +14407,71 @@ function lbResvLoad_() {
 }
 function lbResvSave_() { /* server na ang source of truth */ }
 
+/* === START: RSVP STATUS — 4 STATES (confirmed / expected / notgoing / awaiting) === */
+const RSVP_ALLOW_CLEAR = true; // policy: false = hindi na pwedeng bawiin ang sagot, palitan lang
 function rsvpStatus_(playerId, pid, date, start) {
+  const r = rsvpStatus0_(playerId, pid, date, start);
+  r.pending = !!(RSVP.ops && RSVP.ops[playerId + '|' + rsvpKey_(pid, date, start)]);
+  return r;
+}
+function rsvpStatus0_(playerId, pid, date, start) {
   const v = RSVP.map[playerId + '|' + rsvpKey_(pid, date, start)];
-  if (v) return { v: v, implicit: false };
-  if (rsvpDefaultYes_(pid)) return { v: '', implicit: true }; // expected lang, HINDI confirmed
-  return { v: '', implicit: false };
+  if (v === 'yes') return { v: 'yes', implicit: false, state: 'confirmed' };
+  if (v === 'no') return { v: 'no', implicit: false, state: 'notgoing' };
+  if (rsvpDefaultYes_(pid)) return { v: '', implicit: true, state: 'expected' };   // default lang, HINDI confirmed
+  return { v: '', implicit: false, state: 'awaiting' };                            // walang default: hinihintay ang sagot
 }
 
+/** Isang pinagmulan ng wording at kulay ng bawat state. lock = optional na dahilan kung bakit hindi na pwedeng baguhin. */
+function rsvpStateHtml_(st, lock, cls) {
+  const m = {
+    confirmed: ['✓ Confirmed going', '#1f7a3a'],
+    expected:  ['Expected by default · no reply yet. Tap Going to confirm, or Not going if you can\'t make it.', 'var(--muted)'],
+    notgoing:  ['Not going', 'var(--red)'],
+    awaiting:  ['Awaiting your response', 'var(--navy)'],
+    saving:    ['Saving…', 'var(--muted)']
+  }[st.pending ? 'saving' : st.state] || ['', 'var(--muted)'];
+  const why = { 'Reservations closed': 'Answers close ' + LB_RESERVE_CUTOFF_H + ' hours before start.', 'In progress': 'Training has started.', 'Ended': 'This session has finished.' }[lock] || '';
+  const t = lock ? lock + (why ? ' — ' + why : '') + ' · ' + m[0] : m[0];
+  return '<div class="' + (cls || 'event-venue') + '" style="margin-top:4px;font-weight:700;color:' + m[1] + '">' + lbEscapeHtml_(t) + '</div>';
+}
+/* === END: RSVP STATUS === */
+
+/* === START: RSVP LOAD — SINGLE-FLIGHT + STALE GUARD === */
+var rsvpSeq_ = 0, rsvpVer_ = 0; // seq = pinakabagong load lang ang panalo · ver = tumataas tuwing may boto
+
 async function rsvpLoad_() {
+  const my = ++rsvpSeq_, ver = rsvpVer_, ep = LOGOUT_EPOCH;
   const list = (typeof fmPlayers_ === 'function') ? fmPlayers_() : [];
+  const wasFailed = !!RSVP.failed;
+  let changed = false;
   try {
     const ids = list.map(function (p) { return p.playerId; }).join(',');
     const json = await lbFetchJson_(LIVITY_API_URL + '?action=weekRsvp&playerIds=' + encodeURIComponent(ids) + '&contact=' + encodeURIComponent((list[0] || {}).whatsapp || ''), { timeoutMs: 10000, retries: 1 });
-    if (!json.success) throw new Error(json.error || 'bad rsvp payload');
-    if (RSVP.busy) return; // may boto na nasa flight, huwag i-overwrite ng lumang snapshot
-    RSVP.map = {};
-    (json.rsvps || []).forEach(function (r) { RSVP.map[r.playerId + '|' + rsvpKey_(r.programId, r.sessionDate, r.startTime)] = r.status; });
-    RSVP.coaches = json.coaches || {};
-    RSVP.avail = json.avail || {};
-    RSVP.counts = json.counts || {};
-    RSVP.eligible = json.eligible || {};
-    RSVP.defaults = Array.isArray(json.defaults) ? json.defaults : null;
+    if (!json || json.success !== true) throw new Error((json && json.error) || 'bad rsvp payload');
+    if (json.rsvps != null && !Array.isArray(json.rsvps)) throw new Error('bad rsvp payload');
+    // luma na ang sagot: may mas bago nang load, may boto na nangyari, may boto pang tumatakbo, o nag-logout
+    if (my !== rsvpSeq_ || ver !== rsvpVer_ || RSVP.busy || ep !== LOGOUT_EPOCH) return;
+    const map = {};
+    (json.rsvps || []).forEach(function (r) { map[r.playerId + '|' + rsvpKey_(r.programId, r.sessionDate, r.startTime)] = r.status; });
+    const next = {
+      coaches: json.coaches || {}, avail: json.avail || {}, counts: json.counts || {}, eligible: json.eligible || {},
+      defaults: Array.isArray(json.defaults) ? json.defaults : null
+    };
+    const sig = JSON.stringify([map, next]);
+    changed = sig !== RSVP.sig;
+    RSVP.map = map;
+    RSVP.coaches = next.coaches; RSVP.avail = next.avail; RSVP.counts = next.counts; RSVP.eligible = next.eligible; RSVP.defaults = next.defaults;
+    RSVP.sig = sig; RSVP.at = Date.now();
     RSVP.loaded = true; RSVP.failed = false;
-  } catch (e) { RSVP.failed = true; }
-  hdRender_();
+  } catch (e) {
+    if (my !== rsvpSeq_ || ep !== LOGOUT_EPOCH) return; // luma ring ang pagkabigo, huwag i-flag
+    RSVP.failed = true; // luma pa rin ang data na nasa screen, may "Couldn't refresh" banner
+  }
+  if (my !== rsvpSeq_) return;
+  if (changed || wasFailed !== !!RSVP.failed) hdRender_(); // walang repaint kung walang nagbago
 }
+/* === END: RSVP LOAD — SINGLE-FLIGHT + STALE GUARD === */
 document.addEventListener('DOMContentLoaded', function () { setTimeout(rsvpLoad_, 1800); });
 
 /** Sessions ngayong linggo na eligible sa player (may active na package sa program). */
@@ -14446,12 +14505,12 @@ function rsvpSchedHtml_(s, day) {
   const mine = p && !p._lite && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; });
   if (mine && ph.k !== 'ended') {
     const st = rsvpStatus_(p.playerId, pid, date, s.startTime), locked = ph.k !== 'open';
-    const args = "'" + p.playerId + "','" + pid + "','" + date + "','" + s.startTime + "'";
+    const args = rsvpArgs_(p.playerId, pid, date, s.startTime);
     const pill = function (val, label) {
       return '<button type="button" class="lb-pill' + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled style="opacity:.5"' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
     };
     h += '<div class="event-venue" style="margin:8px 0 0">For ' + lbEscapeHtml_(w.start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'Asia/Manila' })) + '</div><div class="lb-pills" style="margin:4px 0 0">' + pill('yes', 'Going') + pill('no', 'Not going') + '</div>'
-      + (locked ? '<div class="event-venue" style="margin-top:4px">' + lbEscapeHtml_(ph.label) + '</div>' : '');
+      + rsvpStateHtml_(st, locked ? ph.label : '');
   }
   return '<div style="margin-top:6px">' + h + '</div>';
 }
@@ -14516,7 +14575,7 @@ function rsvpCardHtml_() {
     const st = rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime);
     const ph = lbSessionPhase_(x.s, x.w);
     const locked = ph.k !== 'open';
-    const args = "'" + p.playerId + "','" + x.pid + "','" + x.date + "','" + x.s.startTime + "'";
+        const args = rsvpArgs_(p.playerId, x.pid, x.date, x.s.startTime);
     const coach = RSVP.coaches[rsvpKey_(x.pid, x.date, x.s.startTime)];
     const pill = function (val, label) {
       return '<button type="button" class="lb-pill' + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled style="opacity:.5"' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
@@ -14526,7 +14585,7 @@ function rsvpCardHtml_() {
       + '<div class="event-venue">' + e(x.s.venue) + (coach ? ' · Coach ' + e(coach) : '') + '</div>'
       + rsvpLiveHtml_(x.pid, x.date, x.s.startTime)
       + '<div class="lb-pills" style="margin:8px 0 0">' + pill('yes', 'Going') + pill('no', 'Not going') + '</div>'
-      + (locked ? '<div class="event-venue" style="margin-top:4px">' + e(ph.label) + '</div>' : (st.implicit ? '<div class="event-venue" style="margin-top:4px">Expected by default (no reply yet). Tap Going to confirm, or Not going if you can\'t make it.</div>' : ''))
+      + rsvpStateHtml_(st, locked ? ph.label : '')
       + '</div>';
   }).join('');
   return '<div class="mo-sec" style="margin-top:4px">This week <i>tap to confirm</i></div><div class="panel" style="padding:4px 16px;margin:0 0 14px">' + rows
@@ -14534,31 +14593,119 @@ function rsvpCardHtml_() {
     + (RSVP.failed ? '<p class="lb-text" style="font-size:11px;color:var(--muted);margin:8px 0">📶 Couldn\'t refresh. Showing saved answers.</p>' : '') + '</div>';
 }
 
-async function rsvpApply_(playerId, pid, date, start, status) {
-  const k = playerId + '|' + rsvpKey_(pid, date, start), prev = RSVP.map[k];
-  if (status) RSVP.map[k] = status; else delete RSVP.map[k]; // optimistic
-  hdRender_();
-  try {
-    await doFetch('setRsvp', { playerId: playerId, contact: ((fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0]) || {}).whatsapp || '', programId: pid, sessionDate: date, startTime: start, status: status,
-      requestId: 'RV' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) });
-  } catch (e) {
-    if (prev) RSVP.map[k] = prev; else delete RSVP.map[k];
-    hdRender_();
-    throw e;
+/* === START: RSVP APPLY — PER-KEY QUEUE, LATEST WINS, DELTA COUNTS === */
+
+/** Escape para sa inline onclick="rsvpSet_(...)": JS string muna, tapos HTML attribute. */
+function rsvpArgs_() {
+  return Array.prototype.map.call(arguments, function (v) {
+    const s = String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]+/g, ' ');
+    return "'" + s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + "'";
+  }).join(',');
+}
+
+/** Tumataas lagi, kaya ang bagong requestId ay laging mas malaki kaysa luma (kailangan ng server stale check). */
+var rsvpN_ = 0;
+function rsvpRid_() { rsvpN_ = (rsvpN_ + 1) % 1296; return 'RV' + Date.now().toString(36) + rsvpN_.toString(36).padStart(2, '0'); }
+
+/** "Miguel S." — tugma sa rvShortName_ ng backend. */
+function rsvpShort_(playerId) {
+  const p = fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0] || {};
+  const a = String(p.fullName || '').trim().split(/\s+/).filter(String);
+  if (!a.length) return 'Player';
+  return a.length > 1 ? a[0] + ' ' + a[a.length - 1].charAt(0) + '.' : a[0];
+}
+
+/** Ilipat ang bilang from → to ('yes' | 'no' | ''). Reversible, kaya ito rin ang rollback. */
+function rsvpShift_(playerId, pid, date, start, from, to) {
+  if (from === to) return;
+  RSVP.counts = RSVP.counts || {};
+  const key = rsvpKey_(pid, date, start);
+  const c = RSVP.counts[key] || (RSVP.counts[key] = { yes: 0, no: 0, ry: 0, rn: 0, names: [] });
+  c.names = c.names || [];
+  const p = fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0];
+  const inRoster = !!(p && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; }));
+  const nm = rsvpShort_(playerId);
+  if (from === 'yes') {
+    c.yes = Math.max(0, (c.yes || 0) - 1);
+    if (inRoster && c.ry != null) c.ry = Math.max(0, c.ry - 1);
+    const i = c.names.indexOf(nm); if (i > -1) c.names.splice(i, 1);
+  } else if (from === 'no') {
+    c.no = Math.max(0, (c.no || 0) - 1);
+    if (inRoster && c.rn != null) c.rn = Math.max(0, c.rn - 1);
+  }
+  if (to === 'yes') {
+    c.yes = (c.yes || 0) + 1;
+    if (inRoster && c.ry != null) c.ry++;
+    if (RSVP_SHOW_NAMES) c.names.push(nm);
+  } else if (to === 'no') {
+    c.no = (c.no || 0) + 1;
+    if (inRoster && c.rn != null) c.rn++;
   }
 }
 
+/** Bawat player+session ay may sariling pila. Sunod-sunod ang padala; kapag may mas bagong tap, ang huli lang ang ipapadala. */
+async function rsvpApply_(playerId, pid, date, start, status) {
+  const k = playerId + '|' + rsvpKey_(pid, date, start);
+  RSVP.ops = RSVP.ops || {};
+  const op = RSVP.ops[k] || (RSVP.ops[k] = { chain: Promise.resolve(), tok: 0, n: 0, conf: RSVP.map[k] || '' }); // conf = huling kumpirmado ng server
+  const my = ++op.tok; op.n++;
+
+  rsvpShift_(playerId, pid, date, start, RSVP.map[k] || '', status || ''); // optimistic: counts + bar + names
+  if (status) RSVP.map[k] = status; else delete RSVP.map[k];
+  hdRender_();
+
+  const contact = ((fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0]) || {}).whatsapp || '';
+  const run = op.chain.then(function () {
+    if (my !== op.tok) return null; // may mas bago nang tap, iyon na lang ang ipapadala
+    return doFetch('setRsvp', { playerId: playerId, contact: contact, programId: pid, sessionDate: date, startTime: start, status: status, requestId: rsvpRid_() })
+      .then(function () { op.conf = status || ''; });
+  });
+  op.chain = run.catch(function () {});
+  try {
+    await run;
+  } catch (e) {
+    // pinakabago lang ang nagro-rollback, pabalik sa huling kumpirmado (hindi sa optimistic ng naunang tap)
+    if (my === op.tok && RSVP.ops && RSVP.ops[k] === op) {
+      rsvpShift_(playerId, pid, date, start, RSVP.map[k] || '', op.conf);
+      if (op.conf) RSVP.map[k] = op.conf; else delete RSVP.map[k];
+      hdRender_();
+    }
+    throw e;
+  } finally {
+    if (--op.n <= 0 && RSVP.ops && RSVP.ops[k] === op) delete RSVP.ops[k];
+  }
+}
+
+var rsvpTapAt_ = {};
 async function rsvpSet_(playerId, pid, date, start, val) {
+  if (val !== 'yes' && val !== 'no') return;
+  if (!/^[\w-]{3,40}$/.test(playerId) || !/^PRG-[A-Z]+$/.test(pid) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(start)) return;
+
+  const tk = [playerId, pid, date, start, val].join('|'), now = Date.now();
+  if (now - (rsvpTapAt_[tk] || 0) < 350) return; // double-tap guard: hindi mabubura ang sagot dahil sa dalawang mabilis na tap
+  rsvpTapAt_[tk] = now;
+
   const cur = rsvpStatus_(playerId, pid, date, start);
   let next = val;
-  if (cur.v === val) { if (cur.implicit) return; next = ''; } // tap ulit = bawiin ang sagot
+  if (cur.v === val) {
+    if (cur.implicit) return;
+    if (!RSVP_ALLOW_CLEAR) { appToast_('Tap the other option to change your answer'); return; }
+    next = '';
+  }
   haptic('selection');
   try {
     await rsvpApply_(playerId, pid, date, start, next);
+    hdRender_(); // tanggalin ang "Saving…" agad, huwag hintayin ang refresh
     rsvpLoad_();
-    appToast_(next === 'yes' ? 'See you there ✓' : (next === 'no' ? 'Marked not going' : 'Answer cleared'));
-  } catch (e) { TOAST.error(/closed|authori|active package|outside|no such session|invalid session/i.test(e.message || '') ? e.message : "Couldn't save your answer. Try again."); }
+    appToast_(next === 'yes' ? 'See you there ✓' : (next === 'no' ? 'Marked not going' : (rsvpDefaultYes_(pid) ? 'Answer cleared · expected by default' : 'Answer cleared')));
+  } catch (e) {
+    const policy_ = /closed|authori|active package|outside|no such session|invalid session/i.test(e.message || '');
+    TOAST.error(policy_ ? e.message : "Couldn't save your answer. Previous answer restored.",
+      policy_ ? undefined : { action: { label: 'Retry', fn: function () { rsvpSet_(playerId, pid, date, start, val); } } });
+    rsvpLoad_(); // resync mula sa server pagkatapos ng pagkabigo
+  }
 }
+/* === END: RSVP APPLY — PER-KEY QUEUE, LATEST WINS, DELTA COUNTS === */
 
 var pollAnim_ = true;
 function pollWeekLabel_() {
@@ -14600,7 +14747,18 @@ function pollRender_() {
 
   const ready = !!(p && !p._lite);
   const can = function (pid) { return ready && (p.relationships || []).some(function (r) { return r.programId === pid && r.state === 'active'; }); };
-  const mineList = list.filter(function (x) { return can(x.pid); });
+  (lbScheduleWeek || []).forEach(function (d) {
+    if (!d.active) return;
+    (d.sessions || []).forEach(function (s) {
+      const pid2 = lbSessionProgramId_(s);
+      if (RSVP_PROGRAMS_.indexOf(pid2) < 0 || s.status !== 'Cancelled') return;
+      const w2 = lbSessionWhen_(d.day, s.startTime, s.endTime);
+      if (!w2 || w2.end.getTime() <= w2.now.getTime()) return;
+      list.push({ s: s, day: d.day, w: w2, pid: pid2, date: rsvpDateIso_(w2.start), cx: true });
+    });
+  });
+  list.sort(function (a, b) { return a.w.start - b.w.start; });
+  const mineList = list.filter(function (x) { return !x.cx && can(x.pid); });
   const answered = mineList.filter(function (x) { const s = rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime); return s.v && !s.implicit; }).length;
   const pct = mineList.length ? Math.round(answered / mineList.length * 100) : 0;
   const avail = RSVP.avail || {};
@@ -14650,12 +14808,12 @@ function pollRender_() {
       : (av2.length ? '<div class="pl-coach">Available: ' + av2.map(e).join(', ') + ' · awaiting approval</div>' : '<div class="pl-coach tba">Coach to be announced</div>');
     let vote = '';
     if (mine) {
-      const args = "'" + p.playerId + "','" + x.pid + "','" + x.date + "','" + x.s.startTime + "'";
+      const args = rsvpArgs_(p.playerId, x.pid, x.date, x.s.startTime);
       const b = function (val, cls, label) {
         return '<button type="button" class="' + cls + (st.v === val ? ' sel' : '') + '"' + (locked ? ' disabled' : '') + ' onclick="rsvpSet_(' + args + ",'" + val + "')\">" + label + '</button>';
       };
       vote = '<div class="pl-vote">' + b('yes', 'go', st.v === 'yes' ? '✓ I\'m going' : 'Going') + b('no', 'no', 'Not going') + '</div>'
-        + (locked ? '<div class="pl-lock">' + e(ph.label) + '</div>' : (st.implicit ? '<div class="pl-lock">Expected by default. Tap Not going if you can\'t make it.</div>' : ''));
+        + rsvpStateHtml_(st, locked ? ph.label : '', 'pl-lock');
     }
     return '<div class="pl-card' + (st.v === 'yes' ? ' in' : '') + '"><div class="pl-top">'
       + '<div class="pl-date"><b>' + Number(x.date.slice(8)) + '</b><span>' + x.day.slice(0, 3).toUpperCase() + '</span></div>'
@@ -14664,7 +14822,7 @@ function pollRender_() {
       + '<div class="pl-bar"><i style="width:' + barPct + '%"></i></div>'
       + '<div class="pl-row"><div class="pl-av">' + av + '</div><div class="pl-cnt">' + c.yes + ' confirmed' + (expected ? ' <small>· ' + expected + ' expected</small>' : '') + (c.no ? ' <small>· ' + c.no + ' not going</small>' : '') + '</div></div>'
       + (RSVP_SHOW_NAMES && c.names.length ? '<div class="pl-names">' + c.names.map(e).join(', ') + (expected ? ' + ' + expected + ' expected' : '') + '</div>' : '')
-      + vote + '</div>';
+      + (x.cx ? '<div class="pay-badge overdue" style="margin:10px 0 0">Cancelled</div><p class="lb-text" style="margin:6px 0 0">' + e(x.s.statusNote || 'This session is cancelled. No answer is needed.') + '</p>' : vote) + '</div>';
   }).join('');
 
   /* ---- footer ---- */
@@ -14673,6 +14831,8 @@ function pollRender_() {
     foot = '<button type="button" class="btn primary" style="width:100%;margin-top:6px" onclick="openProfile_()">Find my player to vote →</button>'
       + '<p class="lb-text" style="font-size:11px;color:var(--muted);text-align:center;margin:8px 0 0">Use the mobile number or Player ID from registration. You only need to do this once.</p>';
   } else if (!mineList.length) {
+    foot = '<div class="notice"><b>Voting is off for ' + e(p.fullName) + '</b><br>' + (list.length ? 'No active package covers this week\'s Regular, Advanced or Academy sessions.' : 'Nothing is open to answer right now.') + '</div><button type="button" class="btn primary" style="width:100%;margin-top:8px" onclick="hdOpenSessions_()">Top up sessions →</button>';
+  } else if (false) { // dead branch, luma ang laman sa ibaba
     foot = '<div class="notice">No active package for ' + e(p.fullName) + ', so voting is off. Top up in My Livity to join the poll.</div>';
   } else {
     foot = '<button type="button" class="btn outline" style="width:100%;margin-top:4px;background:#f5f2ea;border-color:#f5f2ea;color:var(--muted)" onclick="rsvpWeekNo_(\'' + p.playerId + '\')">Will not attend this week</button>';
@@ -14808,19 +14968,38 @@ async function coachAvailSet_(i, val) {
   }
 }
 
+/* === START: RSVP WEEK NO — PREDICTABLE, PARTIAL-FAILURE SAFE === */
+var rsvpWeekBusy_ = false;
 async function rsvpWeekNo_(playerId) {
+  if (rsvpWeekBusy_) return;
   const p = fmPlayers_().filter(function (x) { return x.playerId === playerId; })[0] || fmActive_();
   if (!p) return;
-  const todo = rsvpEligible_(p).filter(function (x) { return lbSessionPhase_(x.s, x.w).k === 'open'; });
-  if (!todo.length) { appToast_('No open sessions to update'); return; }
+  const seen = {};
+  const all = rsvpEligible_(p).filter(function (x) { const k = rsvpKey_(x.pid, x.date, x.s.startTime); if (seen[k]) return false; seen[k] = 1; return true; });
+  const open = all.filter(function (x) { return lbSessionPhase_(x.s, x.w).k === 'open'; });
+  const closed = all.length - open.length;
+  if (!open.length) { appToast_('No open sessions to update'); return; }
+  const stOf = function (x) { return rsvpStatus_(p.playerId, x.pid, x.date, x.s.startTime); };
+  const todo = open.filter(function (x) { return stOf(x).v !== 'no'; }); // hindi na uulitin ang nakasagot na ng Not going
+  if (!todo.length) { appToast_('Already marked not going for this week'); return; }
+  const over = todo.filter(function (x) { return stOf(x).v === 'yes'; }).length;
   const first = String(p.fullName || '').trim().split(/\s+/)[0];
-  if (!(await CONFIRM.ask({ title: 'Not attending this week?', text: first + ' will be marked Not going for ' + todo.length + ' session' + (todo.length === 1 ? '' : 's') + '.', confirmLabel: 'Mark all Not going', danger: false }))) return;
+  const text = first + ' will be marked Not going for ' + todo.length + ' session' + (todo.length === 1 ? '' : 's') + '.'
+    + (over ? '\n' + over + ' of them ' + (over === 1 ? 'is' : 'are') + ' currently confirmed Going and will be changed.' : '')
+    + (closed ? '\n' + closed + ' closed or ongoing session' + (closed === 1 ? '' : 's') + ' will not change.' : '');
+  if (!(await CONFIRM.ask({ title: 'Not attending this week?', text: text, confirmLabel: 'Mark all Not going', danger: false }))) return;
+  rsvpWeekBusy_ = true;
+  let ok = 0, fail = 0;
   try {
-    for (const x of todo) await rsvpApply_(p.playerId, x.pid, x.date, x.s.startTime, 'no');
-    rsvpLoad_();
-    appToast_('Marked not going this week');
-  } catch (e) { TOAST.error("Couldn't save. Try again."); }
+    for (const x of todo) { // sunod-sunod, tuloy kahit may pumalya
+      try { await rsvpApply_(p.playerId, x.pid, x.date, x.s.startTime, 'no'); ok++; } catch (e) { fail++; }
+    }
+  } finally { rsvpWeekBusy_ = false; }
+  rsvpLoad_();
+  if (!fail) appToast_('Marked not going this week');
+  else TOAST.warn(ok + ' of ' + todo.length + ' saved. Tap "Will not attend this week" again to retry the rest.');
 }
+/* === END: RSVP WEEK NO === */
 
 /* override: Session Detail "Reserve Spot" / "Cancel Reservation" gumagamit na rin ng parehong RSVP */
 async function lbResvAct_(op, idx) {
@@ -14846,8 +15025,9 @@ async function lbResvAct_(op, idx) {
 const rsvpApplyBase_ = rsvpApply_;
 rsvpApply_ = async function () {
   RSVP.busy = (RSVP.busy || 0) + 1;
+  rsvpVer_++; // may boto: ang GET na nagsimula bago ito ay luma na
   try { return await rsvpApplyBase_.apply(this, arguments); }
-  finally { RSVP.busy = Math.max(0, (RSVP.busy || 1) - 1); }
+  finally { RSVP.busy = Math.max(0, (RSVP.busy || 1) - 1); rsvpVer_++; }
 };
 
 /* ---- ADMIN: Week Roster ---- */
@@ -14866,16 +15046,169 @@ function rsvpWeekSessions_() {
       out.push({ key: rsvpKey_(pid, date, s.startTime), programId: pid, programName: lbShortProgramName_(s.programName), day: d.day, sessionDate: date, startTime: s.startTime, endTime: s.endTime, venue: s.venue });
     });
   });
-  out.sort(function (a, b) { return (a.sessionDate + a.startTime).localeCompare(b.sessionDate + b.startTime); });
-  return out;
+  const seenK = {};
+  const uniq = out.filter(function (x) { if (seenK[x.key]) return false; seenK[x.key] = 1; return true; });
+  uniq.sort(function (a, b) { return (a.sessionDate + a.startTime).localeCompare(b.sessionDate + b.startTime); });
+  return uniq;
 }
 
+/* === START: ADMIN ROSTER — STATES, KEEP-DATA REFRESH, COACH RECOVERY === */
+var adminRosSeq_ = 0;
+
 function adminRosterPaint_() {
+  const p = adminEl_('adminPane');
+  if (adminTab_ !== 'roster' || !p) return;
+  const keep = {};
+  p.querySelectorAll('input[id^="arAdd"]').forEach(function (x) { keep[x.id] = x.value; }); // huwag mawala ang tina-type
+  p.innerHTML = adminRosterHtml_();
+  Object.keys(keep).forEach(function (id) { const x = adminEl_(id); if (x && keep[id]) x.value = keep[id]; });
+}
+
+/** status: idle | loading | ok | empty | noschedule | na. Kapag may data na, hindi na binubura habang nagre-refresh o kapag pumalya. */
+async function adminRosterLoad_() {
+  const my = ++adminRosSeq_, R = adminRos_;
+  R.saving = R.saving || {};
+  const had = R.status === 'ok' && !!R.data;
+  R.refreshing = had; R.msg = '';
+  if (!had) { R.status = 'loading'; R.data = null; }
+  adminRosterPaint_();
+
+  if (!lbScheduleWeek) { R.status = 'noschedule'; R.data = null; R.sessions = []; R.refreshing = false; adminRosterPaint_(); return; }
+  const sessions = rsvpWeekSessions_();
+  if (!sessions.length) { R.status = 'empty'; R.data = null; R.sessions = []; R.at = Date.now(); R.refreshing = false; adminRosterPaint_(); return; } // hindi na tatawag sa server
+
+  try {
+    if (!scKey_()) throw new Error('Staff key required. Use Staff sign-in first.');
+    const data = await Promise.race([
+      scApi_('adminRoster', { sessions: sessions }),
+      new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Timed out. Check your connection.')); }, 20000); })
+    ]);
+    if (my !== adminRosSeq_) return; // may mas bago nang load
+    R.data = data; R.sessions = sessions; R.status = 'ok'; R.at = Date.now(); R.msg = '';
+  } catch (e) {
+    if (my !== adminRosSeq_) return;
+    R.msg = String((e && e.message) || 'Not connected');
+    if (!had) { R.status = 'na'; R.data = null; } // may data na = iwan, may banner lang
+  }
+  R.refreshing = false;
+  adminRosterPaint_();
+}
+
+async function adminRosterRetrySched_() {
+  try { await appRefreshSchedule_(); } catch (e) {}
+  adminRosterLoad_();
+}
+
+function adminRosterHtml_() {
+  const e = lbEscapeHtml_, R = adminRos_, saving = R.saving || {};
+  const has = R.status === 'ok' && !!R.data;
+  const busy = R.status === 'loading' || !!R.refreshing;
+  const sub = R.at ? 'Updated ' + lbSchedAgo_(R.at) + (R.refreshing ? ' · refreshing…' : '') : 'RSVPs from the app · assign coaches';
+  let head = '<div class="ad-head"><b>WEEK ROSTER</b><span>' + e(sub) + '</span></div>';
+  if (has && R.sessions.length) {
+    head += '<button type="button" class="btn outline" style="width:100%;margin:0 0 8px"' + (R.auto ? ' disabled' : '') + ' onclick="adminRosterAuto_()">' + (R.auto ? 'Assigning…' : '✨ Auto-assign coaches (by availability &amp; preferences)') + '</button>'
+      + '<button type="button" class="btn primary" style="width:100%;margin:0 0 8px" onclick="adminRosterShare_()">Send weekly poll to WhatsApp group →</button>';
+  }
+  head += '<button type="button" class="btn outline" style="width:100%;margin:0 0 10px"' + (busy ? ' disabled' : '') + ' onclick="adminRosterLoad_()">' + (busy ? 'Refreshing…' : 'Refresh') + '</button>';
+
+  if (R.status === 'idle' || R.status === 'loading') return head + '<p class="lb-text" style="text-align:center">Loading…</p>';
+  if (R.status === 'noschedule') return head + '<div class="ad-note">The schedule is not loaded yet, so the week can\'t be listed. This is not the same as having no sessions.</div>'
+    + '<button type="button" class="btn outline" style="width:100%" onclick="adminRosterRetrySched_()">Retry</button>';
+  if (R.status === 'na') return head + '<div class="ad-note">Couldn\'t load the roster: ' + e(R.msg) + '</div>'
+    + '<button type="button" class="btn primary" style="width:100%" onclick="adminRosterLoad_()">Retry</button>';
+  if (R.status === 'empty') return head + '<div class="ad-note">No Regular, Advanced or Academy sessions in the next 7 days. This comes from the schedule, not a connection problem.'
+    + (typeof lbSchedState_ !== 'undefined' && lbSchedState_ !== 'live' ? '<br>Note: the schedule is showing a ' + e(lbSchedState_) + ' copy, so check the Sheet.' : '') + '</div>';
+
+  const banner = R.msg ? '<div class="ad-note">Couldn\'t refresh: ' + e(R.msg) + '. Showing the last loaded roster. <button type="button" class="sc-link" style="margin:0" onclick="adminRosterLoad_()">Retry</button></div>' : '';
+  const by = {};
+  ((R.data && R.data.sessions) || []).forEach(function (x) { by[x.key] = x; });
+  const coaches = (R.data && R.data.coaches) || [];
+
+  return head + banner + R.sessions.map(function (s, i) {
+    const d = by[s.key];
+    const top = '<div style="font-size:13px;font-weight:800;color:#fff">' + e(s.programName) + '</div>'
+      + '<div style="font-size:12px;color:#c8c4bb;margin:2px 0 8px">' + e(s.day.slice(0, 3)) + ' ' + e(s.sessionDate) + ' · ' + lbFormatTimeRange_(s.startTime, s.endTime) + ' · ' + e(s.venue) + '</div>';
+    const card = function (inner) { return '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:12px 13px;margin-bottom:10px">' + top + inner + '</div>'; };
+    if (!d) return card('<div class="ad-note" style="margin:0">No data returned for this session. Tap Refresh.</div>');
+
+    const acad = rsvpDefaultYes_(s.programId);
+    const conf = d.going.length, nor = d.noReply.length, no = d.notGoing.length, exp = acad ? nor : 0;
+    const names = function (a) { return a.length ? a.map(function (p) { return e(p.name) + (p.source && p.source !== 'app' ? ' (' + e(p.source) + ')' : ''); }).join(', ') : '—'; };
+    const known = coaches.some(function (c) { return c.coachId === d.coachId; });
+    const coachOpts = '<option value="">Unassigned</option>'
+      + (d.coachId && !known ? '<option value="' + e(d.coachId) + '" selected>' + e(d.coachId) + ' (not in Coaches sheet)</option>' : '')
+      + coaches.map(function (c) { return '<option value="' + e(c.coachId) + '"' + (c.coachId === d.coachId ? ' selected' : '') + '>' + e(c.name) + '</option>'; }).join('');
+    const sv = !!saving[s.key];
+    const chips = ((d.available || []).length && !d.coachId)
+      ? '<div style="margin:0 0 8px"><span style="font-size:11px;color:#a8a49a;display:block;margin-bottom:6px">Available. Tap to approve:</span>'
+        + d.available.map(function (c) { return '<button type="button" class="mo-chip" style="margin:0 6px 6px 0"' + (sv ? ' disabled' : '') + ' onclick="adminRosterCoach_(' + i + ',' + rsvpArgs_(c.coachId) + ')">✓ ' + e(c.name) + '</button>'; }).join('') + '</div>' : '';
+
+    return card(
+      '<div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:6px">Confirmed ' + conf + ' · ' + (acad ? 'Expected ' + exp : 'No reply ' + nor) + ' · Not going ' + no + (acad ? ' · Headcount ' + (conf + exp) : '') + '</div>'
+      + '<div style="font-size:12px;color:#c8c4bb;line-height:1.5"><b style="color:#fff">Confirmed:</b> ' + names(d.going)
+      + (acad ? '<br><b style="color:#fff">Expected (no reply):</b> ' + names(d.noReply) : '')
+      + '<br><b style="color:#fff">Not going:</b> ' + names(d.notGoing)
+      + (acad ? '' : '<br><b style="color:#fff">No reply:</b> ' + names(d.noReply)) + '</div>'
+      + '<div class="sc-label">Coach' + (d.coachId ? '' : ' · awaiting approval') + (sv ? ' · saving…' : '') + '</div>'
+      + chips
+      + '<select class="lb-input"' + (sv ? ' disabled' : '') + ' onchange="adminRosterCoach_(' + i + ',this.value)">' + coachOpts + '</select>'
+      + '<div class="sc-manual"><input class="lb-input" id="arAdd' + i + '" placeholder="Add by Player ID (WhatsApp reply)" autocapitalize="characters" autocomplete="off"><button class="btn primary" onclick="adminRosterAdd_(' + i + ')">Add</button></div>'
+      + '<button type="button" class="sc-link" onclick="adminRosterCopy_(' + i + ')">Copy summary for WhatsApp</button>');
+  }).join('');
+}
+
+async function adminRosterAutoD_() {
+  const R = adminRos_;
+  if (R.auto || !R.sessions.length) return;
+  R.auto = true; adminRosterPaint_();
+  const sessions = R.sessions.map(function (s) { return { key: s.key, programId: s.programId, day: s.day, sessionDate: s.sessionDate, startTime: s.startTime }; });
+  try {
+    const r = await scApi_('autoAssign', { sessions: sessions });
+    const n = (r.assigned || []).length;
+    appToast_(n ? 'Auto-assigned ' + n + ' session(s) ✓' : 'Nothing to assign. Needs coach availability.');
+  } catch (e) { TOAST.error((e && e.message) || "Couldn't auto-assign"); }
+  R.auto = false;
+  adminRosterLoad_();
+}
+
+async function adminRosterCoachD_(i, coachId) {
+  const R = adminRos_, s = R.sessions[i];
+  R.saving = R.saving || {};
+  if (!s || R.saving[s.key]) return;
+  R.saving[s.key] = 1; adminRosterPaint_();
+  let ok = false;
+  try {
+    await scApi_('assignSessionCoach', { sessionKey: s.key, coachId: coachId });
+    ok = true;
+    const row = ((R.data && R.data.sessions) || []).filter(function (x) { return x.key === s.key; })[0];
+    if (row) row.coachId = coachId;
+    appToast_('Coach saved ✓');
+  } catch (e) { TOAST.error((e && e.message) || "Couldn't save coach. The previous coach is still assigned."); }
+  delete R.saving[s.key];
+  adminRosterPaint_(); // kapag pumalya: bumabalik ang dropdown sa huling naka-save
+  if (ok) adminRosterLoad_();
+}
+
+async function adminRosterAddD_(i) {
+  const s = adminRos_.sessions[i], inp = adminEl_('arAdd' + i);
+  const id = ((inp && inp.value) || '').trim().toUpperCase();
+  if (!s || !id) return;
+  if (!SC_ID_FORMAT_RE.test(id)) { TOAST.warn('Player ID looks wrong. Example: LVTFA-XXXXXXX'); return; }
+  try {
+    await scApi_('adminSetRsvp', { playerId: id, programId: s.programId, sessionDate: s.sessionDate, startTime: s.startTime, status: 'yes', source: 'admin' });
+    if (inp) inp.value = ''; // para hindi ibalik ng repaint ang luma
+    appToast_('Added ✓');
+    adminRosterLoad_();
+  } catch (e) { TOAST.error((e && e.message) || "Couldn't add player"); } // naiiwan ang tinype para maitama
+}
+/* === END: ADMIN ROSTER — STATES, KEEP-DATA REFRESH, COACH RECOVERY === */
+
+function adminRosterPaintOld_() {
   const p = adminEl_('adminPane');
   if (adminTab_ === 'roster' && p) p.innerHTML = adminRosterHtml_();
 }
 
-async function adminRosterLoad_() {
+async function adminRosterLoadOld_() {
   if (adminRos_.status === 'loading') return;
   adminRos_ = { status: 'loading', data: null, msg: '', sessions: rsvpWeekSessions_() };
   adminRosterPaint_();
@@ -14887,7 +15220,7 @@ async function adminRosterLoad_() {
   adminRosterPaint_();
 }
 
-function adminRosterHtml_() {
+function adminRosterHtmlOld_() {
   const e = lbEscapeHtml_, R = adminRos_;
   const head = '<div class="ad-head"><b>WEEK ROSTER</b><span>RSVPs from the app · assign coaches</span></div>'
     + '<button type="button" class="btn outline" style="width:100%;margin:0 0 8px" onclick="adminRosterAuto_()">✨ Auto-assign coaches (by availability &amp; preferences)</button>'
@@ -14919,6 +15252,97 @@ function adminRosterHtml_() {
   }).join('');
 }
 
+/* === START: ADMIN ROSTER — AUTO / COACH / ADD (REPORTED, CONFIRMED OVERRIDES) === */
+function adminBy_() { return String((staffMeta_() || {}).name || ''); }
+
+function adminSessLabel_(key) {
+  const s = adminRos_.sessions.filter(function (x) { return x.key === key; })[0];
+  return s ? s.day.slice(0, 3) + ' ' + s.sessionDate.slice(5).replace('-', '/') + ' ' + s.programName : key;
+}
+
+async function adminRosterAuto_() {
+  const R = adminRos_;
+  if (R.auto || !R.sessions.length) return;
+  R.auto = true; adminRosterPaint_();
+  const sessions = R.sessions.map(function (s) { return { key: s.key, programId: s.programId, day: s.day, sessionDate: s.sessionDate, startTime: s.startTime }; });
+  let r = null;
+  try { r = await scApi_('autoAssign', { sessions: sessions, by: adminBy_() }); }
+  catch (e) { TOAST.error((e && e.message) || "Couldn't auto-assign"); }
+  R.auto = false;
+  if (r) {
+    const A = r.assigned || [], S = r.skipped || [], F = r.failed || [];
+    const lines = function (arr, f) { return arr.slice(0, 6).map(f).join('\n') + (arr.length > 6 ? '\n+' + (arr.length - 6) + ' more' : ''); };
+    if (!S.length && !F.length) appToast_(A.length ? 'Auto-assigned ' + A.length + ' session(s) ✓' : 'Nothing to assign');
+    else await CONFIRM.notice({
+      title: 'Auto-assign result',
+      text: 'Assigned: ' + A.length + (A.length ? '\n' + lines(A, function (x) { return '• ' + adminSessLabel_(x.key) + ' → ' + x.coach; }) : '')
+        + (S.length ? '\n\nSkipped: ' + S.length + '\n' + lines(S, function (x) { return '• ' + adminSessLabel_(x.key) + ': ' + x.reason; }) : '')
+        + (F.length ? '\n\nFailed: ' + F.length + '\n' + lines(F, function (x) { return '• ' + adminSessLabel_(x.key) + ': ' + x.reason; }) : '')
+    });
+  }
+  adminRosterLoad_();
+}
+
+async function adminRosterCoach_(i, coachId, force) {
+  const R = adminRos_, s = R.sessions[i];
+  R.saving = R.saving || {};
+  if (!s || R.saving[s.key]) return;
+  R.saving[s.key] = 1; adminRosterPaint_();
+  let ok = false;
+  try {
+    const r = await scApi_('assignSessionCoach', { sessionKey: s.key, coachId: coachId, by: adminBy_(), force: force ? 1 : 0 });
+    ok = true;
+    const row = ((R.data && R.data.sessions) || []).filter(function (x) { return x.key === s.key; })[0];
+    if (row) row.coachId = coachId;
+    if (r.unchanged) appToast_('Already assigned');
+    else if ((r.warnings || []).length) TOAST.warn('Saved, but: ' + r.warnings.join(', '));
+    else appToast_(coachId ? 'Coach saved ✓' : 'Coach removed');
+  } catch (e) {
+    const msg = String((e && e.message) || '');
+    delete R.saving[s.key]; adminRosterPaint_(); // bumabalik ang dropdown sa huling naka-save
+    if (/^CONFLICT/.test(msg) && !force) {
+      const go = await CONFIRM.ask({ title: 'Overlapping session', text: msg.replace(/^CONFLICT:\s*/, '') + '\n\nAssign anyway?', confirmLabel: 'Assign anyway', danger: false });
+      if (go) return adminRosterCoach_(i, coachId, true);
+      return;
+    }
+    TOAST.error(msg || "Couldn't save coach. The previous coach is still assigned.");
+    return;
+  }
+  delete R.saving[s.key];
+  adminRosterPaint_();
+  if (ok) adminRosterLoad_();
+}
+
+var adminAddBusy_ = {};
+async function adminRosterAdd_(i, force) {
+  const s = adminRos_.sessions[i], inp = adminEl_('arAdd' + i);
+  const id = ((inp && inp.value) || '').trim().toUpperCase();
+  if (!s || !id) return;
+  if (!/^[A-Z0-9-]{4,20}$/.test(id)) { TOAST.warn('Player ID looks wrong. Example: LVTFA-XXXXXXX'); return; }
+  if (adminAddBusy_[s.key]) return;
+  const row = ((adminRos_.data && adminRos_.data.sessions) || []).filter(function (x) { return x.key === s.key; })[0];
+  if (row && (row.going || []).some(function (p) { return p.playerId === id; })) { TOAST.info('Already confirmed going'); if (inp) inp.value = ''; return; }
+  adminAddBusy_[s.key] = 1;
+  try {
+    const r = await scApi_('adminAddRsvp', { playerId: id, programId: s.programId, sessionDate: s.sessionDate, startTime: s.startTime, by: adminBy_(), force: force ? 1 : 0, requestId: rsvpRid_() });
+    if (inp) inp.value = '';
+    if (r.duplicate) TOAST.info((r.name || id) + ' is already confirmed going');
+    else if (r.previous === 'no') appToast_((r.name || id) + ': Not going → Going ✓');
+    else appToast_('Added ' + (r.name || id) + (r.eligible === false ? ' (override)' : '') + ' ✓');
+    adminRosterLoad_();
+  } catch (e) {
+    const msg = String((e && e.message) || '');
+    delete adminAddBusy_[s.key];
+    if (/^NOT_ELIGIBLE/.test(msg) && !force) {
+      const go = await CONFIRM.ask({ title: 'Not eligible', text: msg.replace(/^NOT_ELIGIBLE:\s*/, '') + '\n\nAdd to this session anyway? It is recorded as an admin override.', confirmLabel: 'Add anyway', danger: false });
+      if (go) await adminRosterAdd_(i, true);
+      return;
+    }
+    TOAST.error(msg || "Couldn't add player"); // naiiwan ang tinype para maitama
+  } finally { delete adminAddBusy_[s.key]; }
+}
+/* === END: ADMIN ROSTER — AUTO / COACH / ADD === */
+
 function adminRosterShare_() {
   const list = rsvpWeekSessions_();
   if (!list.length) { appToast_('No sessions this week'); return; }
@@ -14930,7 +15354,7 @@ function adminRosterShare_() {
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 
-async function adminRosterAuto_() {
+async function adminRosterAutoOld_() {
   const sessions = adminRos_.sessions.map(function (s) { return { key: s.key, programId: s.programId, day: s.day, sessionDate: s.sessionDate, startTime: s.startTime }; });
   try {
     const r = await scApi_('autoAssign', { sessions: sessions });
@@ -14939,13 +15363,13 @@ async function adminRosterAuto_() {
   } catch (e) { TOAST.error(e.message || "Couldn't auto-assign"); }
 }
 
-async function adminRosterCoach_(i, coachId) {
+async function adminRosterCoachOld_(i, coachId) {
   const s = adminRos_.sessions[i];
   try { await scApi_('assignSessionCoach', { sessionKey: s.key, coachId: coachId }); appToast_('Coach saved ✓'); adminRos_.status = 'idle'; adminRosterLoad_(); }
   catch (e) { TOAST.error(e.message || "Couldn't save coach"); }
 }
 
-async function adminRosterAdd_(i) {
+async function adminRosterAddOld_(i) {
   const s = adminRos_.sessions[i], inp = adminEl_('arAdd' + i);
   const id = ((inp && inp.value) || '').trim().toUpperCase();
   if (!id) return;
@@ -14989,6 +15413,268 @@ function rsvpLiveHtml_(pid, date, start) {
 /* === END: RSVP === */
 
 /* === END: MORE / LIVITY REDESIGN — LOGIC === */
+/* === START: ADMIN LEDGER — UI === */
+let adminLed_ = { status:'idle', data:null, msg:'', q:'', type:'', form:null, busy:false, refreshing:false, at:0 };
+const ADMIN_LED_TYPES_ = [['','All types'],['CHARGE','Charge'],['PENALTY','Penalty'],['SUBMITTED','Proof submitted'],['PAYMENT_VERIFIED','Payment verified'],['REJECTED','Rejected'],['REVERSAL','Reversal'],['WAIVER','Waiver'],['ADJUSTMENT','Adjustment'],['REFUND_REQUESTED','Refund requested'],['REFUND_COMPLETED','Refund completed'],['DUE_DATE_CHANGED','Due date changed']];
+function adminLedPeso_(n) { n = Number(n) || 0; return (n < 0 ? '−' : '') + '₱' + Math.abs(n).toLocaleString(); }
+function adminLedAttr_(s) { return lbEscapeHtml_(s).replace(/"/g, '&quot;'); }
+
+function adminLedgerPaint_() {
+  const p = adminEl_('adminPane');
+  if (adminTab_ !== 'ledger' || !p) return;
+  p.innerHTML = adminLedgerHtml_();
+}
+
+async function adminLedgerLoad_() {
+  const L = adminLed_;
+  L.refreshing = !!L.data; L.msg = '';
+  if (!L.data) L.status = 'loading';
+  adminLedgerPaint_();
+  try {
+    if (!scKey_()) throw new Error('Staff key required. Use Staff sign-in first.');
+    L.data = await scApi_('adminLedger', { q: L.q, type: L.type, limit: 100 });
+    L.status = 'ok'; L.at = Date.now();
+  } catch (e) {
+    L.msg = String((e && e.message) || 'Not connected');
+    if (!L.data) L.status = 'na';
+  }
+  L.refreshing = false;
+  adminLedgerPaint_();
+}
+
+function adminLedgerSearch_() {
+  const q = adminEl_('ledQ'), t = adminEl_('ledType');
+  adminLed_.q = q ? q.value.trim() : adminLed_.q;
+  adminLed_.type = t ? t.value : adminLed_.type;
+  adminLed_.form = null;
+  adminLedgerLoad_();
+}
+
+function adminLedgerForm_(op) {
+  const s = adminLed_.data && adminLed_.data.summary;
+  if (!s) return;
+  adminLed_.form = { op: op, paymentId: s.paymentId, rid: 'LD' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+  adminLedgerPaint_();
+}
+function adminLedgerFormClose_() { adminLed_.form = null; adminLedgerPaint_(); }
+
+async function adminLedgerSubmit_() {
+  const F = adminLed_.form;
+  if (!F || adminLed_.busy) return;
+  const g = function (id) { const e = adminEl_(id); return e ? e.value : ''; };
+  const amount = Number(g('ledAmt')), reason = g('ledReason').trim(), appr = g('ledAppr').trim();
+  if (reason.length < 5) { TOAST.warn('Enter a reason (at least 5 characters).'); return; }
+  if (F.op !== 'refundComplete' && (!isFinite(amount) || amount === 0)) { TOAST.warn('Enter a non-zero amount.'); return; }
+  const label = { waive: 'Waive penalty', adjust: 'Adjust total', refundRequest: 'Request refund', refundComplete: 'Complete refund' }[F.op];
+  const ok = await CONFIRM.ask({ title: label + '?', text: F.paymentId + (g('ledAmt') ? '\nAmount: ' + adminLedPeso_(amount) : '') + '\nReason: ' + reason + (appr ? '\nApproved by: ' + appr : '') + '\n\nThis is written to the ledger and cannot be edited.', confirmLabel: 'Confirm', danger: false });
+  if (!ok) return;
+  adminLed_.busy = true; adminLedgerPaint_();
+  try {
+    const r = await scApi_('adminAdjust', { op: F.op, paymentId: F.paymentId, amount: amount || 0, reason: reason, approvedBy: appr, by: adminBy_(), requestId: F.rid });
+    adminLed_.busy = false; adminLed_.form = null;
+    TOAST.success(r.duplicate ? 'Already applied' : label + ' saved');
+    adminLed_.q = F.paymentId;
+    adminLedgerLoad_();
+  } catch (e) {
+    adminLed_.busy = false; adminLedgerPaint_(); // nananatili ang form para maitama
+    TOAST.error((e && e.message) || "Couldn't save");
+  }
+}
+
+function adminLedgerCopy_() {
+  const d = adminLed_.data;
+  if (!d || !d.entries.length) { TOAST.info('Nothing to copy'); return; }
+  const q = function (v) { let s = String(v == null ? '' : v); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+  const rows = [['Entry', 'Time', 'Payment', 'Player', 'Type', 'Amount', 'Before', 'After', 'Reason', 'By', 'ApprovedBy']].concat(d.entries.slice().reverse().map(function (x) {
+    return [x.id, x.ts, x.paymentId, x.playerId, x.type, x.amount, x.before, x.after, x.reason, x.by, x.approvedBy];
+  }));
+  const t = rows.map(function (r) { return r.map(q).join(','); }).join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { TOAST.success('CSV copied (' + d.entries.length + ' rows)'); }, function () { TOAST.warn("Couldn't copy"); });
+}
+
+function adminLedgerFormHtml_() {
+  const F = adminLed_.form, busy = adminLed_.busy;
+  if (!F) return '';
+  const cfg = { waive: ['Waive penalty', 'Amount to waive (₱, positive)', true], adjust: ['Adjust total', 'Signed amount (₱, e.g. -500 or 200)', true],
+    refundRequest: ['Request refund', 'Refund amount (₱)', true], refundComplete: ['Complete refund', 'Amount (blank = full pending)', false] }[F.op];
+  return '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,222,0,.35);border-radius:14px;padding:12px 13px;margin:10px 0">'
+    + '<div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:8px">' + lbEscapeHtml_(cfg[0]) + ' · ' + lbEscapeHtml_(F.paymentId) + '</div>'
+    + '<input class="lb-input" id="ledAmt" type="number" inputmode="decimal" step="any" placeholder="' + adminLedAttr_(cfg[1]) + '">'
+    + '<input class="lb-input" id="ledReason" placeholder="Reason (required, min 5 characters)" maxlength="250">'
+    + ((F.op === 'waive' || F.op === 'adjust') ? '<input class="lb-input" id="ledAppr" placeholder="Approved by (required over the limit; not yourself)" maxlength="60">' : '<input type="hidden" id="ledAppr" value="">')
+    + '<div style="display:flex;gap:8px"><button type="button" class="btn primary" style="flex:1"' + (busy ? ' disabled' : '') + ' onclick="adminLedgerSubmit_()">' + (busy ? 'Saving…' : 'Save to ledger') + '</button>'
+    + '<button type="button" class="btn outline" style="flex:1"' + (busy ? ' disabled' : '') + ' onclick="adminLedgerFormClose_()">Cancel</button></div></div>';
+}
+
+function adminLedgerHtml_() {
+  const e = lbEscapeHtml_, L = adminLed_, d = L.data, busy = L.status === 'loading' || L.refreshing;
+  const opts = ADMIN_LED_TYPES_.map(function (t) { return '<option value="' + t[0] + '"' + (L.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
+  let h = '<div class="ad-head"><b>PAYMENT LEDGER</b><span>' + (L.at ? 'Updated ' + e(lbSchedAgo_(L.at)) + (L.refreshing ? ' · refreshing…' : '') : 'Append-only · every change has a reason and an actor') + '</span></div>'
+    + '<div class="sc-manual"><input class="lb-input" id="ledQ" placeholder="Payment ID, Player ID or name" value="' + adminLedAttr_(L.q) + '" onkeydown="if(event.key===\'Enter\')adminLedgerSearch_()"><button class="btn primary"' + (busy ? ' disabled' : '') + ' onclick="adminLedgerSearch_()">Find</button></div>'
+    + '<select class="lb-input" id="ledType" onchange="adminLedgerSearch_()">' + opts + '</select>';
+  if (L.status === 'loading') return h + '<p class="lb-text" style="text-align:center">Loading…</p>';
+  if (L.status === 'na') return h + '<div class="ad-note">Couldn\'t load the ledger: ' + e(L.msg) + '</div><button type="button" class="btn primary" style="width:100%" onclick="adminLedgerLoad_()">Retry</button>';
+  if (L.msg) h += '<div class="ad-note">Couldn\'t refresh: ' + e(L.msg) + '. Showing the last loaded data.</div>';
+  if (!d) return h;
+
+  const s = d.summary;
+  if (s) {
+    const cell = function (l, v, c) { return '<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:' + (c || '#c8c4bb') + '"><span>' + l + '</span><b style="color:#fff">' + v + '</b></div>'; };
+    const unpaid = ['Pending', 'Overdue', 'Submitted', 'Partial', 'Rejected'].indexOf(s.status) > -1;
+    const canRefund = ['Paid', 'Partial', 'Reversed'].indexOf(s.status) > -1;
+    h += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:12px 13px;margin:8px 0">'
+      + '<div style="font-size:13px;font-weight:800;color:#fff">' + e(s.paymentId) + ' · ' + e(s.player) + ' · ' + e(s.status) + '</div>'
+      + cell('Base', adminLedPeso_(s.base)) + cell('Late penalty (live)', adminLedPeso_(s.penalty)) + cell('Adjustments / waivers', adminLedPeso_(s.adjustments))
+      + cell('Total due', adminLedPeso_(s.total)) + cell('Verified received', adminLedPeso_(s.verified)) + cell('Refunded', adminLedPeso_(s.refunded)) + (s.refundPending ? cell('Refund pending', adminLedPeso_(s.refundPending), '#FFB84D') : '')
+      + cell('Balance owed', adminLedPeso_(s.balance), s.balance ? '#FF8A80' : '#34C759')
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'
+      + (unpaid ? '<button type="button" class="mo-chip" onclick="adminLedgerForm_(\'waive\')">Waive penalty</button><button type="button" class="mo-chip" onclick="adminLedgerForm_(\'adjust\')">Adjust total</button>' : '')
+      + (canRefund ? '<button type="button" class="mo-chip" onclick="adminLedgerForm_(\'refundRequest\')">Request refund</button>' : '')
+      + (s.refundPending ? '<button type="button" class="mo-chip" onclick="adminLedgerForm_(\'refundComplete\')">Complete refund</button>' : '')
+      + '</div></div>' + adminLedgerFormHtml_();
+  } else if (L.q && !/^PAY-/i.test(L.q)) {
+    h += '<p class="ad-note">Tip: search a Payment ID (e.g. PAY-0001) to see its summary and adjustment actions.</p>';
+  }
+
+  const T = d.totals || {}, keys = Object.keys(T);
+  if (keys.length) h += '<p class="ad-note">' + keys.map(function (k) { return e(k.replace(/_/g, ' ').toLowerCase()) + ' ' + adminLedPeso_(T[k]); }).join(' · ') + '</p>';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 2px 6px"><span class="sc-label" style="margin:0">Newest first · ' + d.shown + ' of ' + d.matched + '</span><button type="button" class="sc-link" style="margin:0" onclick="adminLedgerCopy_()">Copy CSV</button></div>';
+  h += d.entries.length ? d.entries.map(function (x) {
+    const who = x.by + (x.approvedBy ? ' · approved ' + x.approvedBy : '');
+    return adminRow_(x.type.replace(/_/g, ' ') + (x.player ? ' · ' + x.player : ''), x.reason || '—', x.ts + ' · ' + x.paymentId + ' · bal ' + adminLedPeso_(x.before) + ' → ' + adminLedPeso_(x.after) + ' · ' + who, x.amount ? adminLedPeso_(x.amount) : '');
+  }).join('') : '<p class="lb-text" style="text-align:center;padding:16px 0">No entries match.</p>';
+  return h + '<button type="button" class="btn outline" style="width:100%;margin-top:6px"' + (busy ? ' disabled' : '') + ' onclick="adminLedgerLoad_()">' + (busy ? 'Refreshing…' : 'Refresh') + '</button>';
+}
+/* === START: ADMIN PAYMENT APPROVALS — UI === */
+let adminPay_ = { status:'idle', data:null, msg:'', filter:'Submitted', busy:'', at:0, refreshing:false };
+
+function adminPayPaint_(fresh) {
+  const p = adminEl_('adminPane');
+  if (adminTab_ !== 'pay' || !p) return;
+  const keep = {};
+  if (!fresh) p.querySelectorAll('input[id^="pay"]').forEach(function (x) { keep[x.id] = x.value; }); // huwag mawala ang tina-type
+  p.innerHTML = adminPayHtml_();
+  Object.keys(keep).forEach(function (id) { const el = adminEl_(id); if (el) el.value = keep[id]; });
+}
+
+async function adminPayLoad_() {
+  const P = adminPay_;
+  P.refreshing = !!P.data; P.msg = '';
+  if (!P.data) P.status = 'loading';
+  adminPayPaint_(true);
+  try {
+    if (!scKey_()) throw new Error('Staff key required. Use Staff sign-in first.');
+    P.data = await scApi_('adminPayQueue', { status: P.filter });
+    P.status = 'ok'; P.at = Date.now();
+  } catch (e) {
+    P.msg = String((e && e.message) || 'Not connected');
+    if (!P.data) P.status = 'na';
+  }
+  P.refreshing = false;
+  adminPayPaint_(true);
+}
+
+function adminPayFilter_(v) { adminPay_.filter = v; adminPay_.data = null; adminPay_.status = 'idle'; adminPayLoad_(); }
+
+function adminPayHtml_() {
+  const e = lbEscapeHtml_, P = adminPay_, d = P.data, busy = P.status === 'loading' || P.refreshing;
+  let h = '<div class="ad-head"><b>PAYMENT APPROVALS</b><span>' + (P.at ? 'Updated ' + e(lbSchedAgo_(P.at)) + (P.refreshing ? ' · refreshing…' : '') : 'Verify, reject or reverse. Every action is ledgered.') + '</span></div>'
+    + adminPills_(['Submitted', 'Partial', 'Overdue', 'Pending', 'Rejected', 'Paid', 'All'], P.filter, 'adminPayFilter_');
+  if (P.status === 'loading') return h + '<p class="lb-text" style="text-align:center">Loading…</p>';
+  if (P.status === 'na') return h + '<div class="ad-note">Couldn\'t load payments: ' + e(P.msg) + '</div><button type="button" class="btn primary" style="width:100%" onclick="adminPayLoad_()">Retry</button>';
+  if (P.msg) h += '<div class="ad-note">Couldn\'t refresh: ' + e(P.msg) + '. Showing the last loaded list.</div>';
+  if (!d) return h;
+  const c = d.counts || {}, ck = Object.keys(c);
+  if (ck.length) h += '<p class="ad-note">' + ck.map(function (k) { return e(k) + ' ' + c[k]; }).join(' · ') + '</p>';
+  if (!d.items.length) return h + '<p class="lb-text" style="text-align:center;padding:16px 0">Nothing in "' + e(P.filter) + '".</p>';
+
+  h += d.items.map(function (x, i) {
+    const canV = ['Pending', 'Overdue', 'Submitted', 'Partial', 'Rejected'].indexOf(x.status) > -1;
+    const canJ = x.status === 'Submitted' || x.status === 'Partial';
+    const canR = x.status === 'Paid' || x.status === 'Partial';
+    const dis = P.busy ? ' disabled' : '';
+    const flags = (x.flags && x.flags !== 'OK') ? x.flags.split(',').map(function (f) {
+      const bad = /DUP_REF|UNDERPAID|MISSING_PENALTY|OVERPAID/.test(f);
+      return '<span class="pay-badge ' + (bad ? 'overdue' : 'pending') + '" style="margin:6px 6px 0 0;font-size:10px">' + e(f) + '</span>';
+    }).join('') : '';
+    const defAmt = (x.status === 'Submitted' && x.sent > 0) ? x.sent : x.remaining;
+    const line = function (l, v) { return '<div style="display:flex;justify-content:space-between;font-size:12px;color:#c8c4bb;padding:2px 0"><span>' + l + '</span><b style="color:#fff">' + v + '</b></div>'; };
+    return '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:12px 13px;margin-bottom:10px">'
+      + '<div style="font-size:13px;font-weight:800;color:#fff">' + e(x.player) + ' · ' + e(x.paymentId) + ' · ' + e(x.status) + '</div>'
+      + '<div style="font-size:11px;color:#a8a49a;margin:2px 0 6px">' + e(x.guardian) + (x.contact ? ' · ' + e(x.contact) : '') + (x.method ? ' · ' + e(x.method) : '') + (x.submittedAt ? ' · sent ' + e(x.submittedAt) : '') + '</div>'
+      + line('Base + penalty + adj', adminLedPeso_(x.base) + ' + ' + adminLedPeso_(x.penalty) + ' + ' + adminLedPeso_(x.adjustments))
+      + line('Total due', adminLedPeso_(x.total)) + line('Verified so far', adminLedPeso_(x.verified)) + line('Still owed', adminLedPeso_(x.remaining))
+      + (x.sent ? line('Guardian says sent', adminLedPeso_(x.sent)) : '') + (x.reference ? line('Reference', e(x.reference)) : '')
+      + (x.note ? '<div style="font-size:11px;color:#FFB84D;margin-top:4px">Note: ' + e(x.note) + '</div>' : '') + flags
+      + (x.proofUrl ? '<a class="mo-chip" style="display:inline-block;margin-top:8px" href="' + adminLedAttr_(x.proofUrl) + '" target="_blank" rel="noopener">View proof (Drive, owner login)</a>' : '')
+      + '<div class="sc-manual" style="margin-top:8px"><input class="lb-input" id="payAmt' + i + '" type="number" inputmode="decimal" step="any" value="' + defAmt + '" placeholder="Amount received (₱)"' + (canV ? '' : ' disabled') + '></div>'
+      + '<input class="lb-input" id="payWhy' + i + '" placeholder="Reason (required for Reject / Reverse)" maxlength="180">'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      + (canV ? '<button type="button" class="btn primary" style="flex:1;padding:10px"' + dis + ' onclick="adminPayAct_(' + i + ',\'verify\')">Verify</button>' : '')
+      + (canJ ? '<button type="button" class="btn outline" style="flex:1;padding:10px"' + dis + ' onclick="adminPayAct_(' + i + ',\'reject\')">Reject</button>' : '')
+      + (canR ? '<button type="button" class="btn outline" style="flex:1;padding:10px"' + dis + ' onclick="adminPayAct_(' + i + ',\'reverse\')">Reverse</button>' : '')
+      + '</div></div>';
+  }).join('');
+  return h + '<button type="button" class="btn outline" style="width:100%;margin-top:6px"' + (busy ? ' disabled' : '') + ' onclick="adminPayLoad_()">' + (busy ? 'Refreshing…' : 'Refresh') + '</button>';
+}
+
+async function adminPayAct_(i, op, force) {
+  const P = adminPay_, x = P.data && P.data.items[i];
+  if (!x || P.busy) return;
+  const g = function (id) { const el = adminEl_(id); return el ? el.value.trim() : ''; };
+  const amt = Number(g('payAmt' + i)), why = g('payWhy' + i);
+  if (op === 'verify' && !(amt > 0)) { TOAST.warn('Enter the amount received.'); return; }
+  if (op !== 'verify' && why.length < 5) { TOAST.warn('Enter a reason (at least 5 characters).'); return; }
+  const label = { verify: 'Verify payment', reject: 'Reject payment', reverse: 'Reverse payment' }[op];
+  if (!force) {
+    const ok = await CONFIRM.ask({
+      title: label + '?',
+      text: x.paymentId + ' · ' + x.player + (op === 'verify' ? '\nReceived: ' + adminLedPeso_(amt) + ' of ' + adminLedPeso_(x.remaining) + ' owed' : '\nReason: ' + why) + '\n\nThis is written to the ledger and cannot be edited.',
+      confirmLabel: 'Confirm', danger: op !== 'verify'
+    });
+    if (!ok) return;
+  }
+  x._rid = x._rid || ('PA' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); // pareho sa retry, kaya hindi madodoble
+  P.busy = x.paymentId; adminPayPaint_();
+  try {
+    const r = await scApi_('adminPayAction', { op: op, paymentId: x.paymentId, amount: amt || 0, reason: why, stamp: x.stamp, force: force ? 1 : 0, requestId: x._rid, by: adminBy_() });
+    P.busy = '';
+    TOAST.success(r.duplicate ? 'Already applied' : (op === 'verify' ? 'Verified → ' + (r.state || '') : label + ' done'));
+    adminPayLoad_();
+  } catch (err) {
+    P.busy = ''; adminPayPaint_();
+    const msg = String((err && err.message) || '');
+    if (/^(DUPLICATE|OVERPAID):/.test(msg)) {
+      const go = await CONFIRM.ask({ title: /^DUPLICATE/.test(msg) ? 'Possible duplicate' : 'More than owed', text: msg.replace(/^\w+:\s*/, '') + '\n\nApprove anyway?', confirmLabel: 'Approve anyway', danger: false });
+      if (go) return adminPayAct_(i, op, true);
+      return;
+    }
+    if (/^CHANGED:/.test(msg)) { TOAST.warn(msg.replace(/^CHANGED:\s*/, '')); adminPayLoad_(); return; }
+    TOAST.error(msg || "Couldn't save");
+  }
+}
+/* === END: ADMIN PAYMENT APPROVALS — UI === */
+/* === END: ADMIN LEDGER — UI === */
+/* === START: CONNECT TELEGRAM (My Livity → Support) === */
+const pfSupportBaseTg_ = pfSupportHtml_;
+pfSupportHtml_ = function () {
+  return pfSupportBaseTg_() + pfSupportRow_('chat', 'Connect Telegram', 'Reminders & weekly poll in Telegram', 'pfConnectTelegram_()');
+};
+
+async function pfConnectTelegram_() {
+  const p = fmActive_();
+  if (!p) { openProfile_(); return; }
+  try {
+    const r = await doFetch('tgLinkCode', { playerId: p.playerId, contact: p.whatsapp });
+    const go = await CONFIRM.ask({
+      title: 'Connect Telegram',
+      text: 'Tap Open Telegram, then press Start in the Livity bot.\n\nCode ' + r.code + ' works for ' + r.expiresMin + ' minutes. If it does not open, send /link ' + r.code + ' to the bot.',
+      confirmLabel: 'Open Telegram', cancelLabel: 'Later', danger: false
+    });
+    if (go && r.url) location.href = r.url;
+  } catch (e) { TOAST.error(e.message || "Couldn't create a link code"); }
+}
+/* === END: CONNECT TELEGRAM === */
 
 </script>
 </body>
