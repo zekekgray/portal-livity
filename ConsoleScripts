@@ -1,0 +1,711 @@
+<!-- === START: ADMIN CONSOLE — SCRIPTS === -->
+<script>
+(function () {
+  var S = { tab: 'dash', rvOpen: {}, excType: 'ALL', excQ: '', wkStatus: 'Open', payStatus: 'Submitted', payQ: '', ledQ: '', ledType: '', plQ: '', plStatus: '', thread: '', audQ: '', audAct: '', audHide: '1', ntfAud: '', ntfSt: '', ntfQ: '', enrSt: 'Open', enrQ: '', refSt: 'Open', refQ: '', rptP: 'today' };
+  var TABS = [['dash', 'Dashboard'], ['pay', 'Payments'], ['exc', 'Exceptions'], ['wk', 'Walk-ins'], ['rv', 'Sessions'], ['led', 'Ledger'], ['pl', 'Players'], ['msg', 'Messages'], ['sch', 'Schedule'], ['enr', 'Enrollments'], ['ref', 'Referrals'], ['rpt', 'Reports'], ['aud', 'Audit'], ['ntf', 'Notifications'], ['sys', 'Health'], ['cfg', 'Config']];
+  var STATUSES = ['Submitted', 'Pending', 'Overdue', 'Partial', 'Rejected', 'Paid', 'Reversed', 'All'];
+  var LTYPES = ['CHARGE', 'SUBMITTED', 'PAYMENT_VERIFIED', 'REJECTED', 'REVERSAL', 'PENALTY', 'WAIVER', 'ADJUSTMENT', 'REFUND_REQUESTED', 'REFUND_COMPLETED', 'DUE_DATE_CHANGED'];
+  var UNPAID = ['Pending', 'Overdue', 'Partial', 'Rejected', 'Submitted'];
+  var items = [], sched = [], view = document.getElementById('view');
+
+  function $(s, el) { return (el || document).querySelector(s); }
+  function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function money(n) { return '₱' + (Number(n) || 0).toLocaleString('en-PH'); }
+  function rid() { return 'CN' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function pill(s) { return '<span class="pill st-' + esc(s) + '">' + esc(s || 'Normal') + '</span>'; }
+  function toast(m, bad) { var t = $('#toast'); t.textContent = m; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(toast.h); toast.h = setTimeout(function () { t.className = ''; }, 3200); }
+
+  function api(op, p) {
+    return new Promise(function (res, rej) {
+      google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
+        rej(new Error(String((e && e.message) || e).replace(/^Error:\s*/, '')));
+      }).consoleCall(op, p || {});
+    });
+  }
+
+  /* ---------- modal helpers ---------- */
+  function closeModal() { $('#modal').innerHTML = ''; }
+  function openModal(title, html, btns, wide) {
+    var m = $('#modal');
+    m.innerHTML = '<div class="mask"><div class="dlg' + (wide ? ' wide' : '') + '"><h3>' + esc(title) + '</h3><div class="body">' + html + '</div><div class="foot"></div></div></div>';
+    var foot = $('.foot', m);
+    btns.forEach(function (b) {
+      var el = document.createElement('button'); el.className = 'btn ' + (b.cls || ''); el.textContent = b.label; foot.appendChild(el);
+      el.onclick = function () {
+        if (!b.fn || b.plain) { closeModal(); if (b.fn) b.fn(); return; }
+        var all = foot.querySelectorAll('button'); all.forEach(function (x) { x.disabled = true; });
+        Promise.resolve().then(b.fn).then(function (r) {
+          closeModal(); if (r && r.msg) toast(r.msg); if (!r || !r.noReload) load();
+        }).catch(function (e) { all.forEach(function (x) { x.disabled = false; }); toast(e.message, 1); });
+      };
+    });
+    var f = m.querySelector('input,textarea,select'); if (f) f.focus();
+  }
+  function confirmBox(msg) {
+    return new Promise(function (res) {
+      openModal('Please confirm', '<p class="note">' + esc(msg).replace(/\n/g, '<br>') + '</p>',
+        [{ label: 'Cancel', plain: 1, fn: function () { res(false); } }, { label: 'Proceed', cls: 'dng', plain: 1, fn: function () { res(true); } }]);
+    });
+  }
+  function ask(title, fields, okLabel, onOk, note, danger) {
+    var h = (note ? '<p class="note">' + esc(note) + '</p>' : '') + fields.map(function (f) {
+      var id = 'f_' + f.k, v = f.value == null ? '' : f.value, inp;
+      if (f.type === 'textarea') inp = '<textarea id="' + id + '" rows="3">' + esc(v) + '</textarea>';
+      else if (f.type === 'select') inp = '<select id="' + id + '">' + f.options.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>';
+      else if (f.type === 'checkbox') inp = '<input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '>';
+      else inp = '<input id="' + id + '" type="' + (f.type || 'text') + '" value="' + esc(v) + '"' + (f.ph ? ' placeholder="' + esc(f.ph) + '"' : '') + '>';
+      return '<label class="fld' + (f.type === 'checkbox' ? ' ck' : '') + '"><span>' + esc(f.label) + '</span>' + inp + '</label>';
+    }).join('');
+    openModal(title, h, [{ label: 'Cancel' }, { label: okLabel, cls: danger ? 'dng' : 'pri', fn: function () {
+      var v = {}; fields.forEach(function (f) { var el = $('#f_' + f.k); v[f.k] = f.type === 'checkbox' ? (el.checked ? '1' : '') : el.value; });
+      return onOk(v);
+    } }]);
+  }
+
+  /* ---------- navigation ---------- */
+  function nav() { $('#tabs').innerHTML = TABS.map(function (t) { return '<button class="tab' + (S.tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join(''); }
+  function go(tab) { S.tab = tab; nav(); load(); }
+  function load() {
+    view.innerHTML = '<div class="empty">Loading…</div>';
+    ({ dash: vDash, pay: vPay, exc: vExc, wk: vWk, rv: vRv, led: vLed, pl: vPl, msg: vMsg, sch: vSch, aud: vAud, enr: vEnr, ref: vRef, rpt: vRpt, ntf: vNtf, sys: vSys, cfg: vCfg })[S.tab]().catch(function (e) { view.innerHTML = '<div class="empty err">' + esc(e.message) + '</div>'; });
+  }
+  function search(id, key, ph) { return '<input class="srch" id="' + id + '" data-s="' + key + '" placeholder="' + esc(ph) + '" value="' + esc(S[key]) + '">'; }
+
+  /* ---------- DASHBOARD ---------- */
+  function vDash() {
+    return api('dash').then(function (d) {
+      var c = d.counts, T = [
+        ['Awaiting verification', c.Submitted || 0, 'pay', 'st="Submitted"'], ['Overdue', c.Overdue || 0, 'pay', 'st="Overdue"'],
+        ['Partial', c.Partial || 0, 'pay', 'st="Partial"'], ['Pending', c.Pending || 0, 'pay', 'st="Pending"'], ['Rejected', c.Rejected || 0, 'pay', 'st="Rejected"'],
+        ['Outstanding balance', money(d.outstanding), 'pay', 'st="All"'], ['Refunds pending', money(d.refundsPending), 'led', 'lt="REFUND_REQUESTED"'],
+        ['Attendance exceptions', d.exceptions, 'exc', ''], ['Sessions without coach', d.uncoached, 'rv', ''], ['Walk-ins to review', d.walkins, 'wk', ''],
+        ['Enrollments to review', d.enrOpen, 'enr', ''], ['Referrals open', d.refOpen, 'ref', ''],
+        ['Unread messages', d.unread, 'msg', ''], ['Slots cancelled / moved', d.slotsChanged, 'sch', ''], ['Active players', d.activePlayers, 'pl', '']
+      ];
+      view.innerHTML = '<div class="tiles">' + T.map(function (t) {
+        return '<button class="tile" data-go="' + t[2] + '" data-' + t[3] + '><small>' + t[0] + '</small><b>' + t[1] + '</b></button>';
+      }).join('') + '</div>';
+    });
+  }
+
+  /* ---------- PAYMENTS ---------- */
+  function vPay() {
+    return api('payQueue', { status: S.payStatus, q: S.payQ }).then(function (d) {
+      items = d.items;
+      var chips = STATUSES.map(function (s) {
+        var n = s === 'All' ? d.total : (d.counts[s] || 0);
+        return '<button class="chip' + (S.payStatus === s ? ' on' : '') + '" data-chip="' + s + '">' + s + ' <i>' + n + '</i></button>';
+      }).join('');
+      view.innerHTML = '<div class="bar"><div class="chips">' + chips + '</div>' + search('q', 'payQ', 'Search ID, player, guardian, ref…') + '</div>' +
+        (items.length ? items.map(payCard).join('') : '<div class="empty">Nothing here.</div>');
+    });
+  }
+  function payCard(it) {
+    var fl = (it.flags && it.flags !== 'OK') ? it.flags.split(',').map(function (f) { return '<span class="flag">' + esc(f) + '</span>'; }).join(' ') : '';
+    var un = UNPAID.indexOf(it.status) > -1, b = [];
+    if (un) b.push(['verify', 'Verify', 'pri']);
+    if (it.status === 'Submitted' || it.status === 'Partial') b.push(['reject', 'Reject', '']);
+    if (un) b.push(['adjust', 'Waive / Adjust', ''], ['due', 'Due date', '']);
+    if (it.status === 'Paid' || it.status === 'Partial') b.push(['reverse', 'Reverse', 'dng']);
+    if (['Paid', 'Partial', 'Reversed'].indexOf(it.status) > -1) b.push(['rfreq', 'Refund request', ''], ['rfdone', 'Refund complete' + (it.refundPending ? ' (' + money(it.refundPending) + ')' : ''), '']);
+    b.push(['ledger', 'Ledger', '']);
+    return '<div class="card"><div class="r1"><b>' + esc(it.paymentId) + '</b>' + pill(it.status) + fl + '</div>' +
+      '<div style="margin-top:4px"><b>' + esc(it.player) + '</b> <span class="meta">· ' + esc(it.playerId) + ' · ' + esc(it.guardian) + ' · ' + esc(it.contact) + '</span></div>' +
+      '<div class="nums"><div>Base<b>' + money(it.base) + '</b></div><div>Penalty<b>' + money(it.penalty) + '</b></div><div>Adjust<b>' + money(it.adjustments) + '</b></div>' +
+      '<div>Total<b>' + money(it.total) + '</b></div><div>Verified<b>' + money(it.verified) + '</b></div><div>Remaining<b>' + money(it.remaining) + '</b></div>' +
+      (it.sent ? '<div>Guardian sent<b>' + money(it.sent) + '</b></div>' : '') + (it.refunded ? '<div>Refunded<b>' + money(it.refunded) + '</b></div>' : '') + '</div>' +
+      '<div class="meta">' + esc(it.method) + (it.reference ? ' · Ref ' + esc(it.reference) : '') + (it.submittedAt ? ' · Sent ' + esc(it.submittedAt) : '') + ' · Due ' + esc(it.dueAt) +
+      (it.proofUrl ? ' · <a href="' + esc(it.proofUrl) + '" target="_blank">View proof</a>' : '') + (it.note ? ' · Note: ' + esc(it.note) : '') + '</div>' +
+      '<div class="acts">' + b.map(function (x) { return '<button class="btn ' + x[2] + '" data-act="' + x[0] + '" data-id="' + esc(it.paymentId) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function payDo(it, op, extra, okMsg) {
+    var body = Object.assign({ op: op, paymentId: it.paymentId, stamp: it.stamp, requestId: rid() }, extra);
+    return api('payAction', body).catch(function (e) {
+      if (/^(DUPLICATE|OVERPAID):/.test(e.message)) {
+        return confirmBox(e.message + '\n\nProceed anyway?').then(function (yes) {
+          if (!yes) throw new Error('Cancelled');
+          body.force = '1'; return api('payAction', body);
+        });
+      }
+      throw e;
+    }).then(function (r) { return { msg: it.paymentId + ' → ' + (okMsg || r.state || 'done') + (r.duplicate ? ' (already applied)' : '') }; });
+  }
+  function payAct(act, it) {
+    if (!it) return;
+    var id = it.paymentId;
+    if (act === 'ledger') { S.ledQ = id; S.ledType = ''; return go('led'); }
+    if (act === 'verify') return ask('Verify ' + id, [{ k: 'amount', label: 'Amount received now (₱)', type: 'number', value: (it.status === 'Submitted' && it.sent > 0) ? it.sent : it.remaining }], 'Verify',
+      function (v) { return payDo(it, 'verify', { amount: v.amount }); }, 'Total ' + money(it.total) + ' · verified ' + money(it.verified) + ' · remaining ' + money(it.remaining) + (it.sent ? ' · guardian sent ' + money(it.sent) : ''));
+    if (act === 'reject') return ask('Reject ' + id, [{ k: 'reason', label: 'Reason (shown to the guardian)', type: 'textarea' }], 'Reject', function (v) { return payDo(it, 'reject', { reason: v.reason }); }, 'The guardian can resubmit.', true);
+    if (act === 'reverse') return ask('Reverse ' + id, [{ k: 'reason', label: 'Reason', type: 'textarea' }], 'Reverse', function (v) { return payDo(it, 'reverse', { reason: v.reason }); }, 'Packages are reversed. Sessions already used are NOT restored.', true);
+    if (act === 'adjust') return ask('Waive / Adjust ' + id, [
+      { k: 'op', label: 'Type', type: 'select', options: [['waive', 'Waive penalty (positive amount)'], ['adjust', 'Adjust total (e.g. -500 or 200)']], value: it.penalty > 0 ? 'waive' : 'adjust' },
+      { k: 'amount', label: 'Amount (₱)', type: 'number' }, { k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' },
+      { k: 'approvedBy', label: 'Approved by (email; required above the limit, must differ from you)' }], 'Apply',
+      function (v) { return payDo(it, v.op, { amount: v.amount, reason: v.reason, approvedBy: v.approvedBy }, 'balance updated'); }, 'Current penalty ' + money(it.penalty) + ' · remaining ' + money(it.remaining));
+    if (act === 'due') return ask('Change due date · ' + id, [{ k: 'dueAt', label: 'New due date/time', type: 'datetime-local', value: it.dueAtInput }], 'Save', function (v) { return payDo(it, 'dueDate', { dueAt: v.dueAt }, 'due date updated'); });
+    if (act === 'rfreq') return ask('Request refund · ' + id, [{ k: 'amount', label: 'Amount (₱)', type: 'number' }, { k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' }], 'Request',
+      function (v) { return payDo(it, 'refundRequest', { amount: v.amount, reason: v.reason }, 'refund requested'); }, 'A different admin must complete it.');
+    if (act === 'rfdone') return ask('Complete refund · ' + id, [{ k: 'amount', label: 'Amount (blank = full pending)', type: 'number' }, { k: 'reason', label: 'Transfer reference / note (min 5 chars)' }], 'Complete',
+      function (v) { return payDo(it, 'refundComplete', { amount: v.amount, reason: v.reason }, 'refund completed'); }, 'Pending refund ' + money(it.refundPending));
+  }
+
+  /* === START: ADMIN CONSOLE — PHASE 1 VIEWS (exceptions, walk-ins, package corrections) === */
+  var excItems = [], wkItems = [], curPl = { pid: '', pkgs: [] };
+  var EXC_T = [['ALL', 'All'], ['NO_DEDUCT', 'No deduction'], ['UNMARKED', 'Unmarked'], ['ABSENT', 'Absent (14d)']];
+  var EXC_L = { NO_DEDUCT: 'Checked in, session not deducted', UNMARKED: 'Registered, never marked', ABSENT: 'Marked absent' };
+
+  function vExc() {
+    return api('excQueue', { type: S.excType, q: S.excQ }).then(function (d) {
+      excItems = d.items;
+      var chips = EXC_T.map(function (t) {
+        var n = t[0] === 'ALL' ? d.total : (d.counts[t[0]] || 0);
+        return '<button class="chip' + (S.excType === t[0] ? ' on' : '') + '" data-ec="' + t[0] + '">' + t[1] + ' <i>' + n + '</i></button>';
+      }).join('');
+      view.innerHTML = '<div class="bar"><div class="chips">' + chips + '</div>' + search('eq', 'excQ', 'Search player, ID, program…') + '</div>' +
+        (excItems.length ? excItems.map(excCard).join('') : '<div class="empty">No exceptions.</div>');
+    });
+  }
+  function excCard(it) {
+    var b = [];
+    if (it.type === 'NO_DEDUCT') b.push(['deduct', 'Deduct session now', 'pri'], ['waive', 'Waive deduction', '']);
+    if (it.type === 'UNMARKED') b.push(['present', 'Mark Present', 'pri'], ['late', 'Mark Late', ''], ['absent', 'Mark Absent', ''], ['excuse', 'Excuse', ''], ['excuseAll', 'Excuse whole session', '']);
+    if (it.type === 'ABSENT') b.push(['present', 'Correct to Present', 'pri'], ['late', 'Correct to Late', ''], ['excuse', 'Excuse', '']);
+    return '<div class="card"><div class="r1"><b>' + esc(it.player) + '</b>' + pill(it.status) + '<span class="flag">' + esc(EXC_L[it.type]) + '</span>' +
+      (it.type === 'NO_DEDUCT' && it.payPending ? '<span class="flag">payment pending</span>' : '') + '</div>' +
+      '<div class="meta">' + esc(it.playerId) + ' · ' + esc(it.program) + ' · ' + esc(it.date) + ' ' + esc(it.time) + (it.venue ? ' · ' + esc(it.venue) : '') + (it.checkIn ? ' · In ' + esc(it.checkIn) : '') + '</div>' +
+      '<div class="acts">' + b.map(function (x) { return '<button class="btn ' + x[2] + '" data-exc="' + x[0] + '" data-id="' + esc(it.attendanceId) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function excAct(op, it) {
+    if (!it) return;
+    var needs = { waive: 1, excuse: 1, excuseAll: 1, present: it.type === 'ABSENT', late: it.type === 'ABSENT' };
+    var notes = {
+      deduct: 'Deducts 1 session from the matching package now. Fails if the player has no active package for this program (check payment status first).',
+      waive: 'Marks this check-in as no deduction needed. It leaves the queue.',
+      present: 'Sets Present and deducts 1 session if a matching package is active. Guardian is not notified.',
+      late: 'Sets Late and deducts 1 session if a matching package is active. Guardian is not notified.',
+      absent: 'Sets Absent and notifies the guardian, same as the automatic sweep.',
+      excuse: 'Excused: no deduction and no absence notice.',
+      excuseAll: 'Excuses every Unmarked player of ' + it.program + ' on ' + it.date + ' (e.g. session cancelled).'
+    };
+    var titles = { deduct: 'Deduct session', waive: 'Waive deduction', present: 'Mark Present', late: 'Mark Late', absent: 'Mark Absent', excuse: 'Excuse', excuseAll: 'Excuse whole session' };
+    ask(titles[op] + ' · ' + it.player, [{ k: 'reason', label: needs[op] ? 'Reason (min 5 chars)' : 'Note (optional)', type: 'textarea' }], titles[op], function (v) {
+      var body = op === 'excuseAll'
+        ? { op: 'excuseSession', scheduleId: it.scheduleId, date: it.date, reason: v.reason }
+        : { op: op, attendanceId: it.attendanceId, stamp: it.stamp, reason: v.reason };
+      return api('excAction', body).then(function (r) { return { msg: it.player + ' → ' + r.msg }; });
+    }, notes[op]);
+  }
+
+  function vWk() {
+    return api('walkins', { status: S.wkStatus }).then(function (d) {
+      wkItems = d.items;
+      var chips = [['Open', d.counts.Open], ['Resolved', d.counts.Resolved], ['All', d.counts.Open + d.counts.Resolved]].map(function (c) {
+        return '<button class="chip' + (S.wkStatus === c[0] ? ' on' : '') + '" data-wc="' + c[0] + '">' + c[0] + ' <i>' + c[1] + '</i></button>';
+      }).join('');
+      view.innerHTML = '<div class="bar"><div class="chips">' + chips + '</div></div>' + (wkItems.length ? wkItems.map(wkCard).join('') : '<div class="empty">No walk-ins here.</div>');
+    });
+  }
+  function wkCard(it) {
+    var open = !it.resolution;
+    return '<div class="card"><div class="r1"><b>' + esc(it.player) + '</b>' + pill(open ? 'Open' : it.resolution) + (it.surcharge ? '<span class="flag">surcharge applies</span>' : '') + '</div>' +
+      '<div class="meta">' + esc(it.playerId) + ' · ' + esc(it.category) + ' · ' + esc(it.program) + ' · ' + esc(it.date) + ' ' + esc(it.time) + ' · walk-in #' + it.monthCount + ' this month' +
+      (it.paymentId ? ' · ' + esc(it.paymentId) : '') + (it.resolvedBy ? ' · by ' + esc(it.resolvedBy) : '') + '</div>' +
+      (open ? '<div class="acts"><button class="btn pri" data-wk="charge" data-id="' + esc(it.walkInId) + '">Charge ' + (it.suggested ? money(it.suggested) : '…') + '</button>' +
+        '<button class="btn" data-wk="deduct" data-id="' + esc(it.walkInId) + '">Use package session</button>' +
+        '<button class="btn" data-wk="waive" data-id="' + esc(it.walkInId) + '">Waive</button></div>' : '') + '</div>';
+  }
+  function wkAct(op, it) {
+    if (!it) return;
+    var done = function (r) { return { msg: it.player + ' → ' + r.msg }; };
+    if (op === 'charge') return ask('Charge walk-in · ' + it.player, [{ k: 'amount', label: 'Amount (₱)', type: 'number', value: it.suggested || '' }], 'Create payment',
+      function (v) { return api('walkinAction', { op: 'charge', walkInId: it.walkInId, amount: v.amount }).then(done); },
+      'Creates a Pending payment (method Walk-in). The guardian gets payment instructions and it follows the normal Verify flow in Payments.');
+    if (op === 'deduct') return ask('Use package session · ' + it.player, [], 'Deduct',
+      function () { return api('walkinAction', { op: 'deduct', walkInId: it.walkInId }).then(done); }, 'Deducts 1 session from an active package for this program. Fails if there is none.');
+    if (op === 'waive') return ask('Waive walk-in · ' + it.player, [{ k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' }], 'Waive',
+      function (v) { return api('walkinAction', { op: 'waive', walkInId: it.walkInId, reason: v.reason }).then(done); }, 'No charge and no deduction. Logged in AuditLog.');
+  }
+
+  function pkgEdit(id) {
+    var k = curPl.pkgs.filter(function (x) { return x.packageId === id; })[0]; if (!k) return;
+    var pid = curPl.pid, stamp = [k.status, k.total, k.used, k.expiry].join('|');
+    var so = (['Active', 'Completed'].indexOf(k.status) < 0 ? [[k.status, k.status + ' (current)']] : []).concat([['Active', 'Active'], ['Completed', 'Completed']]);
+    ask('Adjust package · ' + k.packageId, [
+      { k: 'used', label: 'Sessions used (now ' + k.used + ' of ' + k.total + ')', type: 'number', value: k.used },
+      { k: 'grant', label: 'Grant extra sessions (adds to total)', type: 'number', ph: '0' },
+      { k: 'expiry', label: 'Expiry date (blank = not started)', type: 'date', value: k.expiry },
+      { k: 'status', label: 'Status', type: 'select', options: so, value: k.status },
+      { k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' }], 'Save',
+      function (v) {
+        return api('pkgAdjust', Object.assign({ packageId: id, stamp: stamp }, v)).then(function (r) {
+          setTimeout(function () { plOpen(pid); }, 60);
+          return { msg: id + ' → ' + r.used + '/' + r.total + ' · ' + r.state, noReload: 1 };
+        });
+      }, 'To restore sessions, lower "Sessions used". Status follows the counts unless you set it. Every change is logged with your reason.');
+  }
+  /* === START: ADMIN CONSOLE — PHASE 2 VIEWS (sessions, RSVP, coaches) === */
+  var rvItems = [], rvCoaches = [];
+
+  function rvLabel(key) {
+    var s = rvItems.filter(function (x) { return x.key === key; })[0];
+    return s ? s.program + ' · ' + s.day.slice(0, 3) + ' ' + s.date + ' ' + s.start : key;
+  }
+  function vRv() {
+    return api('rvBoard').then(function (d) {
+      rvItems = d.items; rvCoaches = d.coaches || [];
+      view.innerHTML = '<div class="bar"><b>Next 7 days (RSVP programs)</b><span class="meta">Guardian reservations: ' + (d.enabled ? 'open' : '<b>CLOSED</b> (Config → RsvpEnabled)') + '</span><span style="flex:1"></span>' +
+        '<button class="btn pri" id="autoas">Auto-assign coaches</button></div>' +
+        (rvItems.length ? rvItems.map(rvCard).join('') : '<div class="empty">No upcoming RSVP sessions.</div>');
+    });
+  }
+  function rvCard(s, i) {
+    var col = function (title, arr, btns) {
+      return '<div><b>' + title + ' (' + arr.length + ')</b>' + (arr.map(function (x) {
+        return '<div class="rvp"><span>' + esc(x.name) + (x.source && x.source !== 'app' ? ' <small class="meta">' + esc(x.source) + '</small>' : '') + '</span><span>' +
+          btns.map(function (b) { return '<button class="btn" data-rv="' + b[0] + '" data-i="' + i + '" data-p="' + esc(x.playerId) + '">' + b[1] + '</button>'; }).join(' ') + '</span></div>';
+      }).join('') || '<div class="meta">—</div>') + '</div>';
+    };
+    var av = s.available.length ? s.available.map(function (c) { return esc(c.name); }).join(', ') : 'none';
+    return '<div class="card"><div class="r1"><b>' + esc(s.program) + '</b><span class="meta">' + esc(s.day) + ' ' + esc(s.date) + ' · ' + esc(s.start) + '–' + esc(s.end) + ' · ' + esc(s.venue) + '</span>' +
+      (s.cancelled ? pill('Cancelled') : '') + (s.closed && !s.cancelled ? '<span class="flag">closed to guardians</span>' : '') + '</div>' +
+      '<div class="nums"><div>Going<b>' + s.going.length + '</b></div><div>Not going<b>' + s.notGoing.length + '</b></div><div>No reply<b>' + s.noReply.length + '</b></div>' +
+      '<div>Coach<b>' + (s.coachName ? esc(s.coachName) : '<span style="color:var(--red)">Unassigned</span>') + '</b></div></div>' +
+      '<div class="meta">Coaches available: ' + av + '</div>' +
+      '<div class="acts"><button class="btn pri" data-rva="coach" data-i="' + i + '">Assign coach</button><button class="btn" data-rva="avail" data-i="' + i + '">Coach availability</button>' +
+      (s.cancelled ? '' : '<button class="btn" data-rva="add" data-i="' + i + '">Add player</button>') + '</div>' +
+      '<details data-k="' + esc(s.key) + '"' + (S.rvOpen[s.key] ? ' open' : '') + '><summary>Roster</summary><div class="cols">' +
+      col('Going', s.going, [['no', 'Not going'], ['clear', 'Clear']]) + col('Not going', s.notGoing, [['yes', 'Going'], ['clear', 'Clear']]) + col('No reply', s.noReply, [['yes', 'Going'], ['no', 'Not going']]) +
+      '</div></details></div>';
+  }
+  function rvSet(i, pid, st) {
+    var s = rvItems[i]; if (!s) return;
+    api('rvSet', { playerId: pid, programId: s.programId, sessionDate: s.date, startTime: s.start, status: st === 'clear' ? '' : st, requestId: rid(), source: 'console' })
+      .then(function () { toast('Updated'); load(); }).catch(function (e) { toast(e.message, 1); });
+  }
+  function rvAct(act, s) {
+    if (!s) return;
+    if (act === 'add') return ask('Add player · ' + rvLabel(s.key), [{ k: 'playerId', label: 'Player ID (e.g. LVTFA-XXXXXXX)' }], 'Add as Going', function (v) {
+      var body = { playerId: v.playerId, programId: s.programId, sessionDate: s.date, startTime: s.start, requestId: rid() };
+      return api('rvAdd', body).catch(function (e) {
+        if (/^NOT_ELIGIBLE:/.test(e.message)) return confirmBox(e.message.replace('NOT_ELIGIBLE: ', '') + '\n\nAdd anyway?').then(function (yes) {
+          if (!yes) throw new Error('Cancelled'); body.force = '1'; return api('rvAdd', body);
+        });
+        throw e;
+      }).then(function (r) { return { msg: (r.name || 'Player') + (r.duplicate ? ' is already Going' : ' → Going') + (r.eligible === false ? ' (override)' : '') }; });
+    }, 'Admin adds bypass the 2-hour cutoff. Players without an active package need an override.');
+    if (act === 'coach') {
+      var ids = s.available.map(function (c) { return c.coachId; });
+      var opts = [['', '— Unassigned —']].concat(rvCoaches.map(function (c) { return [c.coachId, c.name + (ids.indexOf(c.coachId) > -1 ? '  ✓ available' : '')]; }));
+      return ask('Assign coach · ' + rvLabel(s.key), [{ k: 'coachId', label: 'Coach', type: 'select', options: opts, value: s.coachId }], 'Save', function (v) {
+        var body = { sessionKey: s.key, coachId: v.coachId };
+        return api('coachAssign', body).catch(function (e) {
+          if (/^CONFLICT:/.test(e.message)) return confirmBox(e.message + '\n\nAssign anyway?').then(function (yes) {
+            if (!yes) throw new Error('Cancelled'); body.force = '1'; return api('coachAssign', body);
+          });
+          throw e;
+        }).then(function (r) { return { msg: r.unchanged ? 'No change' : ((r.coachName || 'Unassigned') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join('; ') : '')) }; });
+      }, 'Checks for overlapping sessions. Warns if the coach did not mark available.');
+    }
+    if (act === 'avail') return api('availGet').then(function (d) {
+      var fields = d.coaches.map(function (c, n) {
+        return { k: 'c' + n, label: c.name, type: 'select', options: [['', 'No answer'], ['yes', 'Available'], ['no', 'Not available']], value: d.avail[c.coachId + '|' + s.key] || '' };
+      });
+      ask('Coach availability · ' + rvLabel(s.key), fields, 'Save', function (v) {
+        var ch = [];
+        d.coaches.forEach(function (c, n) { if ((v['c' + n] || '') !== (d.avail[c.coachId + '|' + s.key] || '')) ch.push({ coachId: c.coachId, status: v['c' + n] || '' }); });
+        return api('availSave', { sessionKey: s.key, changes: ch }).then(function (r) { return { msg: r.changed + ' coach(es) updated' }; });
+      }, 'Auto-assign only picks coaches marked Available.');
+    }).catch(function (e) { toast(e.message, 1); });
+  }
+  function rvAuto() {
+    ask('Auto-assign coaches', [], 'Run auto-assign', function () {
+      return api('autoAssign').then(function (r) {
+        setTimeout(function () { rvAutoResult(r); }, 60);
+        return { msg: r.assigned.length + ' assigned · ' + r.skipped.length + ' skipped · ' + r.failed.length + ' failed' };
+      });
+    }, 'Assigns only sessions with no coach, using availability, CoachPrefs priority and least load. Never double-books overlapping sessions. Existing assignments are not changed.');
+  }
+  function rvAutoResult(r) {
+    var ul = function (t, a, f) { return '<h4>' + t + ' (' + a.length + ')</h4>' + (a.length ? '<ul>' + a.map(function (x) { return '<li>' + esc(rvLabel(x.key)) + ' — ' + esc(f(x)) + '</li>'; }).join('') + '</ul>' : '<p class="meta">None.</p>'); };
+    openModal('Auto-assign result', ul('Assigned', r.assigned, function (x) { return x.coach; }) + ul('Skipped', r.skipped, function (x) { return x.reason; }) + ul('Failed', r.failed, function (x) { return x.reason; }), [{ label: 'Close' }], true);
+  }
+  /* === END: ADMIN CONSOLE — PHASE 2 VIEWS === */
+  /* === END: ADMIN CONSOLE — PHASE 1 VIEWS (exceptions, walk-ins, package corrections) === */
+
+  /* ---------- LEDGER ---------- */
+  function vLed() {
+    return api('ledger', { q: S.ledQ, type: S.ledType }).then(function (d) {
+      var s = d.summary, sum = s ? '<div class="sum">' + [['Status', s.status], ['Base', money(s.base)], ['Penalty', money(s.penalty)], ['Adjust', money(s.adjustments)], ['Total', money(s.total)],
+        ['Verified', money(s.verified)], ['Refunded', money(s.refunded)], ['Refund pending', money(s.refundPending)], ['Net collected', money(s.netCollected)], ['Balance', money(s.balance)]]
+        .map(function (x) { return '<div>' + x[0] + '<b>' + esc(x[1]) + '</b></div>'; }).join('') + '</div>' : '';
+      var sel = '<select data-sel="ledType" style="width:210px"><option value="">All types</option>' + LTYPES.map(function (t) { return '<option' + (S.ledType === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>';
+      view.innerHTML = '<div class="bar">' + search('lq', 'ledQ', 'PAY-0001, player, reason…') + sel + '<span class="meta">' + d.matched + ' entries</span></div>' + sum +
+        '<table><tr><th>Time</th><th>Payment</th><th>Player</th><th>Type</th><th class="num">Amount</th><th class="num">Balance</th><th>Reason</th><th>By</th></tr>' +
+        (d.entries.length ? d.entries.map(function (e) {
+          return '<tr><td>' + esc(e.ts) + '</td><td>' + esc(e.paymentId) + '</td><td>' + esc(e.player) + '</td><td>' + esc(e.type) + '</td><td class="num">' + money(e.amount) + '</td><td class="num">' + money(e.before) + ' → ' + money(e.after) + '</td><td>' + esc(e.reason) + '</td><td>' + esc(e.by) + (e.approvedBy ? '<br><small>appr. ' + esc(e.approvedBy) + '</small>' : '') + '</td></tr>';
+        }).join('') : '<tr><td colspan="8" class="empty">No entries.</td></tr>') + '</table>';
+    });
+  }
+
+  /* ---------- PLAYERS ---------- */
+  function vPl() {
+    return api('players', { q: S.plQ, status: S.plStatus }).then(function (d) {
+      var sel = '<select data-sel="plStatus" style="width:150px"><option value="">All</option><option' + (S.plStatus === 'Active' ? ' selected' : '') + '>Active</option><option' + (S.plStatus === 'Inactive' ? ' selected' : '') + '>Inactive</option></select>';
+      view.innerHTML = '<div class="bar">' + search('pq', 'plQ', 'Search name, ID, guardian, phone, email…') + sel + '<span class="meta">' + d.total + ' players' + (d.total > 60 ? ' (showing 60)' : '') + '</span></div>' +
+        '<table><tr><th>ID</th><th>Player</th><th>Category</th><th>Guardian</th><th>Contact</th><th>Status</th><th></th></tr>' +
+        d.items.map(function (p) {
+          return '<tr><td>' + esc(p.playerId) + '</td><td>' + esc(p.name) + '</td><td>' + esc(p.category) + '</td><td>' + esc(p.guardian) + '</td><td>' + esc(p.contact) + '</td><td>' + pill(p.status) + '</td><td><button class="btn" data-pl="' + esc(p.playerId) + '">Open</button></td></tr>';
+        }).join('') + '</table>';
+    });
+  }
+  function plOpen(pid) {
+    api('playerDetail', { playerId: pid }).then(function (d) {
+      curPl = { pid: pid, pkgs: d.packages };
+      var p = d.player, next = p.status === 'Active' ? 'Inactive' : 'Active';
+      var h = '<p><b>' + esc(p.name) + '</b> · ' + esc(p.playerId) + ' · ' + esc(p.category) + ' ' + pill(p.status) + '<br><span class="meta">' + esc(p.guardian) + ' · ' + esc(p.contact) + ' · ' + esc(p.email) + '</span></p>' +
+        '<p class="note">Balance due: <b>' + money(d.balanceDue) + '</b></p><h4>Packages</h4><table><tr><th>ID</th><th>Program</th><th>Type</th><th>Used</th><th>Expiry</th><th>Status</th><th></th></tr>' +
+        (d.packages.map(function (k) { return '<tr><td>' + esc(k.packageId) + '</td><td>' + esc(k.program) + '</td><td>' + esc(k.type) + '</td><td>' + k.used + '/' + k.total + '</td><td>' + esc(k.expiry) + '</td><td>' + esc(k.status) + '</td><td>' + (k.status === 'Reversed' ? '' : '<button class="btn" data-pkg="' + esc(k.packageId) + '">Adjust</button>') + '</td></tr>'; }).join('') || '<tr><td colspan="7">None.</td></tr>') +
+        '</table><h4>Payments</h4><table><tr><th>ID</th><th>Item</th><th class="num">Total</th><th class="num">Verified</th><th>Status</th></tr>' +
+        (d.payments.map(function (k) { return '<tr><td>' + esc(k.paymentId) + '</td><td>' + esc(k.label) + '</td><td class="num">' + money(k.total) + '</td><td class="num">' + money(k.verified) + '</td><td>' + pill(k.status) + '</td></tr>'; }).join('') || '<tr><td colspan="5">None.</td></tr>') + '</table>';
+      openModal('Player', h, [{ label: 'Close' }, { label: 'Set ' + next, cls: next === 'Inactive' ? 'dng' : 'pri', fn: function () {
+        return api('playerStatus', { playerId: pid, status: next }).then(function () { return { msg: p.name + ' → ' + next }; });
+      } }], true);
+    }).catch(function (e) { toast(e.message, 1); });
+  }
+
+  /* ---------- MESSAGES ---------- */
+  function vMsg() {
+    return Promise.all([api('threads'), S.thread ? api('thread', { contact: S.thread }) : Promise.resolve(null)]).then(function (r) {
+      var th = r[0].items, conv = r[1];
+      var list = th.map(function (t) {
+        return '<div class="th' + (S.thread && S.thread === t.key ? ' on' : '') + '" data-th="' + esc(t.key) + '"><b>' + esc(t.guardian || t.whatsapp || t.key) + (t.unread ? '<span class="dot">' + t.unread + '</span>' : '') + '</b><small>' + esc(t.last) + '</small><small>' + esc(t.lastAt) + '</small></div>';
+      }).join('') || '<div class="empty">No messages.</div>';
+      var right = !conv ? '<div class="empty">Select a conversation.</div>' :
+        '<div class="msgs" id="msgs">' + conv.messages.map(function (m) { return '<div class="bub ' + esc(m.from) + '">' + esc(m.body) + '<small>' + esc(m.from) + ' · ' + esc(m.at) + '</small></div>'; }).join('') + '</div>' +
+        '<div class="reply"><textarea id="rb" rows="3" placeholder="Reply as Admin…"></textarea><label class="fld ck" style="margin:0"><input type="checkbox" id="rn" checked><span>Also notify the guardian (email / in-app)</span></label><button class="btn pri" id="send">Send reply</button></div>';
+      view.innerHTML = '<div class="two"><div class="list">' + list + '</div><div class="conv">' + right + '</div></div>';
+      var m = $('#msgs'); if (m) m.scrollTop = m.scrollHeight;
+    });
+  }
+  function sendReply() {
+    var b = $('#rb').value, btn = $('#send'); btn.disabled = true;
+    api('reply', { contact: S.thread, body: b, notify: $('#rn').checked ? '1' : '' }).then(function () { toast('Reply sent'); load(); }).catch(function (e) { btn.disabled = false; toast(e.message, 1); });
+  }
+
+  /* ---------- SCHEDULE ---------- */
+  function vSch() {
+    return api('schedule').then(function (d) {
+      sched = d.items;
+      view.innerHTML = '<table><tr><th>ID</th><th>Program</th><th>Day</th><th>Time</th><th>Venue</th><th>Status</th><th>Note / new slot</th><th></th></tr>' + sched.map(function (s) {
+        return '<tr><td>' + esc(s.scheduleId) + '</td><td>' + esc(s.program) + '</td><td>' + esc(s.day) + '</td><td>' + esc(s.start) + '–' + esc(s.end) + '</td><td>' + esc(s.venue) + '</td><td>' + pill(s.status) + '</td><td>' + esc(s.note) + (s.newDate ? '<br><small>→ ' + esc(s.newDate) + ' ' + esc(s.newStart) + '–' + esc(s.newEnd) + '</small>' : '') + '</td><td><button class="btn" data-sch="' + esc(s.scheduleId) + '">Edit</button></td></tr>';
+      }).join('') + '</table>';
+    });
+  }
+  function schEdit(id) {
+    var s = sched.filter(function (x) { return x.scheduleId === id; })[0]; if (!s) return;
+    ask('Edit slot · ' + s.program + ' ' + s.day + ' ' + s.start, [
+      { k: 'status', label: 'Status', type: 'select', options: [['', 'Normal'], ['Cancelled', 'Cancelled'], ['Rescheduled', 'Rescheduled']], value: s.status },
+      { k: 'note', label: 'Note / reason (shown to guardians)', type: 'textarea', value: s.note },
+      { k: 'newDate', label: 'New date (Rescheduled only)', type: 'date', value: s.newDate }, { k: 'newStart', label: 'New start', type: 'time', value: s.newStart }, { k: 'newEnd', label: 'New end', type: 'time', value: s.newEnd },
+      { k: 'notify', label: 'Notify everyone on the roster', type: 'checkbox', value: '' }], 'Save',
+      function (v) { v.scheduleId = id; return api('schedSet', v).then(function (r) { return { msg: 'Slot ' + r.state + (r.notified ? ' · notified ' + r.notified : '') }; }); },
+      'Status applies to the weekly slot until set back to Normal.');
+  }
+
+    /* === START: ADMIN CONSOLE — PHASE 3 VIEWS (audit, notifications, health, config) === */
+  var ntfItems = [], cfgItems = [];
+
+  function badge(kind, text) { return '<span class="pill st-' + ({ ok: 'Active', warn: 'Pending', bad: 'Overdue' }[kind] || '') + '">' + esc(text) + '</span>'; }
+  function selHtml(key, w, list) {
+    return '<select data-sel="' + key + '" style="width:' + w + 'px">' + list.map(function (o) {
+      return '<option value="' + esc(o[0]) + '"' + (String(S[key]) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('') + '</select>';
+  }
+
+  /* ---------- AUDIT ---------- */
+  function vAud() {
+    return api('audit', { q: S.audQ, action: S.audAct, hide: S.audHide }).then(function (d) {
+      var acts = selHtml('audAct', 250, [['', 'All actions']].concat(d.actions.map(function (a) { return [a, a]; })));
+      var hide = selHtml('audHide', 200, [['1', 'Hide system markers'], ['', 'Show all']]);
+      var col = { bad: 'var(--red)', warn: 'var(--amber)' };
+      view.innerHTML = '<div class="bar">' + search('aq', 'audQ', 'Search action, details, user…') + acts + hide +
+        '<span class="meta">' + d.matched + ' match · latest ' + d.scanned + ' rows scanned' + (d.matched > d.items.length ? ' · showing ' + d.items.length : '') + '</span></div>' +
+        '<table><tr><th>Time</th><th>Action</th><th>Details</th><th>User</th></tr>' +
+        (d.items.length ? d.items.map(function (x) {
+          return '<tr><td style="white-space:nowrap">' + esc(x.ts) + '</td><td><b' + (col[x.sev] ? ' style="color:' + col[x.sev] + '"' : '') + '>' + esc(x.action) + '</b></td><td class="wrap">' + esc(x.details) + '</td><td>' + esc(x.user) + '</td></tr>';
+        }).join('') : '<tr><td colspan="4" class="empty">No entries.</td></tr>') + '</table>';
+    });
+  }
+
+  /* ---------- NOTIFICATIONS ---------- */
+  function vNtf() {
+    return api('notifs', { aud: S.ntfAud, st: S.ntfSt, q: S.ntfQ }).then(function (d) {
+      ntfItems = d.items;
+      var aud = selHtml('ntfAud', 160, [['', 'All audiences'], ['Parent', 'Parent'], ['Admin', 'Admin'], ['System', 'System']]);
+      var st = selHtml('ntfSt', 170, [['', 'All'], ['failed', 'Failed email'], ['email', 'Email / Both'], ['inapp', 'In-app only']]);
+      var sum = '<div class="sum"><div>Latest scanned<b>' + d.scanned + '</b></div><div>Failed emails<b>' + d.failedCount + '</b></div><div>Email quota left<b>' + (d.quota == null ? '—' : d.quota) + '</b></div></div>';
+      view.innerHTML = '<div class="bar">' + search('nq', 'ntfQ', 'Search ID, type, player, text…') + aud + st + '</div>' + sum +
+        (d.items.length ? d.items.map(function (it) {
+          return '<div class="card"><div class="r1"><b>' + esc(it.title) + '</b><span class="pill">' + esc(it.channel) + '</span>' +
+            (it.failed ? '<span class="flag">email failed: ' + esc(it.failed) + '</span>' : '') + '</div>' +
+            '<div class="meta">' + esc(it.id) + ' · ' + esc(it.typeKey) + ' · ' + esc(it.audience) + (it.recipient ? ' · ' + esc(it.recipient) : '') + ' · ' + esc(it.at) + '</div>' +
+            '<div style="margin-top:6px">' + esc(it.body) + '</div>' +
+            (it.canResend ? '<div class="acts"><button class="btn' + (it.failed ? ' pri' : '') + '" data-ntf="resend" data-id="' + esc(it.id) + '">Resend email' + (it.to ? ' → ' + esc(it.to) : '') + '</button></div>' : '') + '</div>';
+        }).join('') : '<div class="empty">No notifications match.</div>');
+    });
+  }
+  function ntfAct(it) {
+    if (!it) return;
+    ask('Resend email · ' + it.id, [], 'Resend', function () {
+      return api('notifResend', { id: it.id }).then(function (r) { return { msg: r.msg }; });
+    }, 'Sends "' + it.title + '" again' + (it.to ? ' to ' + it.to : '') + '. Uses your daily email quota.');
+  }
+
+  /* ---------- HEALTH ---------- */
+  function vSys() {
+    return api('health').then(function (d) {
+      var bad = d.checks.filter(function (c) { return c.k === 'bad'; }).length, warn = d.checks.filter(function (c) { return c.k === 'warn'; }).length;
+      var sum = '<div class="sum"><div>Critical<b>' + bad + '</b></div><div>Warnings<b>' + warn + '</b></div><div>Email quota left<b>' + (d.quota == null ? '—' : d.quota) + '</b></div></div>';
+      var checks = '<div class="card">' + d.checks.map(function (c) {
+        return '<div class="krow"><div><b>' + esc(c.t) + '</b>' + (c.d ? '<span class="meta">' + esc(c.d) + '</span>' : '') + '</div>' + badge(c.k, c.k === 'ok' ? 'OK' : (c.k === 'bad' ? 'Fix' : 'Check')) + '</div>';
+      }).join('') + '</div>';
+      var missing = d.triggers.filter(function (t) { return t.req && !t.n; }).length;
+      var trg = '<div class="csec">Triggers</div><div class="card">' + d.triggers.map(function (t) {
+        var s = t.n ? (t.n > 1 ? badge('warn', t.n + ' copies') : badge('ok', 'Installed')) : badge(t.req ? 'bad' : 'warn', t.req ? 'Missing' : 'Not installed');
+        return '<div class="krow"><div><b>' + esc(t.label) + '</b><span class="meta">' + esc(t.fn) + (t.req ? '' : ' · optional') + '</span></div>' +
+          '<div style="display:flex;gap:10px;align-items:center">' + s + '<button class="btn" data-sys="trg" data-fn="' + esc(t.fn) + '">' + (t.n ? 'Reinstall' : 'Install') + '</button></div></div>';
+      }).join('') + (missing ? '<div class="acts"><button class="btn pri" data-sys="trgAll">Install all missing (' + missing + ')</button></div>' : '') + '</div>';
+      var errs = '<div class="csec">Recent errors</div>' + (d.errors.length ? '<table><tr><th>Time</th><th>Action</th><th>Details</th></tr>' + d.errors.map(function (x) {
+        return '<tr><td style="white-space:nowrap">' + esc(x.ts) + '</td><td><b style="color:var(--red)">' + esc(x.action) + '</b></td><td class="wrap">' + esc(x.details) + '</td></tr>';
+      }).join('') + '</table>' : '<div class="card meta">None in the latest log entries.</div>');
+      var sizes = '<div class="csec">Sheet sizes (rows)</div><div class="sum">' + d.sizes.map(function (s) { return '<div>' + esc(s.name) + '<b>' + s.rows.toLocaleString() + '</b></div>'; }).join('') + '</div>';
+      var maint = '<div class="csec">Maintenance</div><div class="card"><div class="acts" style="margin-top:0">' +
+        '<button class="btn" data-sys="backfill">Backfill ledger</button><button class="btn" data-sys="locks">Reset staff-key lockout + RSVP cache</button></div></div>';
+      view.innerHTML = sum + checks + trg + errs + sizes + maint;
+    });
+  }
+  function sysAct(op, fn) {
+    var T = { trg: 'Install trigger', trgAll: 'Install missing triggers', backfill: 'Backfill ledger', locks: 'Reset lockout + cache' };
+    var N = {
+      trg: 'Replaces any existing trigger for this job, then creates it again.',
+      trgAll: 'Installs every required trigger that is missing. Existing ones are not touched.',
+      backfill: 'Adds opening ledger entries for payments that have none. Safe to repeat.',
+      locks: 'Clears the staff-key lockout and the RSVP cache. Players are not affected.'
+    };
+    ask(T[op], [], 'Run', function () {
+      return api('sysAction', { op: op, fn: fn || '' }).then(function (r) { return { msg: r.msg }; });
+    }, N[op]);
+  }
+
+  /* ---------- CONFIG ---------- */
+  function vCfg() {
+    return api('cfg').then(function (d) {
+      cfgItems = d.items;
+      var groups = [], by = {};
+      d.items.forEach(function (c) { if (!by[c.g]) { by[c.g] = []; groups.push(c.g); } by[c.g].push(c); });
+      var h = '<p class="note">Every change is logged in Audit with your reason. Secret values are never logged or shown. Penalty rules also apply to payments that are already unpaid.</p>';
+      groups.forEach(function (g) {
+        h += '<div class="csec">' + esc(g) + '</div><div class="card">' + by[g].map(function (c) {
+          var val = c.secret ? (c.weak ? badge('bad', 'Default key') : (c.set ? badge('ok', 'Set') : badge('warn', 'Not set')))
+            : (c.set ? '<span style="font-weight:700">' + esc(c.value) + '</span>' : '<span class="meta">not set' + (c.def ? ' · default ' + esc(c.def) : '') + '</span>');
+          return '<div class="krow"><div><b>' + esc(c.l) + '</b><span class="meta">' + esc(c.k) + (c.h ? ' · ' + esc(c.h) : '') + '</span></div>' +
+            '<div style="display:flex;gap:10px;align-items:center">' + val + '<button class="btn" data-cfg="' + esc(c.k) + '">Edit</button></div></div>';
+        }).join('') + '</div>';
+      });
+      h += '<div class="csec">Other keys (read-only, edit in the Sheet)</div><table><tr><th>Key</th><th>Value</th></tr>' +
+        (d.other.length ? d.other.map(function (o) { return '<tr><td>' + esc(o.k) + '</td><td class="wrap">' + esc(o.value) + '</td></tr>'; }).join('') : '<tr><td colspan="2" class="empty">None.</td></tr>') + '</table>';
+      view.innerHTML = h;
+    });
+  }
+  function cfgEdit(k) {
+    var c = cfgItems.filter(function (x) { return x.k === k; })[0];
+    if (!c) return;
+    var f;
+    if (c.t === 'bool') f = { k: 'value', label: c.l, type: 'select', options: [['true', 'true'], ['false', 'false']], value: c.set ? String(c.value).toLowerCase() : (c.def || 'false') };
+    else f = { k: 'value', label: c.l + (c.secret ? ' (new value)' : ''), type: c.secret ? 'password' : ((c.t === 'int' || c.t === 'num') ? 'number' : 'text'), value: c.secret ? '' : (c.value || c.def || ''), ph: c.secret ? 'Min. 6 characters' : '' };
+    ask('Edit · ' + c.k, [f, { k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' }], 'Save', function (v) {
+      return api('cfgSet', { key: c.k, value: v.value, reason: v.reason, stamp: c.stamp }).then(function (r) { return { msg: r.msg }; });
+    }, c.h || ('Current: ' + (c.set ? c.value : 'not set')), !!c.secret);
+  }
+  /* === END: ADMIN CONSOLE — PHASE 3 VIEWS === */
+
+    /* === START: ADMIN CONSOLE — PHASE 4 VIEWS (enrollment review, referrals) === */
+  var enrItems = [], refItems = [];
+  var REV_L = { New: 'New', NeedsCorrection: 'Needs correction', Approved: 'Approved', Declined: 'Declined' };
+
+  /* ---------- ENROLLMENTS ---------- */
+  function vEnr() {
+    return api('enrQueue', { status: S.enrSt, q: S.enrQ }).then(function (d) {
+      enrItems = d.items;
+      var c = d.counts;
+      var st = selHtml('enrSt', 200, [['Open', 'Open · ' + c.Open], ['Approved', 'Approved · ' + c.Approved], ['Declined', 'Declined · ' + c.Declined], ['All', 'All · ' + c.All]]);
+      view.innerHTML = '<div class="bar">' + search('enq', 'enrQ', 'Search name, ID, guardian, phone, email…') + st + '</div>' +
+        '<p class="note">Review does not block activation. Training starts when the payment is verified. Declining makes the player Inactive but does not cancel their payment. Handle that in Payments.</p>' +
+        (enrItems.length ? enrItems.map(enrCard).join('') : '<div class="empty">Nothing here.</div>');
+    });
+  }
+  function enrCard(it) {
+    var b = [];
+    if (it.review === 'New' || it.review === 'NeedsCorrection') b.push(['approve', 'Approve', 'pri'], ['correct', 'Needs correction', ''], ['decline', 'Decline', 'dng']);
+    if (it.review === 'Declined') b.push(['reopen', 'Reopen', '']);
+    var fl = it.dupes.map(function (x) { return '<span class="flag">⚠ ' + esc(x) + '</span>'; }).join(' ') + (it.email ? '' : ' <span class="flag">no guardian email</span>');
+    return '<div class="card"><div class="r1"><b>' + esc(it.name) + '</b><span class="pill st-' + esc(it.review || 'Legacy') + '">' + esc(REV_L[it.review] || 'Legacy') + '</span>' +
+      (it.status !== 'Active' ? pill(it.status) : '') + fl + '</div>' +
+      '<div class="meta">' + esc(it.playerId) + ' · ' + esc(it.category || '—') + (it.birthYear ? ' · born ' + esc(it.birthYear) : '') + ' · ' + esc(it.program) + ' · enrolled ' + esc(it.enrolled) + '</div>' +
+      '<div class="meta">Guardian: ' + esc(it.guardian) + ' · ' + esc(it.contact) + (it.email ? ' · ' + esc(it.email) : '') + (it.referredBy ? ' · referred by ' + esc(it.referredBy) : '') + '</div>' +
+      '<div class="meta">Payments: ' + (it.payments.length ? esc(it.payments.join('  |  ')) : 'none yet') + '</div>' +
+      (it.note ? '<div class="meta">Note: ' + esc(it.note) + (it.by ? ' · ' + esc(it.by) + ' ' + esc(it.at) : '') + '</div>' : '') +
+      '<div class="acts">' + b.map(function (x) { return '<button class="btn ' + x[2] + '" data-enr="' + x[0] + '" data-id="' + esc(it.playerId) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function enrAct(op, it) {
+    if (!it) return;
+    var needs = op !== 'approve';
+    var N = {
+      approve: 'Marks the data as checked and notifies the guardian.',
+      correct: 'The guardian is notified with your message. Payment and activation are not affected.',
+      decline: 'Player becomes Inactive (cannot be found, scanned or RSVP). The guardian is notified. Any pending payment must be handled in Payments.',
+      reopen: 'Player becomes Active again and returns to the New queue.'
+    };
+    var T = { approve: 'Approve', correct: 'Needs correction', decline: 'Decline', reopen: 'Reopen' };
+    ask(T[op] + ' · ' + it.name, needs ? [{ k: 'reason', label: op === 'correct' ? 'What needs correcting (sent to the guardian)' : 'Reason (min 5 chars)', type: 'textarea' }] : [],
+      T[op], function (v) {
+        return api('enrAction', { op: op, playerId: it.playerId, stamp: it.stamp, reason: v.reason || '' }).then(function (r) { return { msg: r.msg }; });
+      }, N[op], op === 'decline');
+  }
+
+  /* ---------- REFERRALS ---------- */
+  function vRef() {
+    return api('refQueue', { status: S.refSt, q: S.refQ }).then(function (d) {
+      refItems = d.items;
+      var c = d.counts;
+      var st = selHtml('refSt', 200, [['Open', 'Open · ' + c.Open], ['Applied', 'Applied · ' + c.Applied], ['Rejected', 'Rejected · ' + c.Rejected], ['All', 'All · ' + c.All]]);
+      view.innerHTML = '<div class="bar">' + search('rfq', 'refQ', 'Search referral, player, ID…') + st + '<button class="btn pri" id="refadd">Add referral</button></div>' +
+        '<p class="note">Flow: Pending → Approved (referred player paid a package) → Applied (discount goes on the referrer\'s next unpaid package payment, ledgered). Sibling and loyalty discounts are not automated. Use Waive / Adjust in Payments.</p>' +
+        (refItems.length ? refItems.map(refCard).join('') : '<div class="empty">Nothing here.</div>');
+    });
+  }
+  function refCard(it) {
+    var b = [];
+    if (it.status === 'Pending') b.push(['approve', 'Approve', 'pri'], ['reject', 'Reject', 'dng']);
+    if (it.status === 'Approved') b.push(['apply', 'Apply discount', 'pri'], ['reject', 'Reject', 'dng']);
+    var fl = it.flags.map(function (x) { return '<span class="flag">⚠ ' + esc(x) + '</span>'; }).join(' ');
+    return '<div class="card"><div class="r1"><b>' + esc(it.referralId) + '</b>' + pill(it.status) +
+      (it.status === 'Pending' ? '<span class="flag">' + (it.qualified ? 'referred player paid a package' : 'referred player has no paid package yet') + '</span>' : '') + fl + '</div>' +
+      '<div style="margin-top:4px"><b>' + esc(it.referrer) + '</b> <span class="meta">(' + esc(it.referrerId) + ')</span> referred <b>' + esc(it.referred) + '</b> <span class="meta">(' + esc(it.referredId) + ')</span></div>' +
+      '<div class="meta">Recorded ' + esc(it.date) + ' · discount ' + money(it.discount) + (it.paymentId ? ' · applied to ' + esc(it.paymentId) : '') + (it.by ? ' · ' + esc(it.by) + ' ' + esc(it.at) : '') + '</div>' +
+      (it.note ? '<div class="meta">Note: ' + esc(it.note) + '</div>' : '') +
+      '<div class="acts">' + b.map(function (x) { return '<button class="btn ' + x[2] + '" data-ref="' + x[0] + '" data-id="' + esc(it.referralId) + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function refDo(it, op, extra, okMsg) {
+    var body = Object.assign({ op: op, referralId: it.referralId, stamp: it.stamp }, extra);
+    return api('refAction', body).catch(function (e) {
+      if (/^NOT_QUALIFIED:/.test(e.message)) {
+        return confirmBox(e.message.replace('NOT_QUALIFIED: ', '') + '\n\nApprove anyway?').then(function (yes) {
+          if (!yes) throw new Error('Cancelled');
+          body.force = '1'; return api('refAction', body);
+        });
+      }
+      throw e;
+    }).then(function (r) { return { msg: it.referralId + ' → ' + (okMsg || r.state || 'done') }; });
+  }
+  function refAct(op, it) {
+    if (!it) return;
+    if (op === 'approve') return ask('Approve ' + it.referralId, [], 'Approve', function () { return refDo(it, 'approve', {}); },
+      it.referrer + ' referred ' + it.referred + '. ' + (it.qualified ? 'The referred player has a paid package.' : 'The referred player has NO paid package yet, so you will be asked to confirm.'));
+    if (op === 'reject') return ask('Reject ' + it.referralId, [{ k: 'reason', label: 'Reason (min 5 chars)', type: 'textarea' }], 'Reject', function (v) { return refDo(it, 'reject', { reason: v.reason }); }, 'No discount is given.', true);
+    if (op === 'apply') {
+      if (!it.payments.length) { toast('The referrer has no unpaid package payment yet. Apply it when they top up.', 1); return; }
+      return ask('Apply discount · ' + it.referralId, [
+        { k: 'paymentId', label: 'Referrer\'s payment', type: 'select', options: it.payments.map(function (x) { return [x.paymentId, x.label]; }) },
+        { k: 'amount', label: 'Discount (₱)', type: 'number', value: it.discount },
+        { k: 'approvedBy', label: 'Approved by (email; only needed above the adjustment limit)' }
+      ], 'Apply', function (v) { return refDo(it, 'apply', { paymentId: v.paymentId, amount: v.amount, approvedBy: v.approvedBy }, 'discount applied'); },
+      'Lowers the payment total through the ledger (Adjustment). Safe to retry: it will not apply twice.');
+    }
+  }
+  function refAdd() {
+    ask('Add referral', [{ k: 'referrerId', label: 'Referrer Player ID (the one who referred)' }, { k: 'referredId', label: 'Referred Player ID (the new player)' }], 'Add',
+      function (v) { return api('refAdd', v).then(function (r) { return { msg: r.msg }; }); },
+      'For claims received by WhatsApp. The app form does not collect a referrer yet.');
+  }
+  /* === END: ADMIN CONSOLE — PHASE 4 VIEWS === */
+
+  /* === START: ADMIN CONSOLE — PHASE 5 VIEWS (reports, alerts) === */
+  var RPT_P = [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'Last 7 days'], ['prevweek', 'Previous 7 days'], ['month', 'This month'], ['lastmonth', 'Last month']];
+  var AL_L = { soon: 'Expiring soon', admin: 'Admin near-expiry', expired: 'Expired', member: 'Membership renewal', noshow: 'No-show follow-up' };
+
+  function vRpt() {
+    return Promise.all([api('reportGet', { period: S.rptP }), api('alertsPreview')]).then(function (r) {
+      var d = r[0], D = d.data, a = r[1], c = a.counts;
+      var st = function (l, v) { return '<div>' + esc(l) + '<b>' + esc(v) + '</b></div>'; };
+      var prog = Object.keys(D.byProgram).map(function (k) { return k + ' ' + D.byProgram[k]; }).join(' · ') || '—';
+      var h = '<div class="bar">' + selHtml('rptP', 190, RPT_P) + '<span class="meta">' + esc(d.label) + '</span><span style="flex:1"></span><button class="btn pri" id="rptsend">Email this report</button></div>' +
+        '<div class="csec">Money</div><div class="sum">' + st('Collected', money(D.collected)) + st('Refunded', money(D.refunded)) + st('Net collected', money(D.net)) + st('Waived', money(D.waived)) +
+        st('Adjustments', money(D.adjusted)) + st('Penalties charged', money(D.penalties)) + st('Reversed', money(D.reversed)) + st('New payment requests', D.newPayments + ' · ' + money(D.newPaymentsAmt)) + '</div>' +
+        '<div class="csec">Players &amp; attendance</div><div class="sum">' + st('New enrollments', D.enrollments) + st('Present', D.present) + st('Late', D.late) + st('Absent', D.absent) + st('Walk-ins', D.walkins) + '</div>' +
+        '<p class="meta">By program: ' + esc(prog) + '</p>' +
+        '<div class="csec">Outstanding now (not period-based)</div><div class="sum">' + st('Balance owed', money(D.outstanding)) + st('Unpaid payments', D.outstandingN) + st('Overdue', D.overdueN + ' · ' + money(D.overdueAmt)) + '</div>' +
+        '<div class="csec">Alerts due now (not yet sent)</div><div class="sum">' + Object.keys(AL_L).map(function (k) { return st(AL_L[k], c[k] || 0); }).join('') + '</div>' +
+        (a.items.length ? '<div class="card">' + a.items.map(function (x) { return '<div class="krow"><div><b>' + esc(x.label) + '</b><span class="meta">' + esc(AL_L[x.type]) + '</span></div></div>'; }).join('') +
+          (a.more ? '<div class="meta">+ ' + a.more + ' more</div>' : '') + '</div>' : '<div class="card meta">Nothing due.</div>') +
+        '<div class="acts"><button class="btn" id="alrun">Send due alerts now</button></div>';
+      view.innerHTML = h;
+    });
+  }
+  function rptSend() {
+    ask('Email report', [], 'Send', function () { return api('reportSend', { period: S.rptP }).then(function (r) { return { msg: r.msg, noReload: 1 }; }); },
+      'Sends this period\'s full report to Config → AdminEmail. Today/Yesterday use the "Daily Payment Summary" email type; 7-day uses Weekly; month uses Monthly.');
+  }
+  function alRun() {
+    ask('Send due alerts now', [], 'Send', function () { return api('alertsRun').then(function (r) { return { msg: r.msg }; }); },
+      'Sends everything listed under "Alerts due now" to guardians (email + in-app) and admin. Each alert is sent once only.');
+  }
+  /* === END: ADMIN CONSOLE — PHASE 5 VIEWS === */
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function (e) {
+    var t;
+    if ((t = e.target.closest('[data-tab]'))) return go(t.dataset.tab);
+    if ((t = e.target.closest('[data-go]'))) {
+      if (t.dataset.st) S.payStatus = t.dataset.st;
+      if (t.dataset.lt !== undefined) { S.ledType = t.dataset.lt; S.ledQ = ''; }
+      return go(t.dataset.go);
+    }
+    if ((t = e.target.closest('[data-chip]'))) { S.payStatus = t.dataset.chip; return load(); }
+    if ((t = e.target.closest('[data-act]'))) return payAct(t.dataset.act, items.filter(function (x) { return x.paymentId === t.dataset.id; })[0]);
+    if ((t = e.target.closest('[data-pl]'))) return plOpen(t.dataset.pl);
+    if ((t = e.target.closest('[data-th]'))) { S.thread = t.dataset.th; return load(); }
+    if ((t = e.target.closest('[data-sch]'))) return schEdit(t.dataset.sch);
+    if ((t = e.target.closest('[data-ec]'))) { S.excType = t.dataset.ec; return load(); }
+    if ((t = e.target.closest('[data-wc]'))) { S.wkStatus = t.dataset.wc; return load(); }
+    if ((t = e.target.closest('[data-exc]'))) return excAct(t.dataset.exc, excItems.filter(function (x) { return x.attendanceId === t.dataset.id; })[0]);
+    if ((t = e.target.closest('[data-wk]'))) return wkAct(t.dataset.wk, wkItems.filter(function (x) { return x.walkInId === t.dataset.id; })[0]);
+    if ((t = e.target.closest('[data-pkg]'))) return pkgEdit(t.dataset.pkg);
+    if ((t = e.target.closest('[data-rv]'))) return rvSet(+t.dataset.i, t.dataset.p, t.dataset.rv);
+    if ((t = e.target.closest('[data-rva]'))) return rvAct(t.dataset.rva, rvItems[+t.dataset.i]);
+    if (e.target.id === 'autoas') return rvAuto();
+    if ((t = e.target.closest('[data-ntf]'))) return ntfAct(ntfItems.filter(function (x) { return x.id === t.dataset.id; })[0]);
+    if ((t = e.target.closest('[data-sys]'))) return sysAct(t.dataset.sys, t.dataset.fn);
+    if ((t = e.target.closest('[data-cfg]'))) return cfgEdit(t.dataset.cfg);
+    if ((t = e.target.closest('[data-enr]'))) return enrAct(t.dataset.enr, enrItems.filter(function (x) { return x.playerId === t.dataset.id; })[0]);
+    if ((t = e.target.closest('[data-ref]'))) return refAct(t.dataset.ref, refItems.filter(function (x) { return x.referralId === t.dataset.id; })[0]);
+    if (e.target.id === 'refadd') return refAdd();
+    if (e.target.id === 'rptsend') return rptSend();
+    if (e.target.id === 'alrun') return alRun();
+    if (e.target.id === 'send') return sendReply();
+    if (e.target.id === 'refresh') return load();
+  });
+  document.addEventListener('toggle', function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) S.rvOpen[k] = e.target.open; }, true);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.dataset && e.target.dataset.s) { S[e.target.dataset.s] = e.target.value.trim(); load(); }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.dataset && e.target.dataset.sel) { S[e.target.dataset.sel] = e.target.value; load(); }
+  });
+
+  $('#me').textContent = window.CONSOLE_ME || '';
+  nav(); load();
+})();
+</script>
+<!-- === END: ADMIN CONSOLE — SCRIPTS === -->
