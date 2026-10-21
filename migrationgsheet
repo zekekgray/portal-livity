@@ -1,0 +1,82 @@
+/* === LIVITY MIGRATION (run from the NEW spreadsheet's script) === */
+const MIG_SOURCE_ID = '1_kUN5uDa67wJbwwpmBBtCk5HJOQkjYt1d077vsPveK0';
+const MIG_TARGET_ID = '';            // blank = ang spreadsheet na kinabitan ng script na ito
+const MIG_ALLOW_OVERWRITE = false;   // true = papalitan ang target sheet na may laman na
+const MIG_SKIP = ['Sheet1'];         // hindi kokopyahin
+
+function mig_() {
+  const src = SpreadsheetApp.openById(MIG_SOURCE_ID);
+  const tgt = MIG_TARGET_ID ? SpreadsheetApp.openById(MIG_TARGET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  if (src.getId() === tgt.getId()) throw new Error('Pareho ang source at target.');
+  return { src: src, tgt: tgt };
+}
+
+/** 1) RUN MUNA ITO. Walang binabago, ililista lang kung ano ang mangyayari. */
+function migrateDryRun() {
+  const s = mig_(), out = [];
+  out.push('SOURCE: ' + s.src.getName() + '\nTARGET: ' + s.tgt.getName() + '\nTZ source ' + s.src.getSpreadsheetTimeZone() + ' / target ' + s.tgt.getSpreadsheetTimeZone());
+  s.src.getSheets().forEach(function (sh) {
+    const n = sh.getName();
+    if (MIG_SKIP.indexOf(n) > -1) return;
+    const t = s.tgt.getSheetByName(n), tRows = t ? Math.max(0, t.getLastRow() - 1) : 0;
+    const act = !t ? 'CREATE' : (tRows === 0 ? 'REPLACE (empty)' : (MIG_ALLOW_OVERWRITE ? 'OVERWRITE (' + tRows + ' rows lost)' : 'SKIP (target has ' + tRows + ' rows)'));
+    out.push(n + ': ' + Math.max(0, sh.getLastRow() - 1) + ' rows → ' + act);
+  });
+  Logger.log(out.join('\n'));
+}
+
+/** 2) Kopyahin ang lahat ng sheet. */
+function migrateLivityData() {
+  const s = mig_(), log = [];
+  const order = [];
+  s.src.getSheets().forEach(function (sh) {
+    const n = sh.getName();
+    if (MIG_SKIP.indexOf(n) > -1) return;
+    const old = s.tgt.getSheetByName(n);
+    if (old && Math.max(0, old.getLastRow() - 1) > 0 && !MIG_ALLOW_OVERWRITE) { log.push('SKIPPED ' + n + ' (target has data)'); return; }
+    const copy = sh.copyTo(s.tgt);          // mauuna ang copy, kaya hindi mauubos ang sheets ng target
+    if (old) s.tgt.deleteSheet(old);
+    copy.setName(n);
+    order.push(n);
+    log.push('COPIED ' + n + ' · ' + Math.max(0, sh.getLastRow() - 1) + ' rows');
+  });
+  // ayusin ang pagkakasunod-sunod ng tabs ayon sa source
+  s.src.getSheets().forEach(function (sh, i) {
+    const t = s.tgt.getSheetByName(sh.getName());
+    if (t) { s.tgt.setActiveSheet(t); s.tgt.moveActiveSheet(i + 1); }
+  });
+  SpreadsheetApp.flush();
+  Logger.log(log.join('\n') + '\n\nTapos na. Run migrateVerify() bago lumipat.');
+}
+
+/** 3) Ikumpara ang source vs target (laki at laman, as displayed). */
+function migrateVerify() {
+  const s = mig_(), bad = [], ok = [];
+  const sig = function (sh) {
+    const v = sh.getDataRange().getDisplayValues();
+    const h = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify(v)).map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+    return { r: v.length, c: v[0] ? v[0].length : 0, h: h };
+  };
+  s.src.getSheets().forEach(function (sh) {
+    const n = sh.getName();
+    if (MIG_SKIP.indexOf(n) > -1) return;
+    const t = s.tgt.getSheetByName(n);
+    if (!t) { bad.push(n + ': WALA sa target'); return; }
+    const a = sig(sh), b = sig(t);
+    if (a.r !== b.r || a.c !== b.c) bad.push(n + ': laki ' + a.r + 'x' + a.c + ' vs ' + b.r + 'x' + b.c);
+    else if (a.h !== b.h) bad.push(n + ': magkaiba ang laman');
+    else ok.push(n + ' ✓ ' + Math.max(0, a.r - 1) + ' rows');
+  });
+  Logger.log(ok.join('\n') + (bad.length ? '\n\nPROBLEMA (' + bad.length + '):\n' + bad.join('\n') : '\n\nLAHAT TUGMA.'));
+}
+
+/** 4) QR secret: kung hindi ito kokopyahin, INVALID ang lahat ng QR ng players at ng receipt signatures. */
+function showQrSecretOnce_() {          // run ito sa LUMANG script project
+  Logger.log('QR_SECRET = ' + PropertiesService.getScriptProperties().getProperty('QR_SECRET'));
+}
+function setQrSecret_() {               // run ito sa BAGONG script project (ilagay ang value sa loob)
+  const v = '2206df19-651d-4ad0-818c-e94f322f2704a75308ee-6da8-4dcf-8825-2d7a89661072';
+  if (!v || v.indexOf('PASTE') === 0) throw new Error('Ilagay muna ang QR_SECRET.');
+  PropertiesService.getScriptProperties().setProperty('QR_SECRET', v);
+  Logger.log('QR_SECRET set.');
+}
