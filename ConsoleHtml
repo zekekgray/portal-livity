@@ -1,0 +1,23 @@
+<!-- === START: ADMIN CONSOLE — LAYOUT === -->
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= consoleInclude_('ConsoleStyles') ?>
+</head>
+<body>
+  <header>
+    <b class="brand">LIVITY <span>ADMIN</span></b>
+    <nav id="tabs"></nav>
+    <span class="me" id="me"></span>
+    <button class="btn ghost" id="refresh" title="Refresh">↻</button>
+  </header>
+  <main id="view"></main>
+  <div id="modal"></div>
+  <div id="toast"></div>
+  <script>window.CONSOLE_ME = <?!= JSON.stringify(me) ?>;</script>
+  <?!= consoleInclude_('ConsoleScripts') ?>
+</body>
+</html>
+<!-- === END: ADMIN CONSOLE — LAYOUT === -->
